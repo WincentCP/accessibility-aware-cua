@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -14,6 +15,8 @@ from packages.agent.contracts import (
     VerificationStatus,
 )
 from packages.agent.state import to_graph_state
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def sample_goal() -> GoalSpec:
@@ -89,3 +92,11 @@ def test_contracts_reject_unknown_fields() -> None:
             risk_level="LOW",
             arbitrary_planner_text="tidak boleh lolos",
         )
+
+
+def test_empty_database_rollback_is_idempotent() -> None:
+    down_sql = (
+        ROOT / "packages" / "agent" / "migrations" / "001_stage6_down.sql"
+    ).read_text(encoding="utf-8")
+    assert "DROP TABLE IF EXISTS schema_migrations" in down_sql
+    assert "DELETE FROM schema_migrations" not in down_sql
