@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from copy import deepcopy
 from typing import Any
 
 import httpx
@@ -46,6 +47,28 @@ class OpenAIResponsesClient:
                     raise RuntimeError(f"Planner model menolak request: {content.get('refusal', 'refusal')}")
         raise RuntimeError("Responses API tidak mengembalikan structured output text.")
 
+    @staticmethod
+    def _strict_schema(schema: dict[str, Any]) -> dict[str, Any]:
+        """Convert Pydantic JSON Schema to the strict Responses API subset."""
+
+        normalized = deepcopy(schema)
+
+        def visit(value: Any) -> None:
+            if isinstance(value, dict):
+                value.pop("default", None)
+                properties = value.get("properties")
+                if value.get("type") == "object" and isinstance(properties, dict):
+                    value["additionalProperties"] = False
+                    value["required"] = list(properties)
+                for child in value.values():
+                    visit(child)
+            elif isinstance(value, list):
+                for child in value:
+                    visit(child)
+
+        visit(normalized)
+        return normalized
+
     def generate(self, *, prompt: str, schema: dict[str, Any], request: dict[str, Any]) -> ModelResponse:
         started = time.perf_counter()
         response = self.client.post(
@@ -68,7 +91,7 @@ class OpenAIResponsesClient:
                     "format": {
                         "type": "json_schema",
                         "name": "planner_decision",
-                        "schema": schema,
+                        "schema": self._strict_schema(schema),
                         "strict": True,
                     }
                 },

@@ -13,6 +13,7 @@ os.environ.setdefault("CUA_APP_SECRET", "test-secret")
 from apps.api.a11y_api.app import create_app
 from apps.api.a11y_api.config import Settings
 from packages.agent.openai_client import OpenAIResponsesClient
+from packages.agent.planner import PlannerDecision
 from packages.agent.remote_page import RemoteBridgeError, RemotePage
 
 
@@ -58,6 +59,29 @@ def test_openai_adapter_uses_strict_responses_structured_output() -> None:
     assert captured["text"]["format"]["type"] == "json_schema"
     assert captured["text"]["format"]["strict"] is True
     assert captured["input"][1]["content"][0]["type"] == "input_text"
+
+
+def test_openai_adapter_normalizes_pydantic_schema_for_strict_outputs() -> None:
+    schema = OpenAIResponsesClient._strict_schema(PlannerDecision.model_json_schema())
+
+    def assert_strict(value: object) -> None:
+        if isinstance(value, dict):
+            assert "default" not in value
+            properties = value.get("properties")
+            if value.get("type") == "object" and isinstance(properties, dict):
+                assert value["additionalProperties"] is False
+                assert value["required"] == list(properties)
+            for child in value.values():
+                assert_strict(child)
+        elif isinstance(value, list):
+            for child in value:
+                assert_strict(child)
+
+    assert_strict(schema)
+    action = schema["$defs"]["AgentAction"]
+    assert "schema_version" in action["required"]
+    assert "target_ref" in action["required"]
+    assert "requires_approval" in action["required"]
 
 
 def test_remote_page_uses_bearer_token_and_semantic_actions_only() -> None:
