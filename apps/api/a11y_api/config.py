@@ -34,11 +34,14 @@ class Settings:
     browser_headless: bool
     browser_bridge_url: str = "http://127.0.0.1:8765"
     openai_api_key: str | None = None
-    planner_model: str = "gpt-4.1-mini-2025-04-14"
+    gemini_api_key: str | None = None
+    planner_provider: str = "gemini"
+    planner_model: str = "gemini-2.5-flash"
     live_agent_enabled: bool = True
     tts_enabled: bool = True
-    tts_model: str = "gpt-4o-mini-tts"
-    tts_voice: str = "coral"
+    tts_provider: str = "gemini"
+    tts_model: str = "gemini-2.5-flash-preview-tts"
+    tts_voice: str = "Puck"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -89,9 +92,12 @@ class Settings:
                 "CUA_BROWSER_BRIDGE_URL", "http://127.0.0.1:8765"
             ).rstrip("/"),
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
-            planner_model=os.getenv("CUA_PLANNER_MODEL", "gpt-4.1-mini-2025-04-14"),
+            gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
+            planner_provider=os.getenv("CUA_PLANNER_PROVIDER", "gemini").strip().lower(),
+            planner_model=os.getenv("CUA_PLANNER_MODEL", "gemini-2.5-flash"),
             live_agent_enabled=_as_bool(os.getenv("CUA_LIVE_AGENT_ENABLED", "true")),
             tts_enabled=_as_bool(os.getenv("CUA_TTS_ENABLED", "true")),
-            tts_model=os.getenv("CUA_TTS_MODEL", "gpt-4o-mini-tts"),
-            tts_voice=os.getenv("CUA_TTS_VOICE", "coral"),
+            tts_provider=os.getenv("CUA_TTS_PROVIDER", "gemini").strip().lower(),
+            tts_model=os.getenv("CUA_TTS_MODEL", "gemini-2.5-flash-preview-tts"),
+            tts_voice=os.getenv("CUA_TTS_VOICE", "Puck"),
         )

@@ -20,6 +20,7 @@ from apps.api.a11y_api import APP_VERSION
 from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
 from packages.agent.live import LiveAgentManager
+from packages.agent.gemini_tts import GeminiTTSClient
 from packages.agent.openai_tts import OpenAITTSClient
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -178,13 +179,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def synthesize_speech(payload: SpeechRequest) -> Response:
         if not active_settings.tts_enabled:
             raise HTTPException(status_code=503, detail="Panduan suara AI dinonaktifkan.")
-        if not active_settings.openai_api_key:
-            raise HTTPException(status_code=503, detail="OPENAI_API_KEY belum diisi di .env lokal.")
-        client = OpenAITTSClient(
-            active_settings.openai_api_key,
-            model=active_settings.tts_model,
-            voice=active_settings.tts_voice,
-        )
+        if active_settings.tts_provider == "gemini":
+            if not active_settings.gemini_api_key:
+                raise HTTPException(status_code=503, detail="GEMINI_API_KEY belum diisi di .env lokal.")
+            client = GeminiTTSClient(
+                active_settings.gemini_api_key,
+                model=active_settings.tts_model,
+                voice=active_settings.tts_voice,
+            )
+        elif active_settings.tts_provider == "openai":
+            if not active_settings.openai_api_key:
+                raise HTTPException(status_code=503, detail="OPENAI_API_KEY belum diisi di .env lokal.")
+            client = OpenAITTSClient(
+                active_settings.openai_api_key,
+                model=active_settings.tts_model,
+                voice=active_settings.tts_voice,
+            )
+        else:
+            raise HTTPException(status_code=503, detail="TTS provider tidak didukung.")
         try:
             audio = client.generate(payload.text)
         except RuntimeError as exc:
@@ -193,7 +205,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             client.close()
         return Response(
             content=audio,
-            media_type="audio/mpeg",
+            media_type="audio/wav" if active_settings.tts_provider == "gemini" else "audio/mpeg",
             headers={"Cache-Control": "private, max-age=300"},
         )
 

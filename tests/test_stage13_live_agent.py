@@ -12,6 +12,8 @@ os.environ.setdefault("CUA_APP_SECRET", "test-secret")
 
 from apps.api.a11y_api.app import create_app
 from apps.api.a11y_api.config import Settings
+from packages.agent.gemini_client import GeminiStructuredClient
+from packages.agent.gemini_tts import INDONESIAN_TTS_DIRECTION, GeminiTTSClient
 from packages.agent.openai_client import OpenAIResponsesClient
 from packages.agent.openai_tts import INDONESIAN_GUIDE_INSTRUCTIONS, OpenAITTSClient
 from packages.agent.planner import PlannerDecision
@@ -115,6 +117,74 @@ def test_openai_tts_requests_cheerful_indonesian_audio() -> None:
     }
 
 
+def test_gemini_adapter_uses_structured_json_output() -> None:
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.update(json.loads(request.content))
+        assert request.headers["x-goog-api-key"] == "gemini-key"
+        assert request.url.path.endswith("/models/test-gemini:generateContent")
+        return httpx.Response(
+            200,
+            json={
+                "modelVersion": "test-gemini-001",
+                "candidates": [{"content": {"parts": [{"text": '{"choice":"observe"}'}]}}],
+                "usageMetadata": {"promptTokenCount": 10, "candidatesTokenCount": 3},
+            },
+        )
+
+    client = GeminiStructuredClient(
+        "gemini-key",
+        model="test-gemini",
+        base_url="https://unit.test/v1beta",
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        result = client.generate(
+            prompt="Return one decision.",
+            schema={"type": "object", "properties": {"choice": {"type": "string"}}},
+            request={"goal": "observe"},
+        )
+    finally:
+        client.close()
+
+    assert result.payload == {"choice": "observe"}
+    assert result.provider == "google-gemini"
+    assert result.input_tokens == 10
+    assert captured["generationConfig"]["responseMimeType"] == "application/json"
+    assert captured["generationConfig"]["responseJsonSchema"]["type"] == "object"
+
+
+def test_gemini_tts_returns_browser_playable_wav() -> None:
+    captured: dict = {}
+    pcm = b"\x00\x00\x01\x00"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.update(json.loads(request.content))
+        assert request.headers["x-goog-api-key"] == "gemini-key"
+        return httpx.Response(
+            200,
+            json={"output_audio": {"data": __import__("base64").b64encode(pcm).decode()}},
+        )
+
+    client = GeminiTTSClient(
+        "gemini-key",
+        model="test-tts",
+        voice="Puck",
+        base_url="https://unit.test/v1beta",
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        audio = client.generate("Halo, tugas sudah siap.")
+    finally:
+        client.close()
+
+    assert audio.startswith(b"RIFF")
+    assert captured["model"] == "test-tts"
+    assert captured["generation_config"]["speech_config"] == [{"voice": "Puck"}]
+    assert captured["input"] == f"{INDONESIAN_TTS_DIRECTION}Halo, tugas sudah siap."
+
+
 def test_remote_page_uses_bearer_token_and_semantic_actions_only() -> None:
     requests: list[tuple[str, str, dict | None]] = []
 
@@ -183,7 +253,9 @@ def _settings(*, api_key: str | None) -> Settings:
         database_url="postgresql://unused",
         browser_profile_dir=Path(".runtime/test"),
         browser_headless=True,
-        openai_api_key=api_key,
+        gemini_api_key=api_key,
+        planner_provider="gemini",
+        planner_model="gemini-2.5-flash",
     )
 
 
@@ -199,7 +271,7 @@ def test_live_api_fails_closed_before_browser_when_key_is_missing() -> None:
             },
         )
     assert response.status_code == 503
-    assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
+    assert response.json()["detail"] == "GEMINI_API_KEY belum diisi di .env lokal."
 
 
 def test_voice_api_fails_closed_when_key_is_missing() -> None:
@@ -207,7 +279,7 @@ def test_voice_api_fails_closed_when_key_is_missing() -> None:
     with TestClient(app) as client:
         response = client.post("/api/voice/speech", json={"text": "Halo!"})
     assert response.status_code == 503
-    assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
+    assert response.json()["detail"] == "GEMINI_API_KEY belum diisi di .env lokal."
 
 
 def test_live_request_accepts_automatic_public_benchmark_goal() -> None:
@@ -219,7 +291,7 @@ def test_live_request_accepts_automatic_public_benchmark_goal() -> None:
             json={"benchmark_session_id": reset["session_id"]},
         )
     assert response.status_code == 503
-    assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
+    assert response.json()["detail"] == "GEMINI_API_KEY belum diisi di .env lokal."
 
 
 def test_live_api_rejects_unknown_session_before_starting_agent() -> None:

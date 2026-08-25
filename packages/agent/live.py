@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from packages.agent.contracts import AgentAction, RelevantItem, VerificationResult
 from packages.agent.executor import DeterministicExecutor
+from packages.agent.gemini_client import GeminiStructuredClient
 from packages.agent.graph import OrchestrationServices, build_agent_graph
 from packages.agent.observer import AccessibilityObserver
 from packages.agent.openai_client import OpenAIResponsesClient
@@ -50,8 +51,13 @@ class LiveAgentManager:
     def start(self, *, benchmark_session_id: str, goal: str | None = None) -> LiveRun:
         if not self.settings.live_agent_enabled:
             raise RuntimeError("Live agent dinonaktifkan oleh konfigurasi.")
-        if not self.settings.openai_api_key:
+        provider = self.settings.planner_provider
+        if provider == "gemini" and not self.settings.gemini_api_key:
+            raise RuntimeError("GEMINI_API_KEY belum diisi di .env lokal.")
+        if provider == "openai" and not self.settings.openai_api_key:
             raise RuntimeError("OPENAI_API_KEY belum diisi di .env lokal.")
+        if provider not in {"gemini", "openai"}:
+            raise RuntimeError(f"Planner provider tidak didukung: {provider}.")
         view = self.case_store.view(benchmark_session_id)
         page = RemotePage(self.settings.browser_bridge_url, self.settings.app_secret)
         try:
@@ -182,14 +188,22 @@ class LiveAgentManager:
         if run.cancelled:
             return
         page = RemotePage(self.settings.browser_bridge_url, self.settings.app_secret)
-        model_client: OpenAIResponsesClient | None = None
+        model_client: GeminiStructuredClient | OpenAIResponsesClient | None = None
         try:
             observer = AccessibilityObserver(allow_cdp_fallback=False)
             resolver = SemanticTargetResolver(observer.registry)
-            model_client = OpenAIResponsesClient(
-                self.settings.openai_api_key,
-                model=self.settings.planner_model,
-            )
+            if self.settings.planner_provider == "gemini":
+                model_client = GeminiStructuredClient(
+                    self.settings.gemini_api_key,
+                    model=self.settings.planner_model,
+                )
+                planner_provider = "google-gemini"
+            else:
+                model_client = OpenAIResponsesClient(
+                    self.settings.openai_api_key,
+                    model=self.settings.planner_model,
+                )
+                planner_provider = "openai-responses"
             services = OrchestrationServices(
                 page=page,
                 observer=observer,
@@ -197,7 +211,7 @@ class LiveAgentManager:
                 verifier=PredicateVerifier(observer),
                 planner=StructuredPlanner(
                     model_client,
-                    PlannerConfig(model_id=self.settings.planner_model, provider="openai-responses"),
+                    PlannerConfig(model_id=self.settings.planner_model, provider=planner_provider),
                 ),
                 recovery=RecoveryController(),
             )
