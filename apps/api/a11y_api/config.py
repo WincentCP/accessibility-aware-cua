@@ -36,12 +36,14 @@ class Settings:
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
     planner_provider: str = "gemini"
-    planner_model: str = "gemini-2.5-flash"
+    planner_model: str = "gemini-3.7-flash"
+    planner_fallback_model: str | None = "gemini-3.6-flash"
+    gemini_max_retries: int = 3
     live_agent_enabled: bool = True
     tts_enabled: bool = True
     tts_provider: str = "gemini"
-    tts_model: str = "gemini-2.5-flash-preview-tts"
-    tts_voice: str = "Puck"
+    tts_model: str = "gemini-3.1-flash-tts-preview"
+    tts_voice: str = "Sulafat"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -66,6 +68,13 @@ class Settings:
         if not 1 <= port <= 65535:
             raise ConfigurationError("CUA_PORT harus berada pada rentang 1–65535.")
 
+        try:
+            gemini_max_retries = int(os.getenv("CUA_GEMINI_MAX_RETRIES", "3"))
+        except ValueError as exc:
+            raise ConfigurationError("CUA_GEMINI_MAX_RETRIES harus berupa angka.") from exc
+        if not 0 <= gemini_max_retries <= 6:
+            raise ConfigurationError("CUA_GEMINI_MAX_RETRIES harus berada pada rentang 0–6.")
+
         profile_value = os.getenv("CUA_BROWSER_PROFILE_DIR", ".runtime/playwright-profile")
         profile_dir = Path(profile_value)
         if not profile_dir.is_absolute():
@@ -76,6 +85,8 @@ class Settings:
                 "CUA_BROWSER_PROFILE_DIR tidak boleh memakai profil/home pribadi di luar project. "
                 "Gunakan direktori khusus project, misalnya .runtime/playwright-profile."
             )
+
+        fallback_model = os.getenv("CUA_PLANNER_FALLBACK_MODEL", "gemini-3.6-flash").strip() or None
 
         return cls(
             environment=environment,
@@ -94,10 +105,12 @@ class Settings:
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
             planner_provider=os.getenv("CUA_PLANNER_PROVIDER", "gemini").strip().lower(),
-            planner_model=os.getenv("CUA_PLANNER_MODEL", "gemini-2.5-flash"),
+            planner_model=os.getenv("CUA_PLANNER_MODEL", "gemini-3.7-flash"),
+            planner_fallback_model=fallback_model,
+            gemini_max_retries=gemini_max_retries,
             live_agent_enabled=_as_bool(os.getenv("CUA_LIVE_AGENT_ENABLED", "true")),
             tts_enabled=_as_bool(os.getenv("CUA_TTS_ENABLED", "true")),
             tts_provider=os.getenv("CUA_TTS_PROVIDER", "gemini").strip().lower(),
-            tts_model=os.getenv("CUA_TTS_MODEL", "gemini-2.5-flash-preview-tts"),
-            tts_voice=os.getenv("CUA_TTS_VOICE", "Puck"),
+            tts_model=os.getenv("CUA_TTS_MODEL", "gemini-3.1-flash-tts-preview"),
+            tts_voice=os.getenv("CUA_TTS_VOICE", "Sulafat"),
         )
