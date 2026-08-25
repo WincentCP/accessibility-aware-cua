@@ -80,7 +80,7 @@ Opsional untuk gate database:
 docker compose up -d postgres
 ```
 
-Set `CUA_REQUINE_POSTGRES=true` di `.env`, kemudian:
+Set `CUA_REQUIRE_POSTGRES=true` di `.env`, kemudian:
 
 ```bash
 python scripts/check_dependencies.py
@@ -113,7 +113,8 @@ npm run test:e2e
 python scripts/validate_stage4_5.py --with-browser
 ```
 
-Laporan terakhir berada di `reports/stage4_5_validation_report.md`. CI juga
+Laporan validasi dibuat lokal di `reports/` saat perintah validasi dijalankan.
+Folder tersebut merupakan artefak generated dan tidak disimpan di Git. CI juga
 menjalankan PostgreSQL, Python tests, extension build, Playwright, axe, dan
 keyboard smoke.
 
