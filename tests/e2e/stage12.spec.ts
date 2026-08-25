@@ -66,6 +66,11 @@ test("microphone denial preserves complete text fallback", async ({ page }) => {
 test("in-page bridge is first landmark and restores real DOM focus for four task types", async ({ page }) => {
   await page.goto("http://127.0.0.1:4173/focus-fixture.html");
   await expect(page.locator("body > aside").first()).toHaveAttribute("id", "a11y-cua-in-page-panel");
+  await expect(page.locator("#a11y-cua-open-panel")).toHaveText("Mulai dan buka asisten");
+  await page.locator("#a11y-cua-open-panel").click();
+  await expect(page.locator("#a11y-cua-bridge-status")).toHaveText("Asisten terbuka. Lanjutkan di panel sebelah kanan.");
+  await expect(page.locator("#a11y-cua-open-panel")).toBeEnabled();
+  await expect(page.locator("#a11y-cua-open-panel")).toHaveText("Buka kembali asisten");
   const cases = [
     ["button", "Pilih rute", "travel"],
     ["textbox", "Cari produk", "marketplace"],

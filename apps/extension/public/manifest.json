@@ -4,7 +4,7 @@
   "short_name": "A11y CUA",
   "version": "0.12.0",
   "description": "Accessible task map, voice input, and shared-control panel for the local CUA research prototype.",
-  "permissions": ["activeTab", "sidePanel"],
+  "permissions": ["activeTab", "sidePanel", "scripting"],
   "host_permissions": ["http://127.0.0.1:8000/*"],
   "background": {
     "service_worker": "service-worker.js",

@@ -3,6 +3,7 @@ import type { AccessibleTaskMap } from "./contracts";
 import { sanitizeTaskMap } from "./task-map";
 
 const PANEL_ID = "a11y-cua-in-page-panel";
+const CONTENT_SCRIPT_READY = "__a11yCuaContentScriptReady";
 
 const injectPanel = (): void => {
   if (!document.body || document.getElementById(PANEL_ID)) return;
@@ -26,13 +27,26 @@ const injectPanel = (): void => {
     <p><strong>Tujuan:</strong> <span id="a11y-cua-bridge-goal">Belum ada.</span></p>
     <p><strong>Progres:</strong> <span id="a11y-cua-bridge-progress">0 langkah terverifikasi selesai.</span></p>
     <p><strong>Berikutnya, direncanakan:</strong> <span id="a11y-cua-bridge-next">Belum ada.</span></p>
-    <button id="a11y-cua-open-panel" type="button">Buka kontrol dan peta tugas</button>
+    <button id="a11y-cua-open-panel" type="button">Mulai dan buka asisten</button>
     <button type="button" data-a11y-cua-command="PAUSE">Jeda agen</button>
     <button type="button" data-a11y-cua-command="TAKE_OVER">Ambil alih</button>
     <a href="${skipTarget}">Lewati panel agen ke halaman web</a>`;
   document.body.prepend(panel);
-  panel.querySelector<HTMLButtonElement>("#a11y-cua-open-panel")?.addEventListener("click", () => {
-    void chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" });
+  panel.querySelector<HTMLButtonElement>("#a11y-cua-open-panel")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    const status = panel.querySelector<HTMLElement>("#a11y-cua-bridge-status");
+    button.disabled = true;
+    if (status) status.textContent = "Membuka asisten.";
+    try {
+      const result = await chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" }) as { success?: boolean };
+      if (!result?.success) throw new Error("Side panel tidak dapat dibuka.");
+      if (status) status.textContent = "Asisten terbuka. Lanjutkan di panel sebelah kanan.";
+      button.textContent = "Buka kembali asisten";
+      button.disabled = false;
+    } catch {
+      button.disabled = false;
+      if (status) status.textContent = "Asisten belum dapat dibuka. Tekan tombol ini untuk mencoba lagi.";
+    }
   });
   panel.querySelectorAll<HTMLButtonElement>("[data-a11y-cua-command]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -41,15 +55,14 @@ const injectPanel = (): void => {
   });
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", injectPanel, { once: true });
-} else {
-  injectPanel();
-}
-
-chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+const handleRuntimeMessage = (message: unknown, _sender: chrome.runtime.MessageSender, sendResponse: (response?: unknown) => void): boolean => {
   if (!message || typeof message !== "object") return false;
   const payload = message as { type?: string; text?: string; target?: SemanticFocusTarget; map?: AccessibleTaskMap };
+  if (payload.type === "ENSURE_IN_PAGE_PANEL") {
+    injectPanel();
+    sendResponse({ success: Boolean(document.getElementById(PANEL_ID)) });
+    return false;
+  }
   const status = document.querySelector<HTMLElement>("#a11y-cua-bridge-status");
   if (payload.type === "UPDATE_BRIDGE_STATUS" && typeof payload.text === "string") {
     if (status) status.textContent = payload.text;
@@ -75,4 +88,16 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
     return false;
   }
   return false;
-});
+};
+
+const contentWindow = window as typeof window & { [CONTENT_SCRIPT_READY]?: boolean };
+if (!contentWindow[CONTENT_SCRIPT_READY]) {
+  contentWindow[CONTENT_SCRIPT_READY] = true;
+  chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", injectPanel, { once: true });
+} else {
+  injectPanel();
+}
