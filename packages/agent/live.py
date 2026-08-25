@@ -196,6 +196,8 @@ class LiveAgentManager:
                 model_client = GeminiStructuredClient(
                     self.settings.gemini_api_key,
                     model=self.settings.planner_model,
+                    fallback_model=self.settings.planner_fallback_model,
+                    max_retries=self.settings.gemini_max_retries,
                 )
                 planner_provider = "google-gemini"
             else:
