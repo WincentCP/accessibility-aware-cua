@@ -10,4 +10,5 @@ apps/extension/dist/
 playwright-report/
 test-results/
 coverage/
+reports/
 .DS_Store
