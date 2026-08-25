@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/a11y-cua/condition.schema.json",
+  "title": "Benchmark condition",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "capability",
+    "description",
+    "required_properties",
+    "fairness_constraints"
+  ],
+  "properties": {
+    "id": {
+      "enum": [
+        "C0",
+        "C1",
+        "C2"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "required_properties": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string"
+      }
+    },
+    "fairness_constraints": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

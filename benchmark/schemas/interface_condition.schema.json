@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/a11y-cua/interface-condition.schema.json",
+  "title": "User-facing interface condition",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "core_agent",
+    "task_map",
+    "verified_progress_evidence",
+    "focus_synchronized_handoff",
+    "controls",
+    "fairness_constraints"
+  ],
+  "properties": {
+    "id": {
+      "enum": [
+        "U0",
+        "U1"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "core_agent": {
+      "const": "identical"
+    },
+    "task_map": {
+      "type": "boolean"
+    },
+    "verified_progress_evidence": {
+      "type": "boolean"
+    },
+    "focus_synchronized_handoff": {
+      "type": "boolean"
+    },
+    "controls": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "string"
+      }
+    },
+    "fairness_constraints": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

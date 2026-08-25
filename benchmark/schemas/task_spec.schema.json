@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/a11y-cua/task-spec.schema.json",
+  "title": "Public benchmark task specification",
+  "type": "object",
+  "required": [
+    "id",
+    "domain",
+    "name",
+    "goal",
+    "start_route",
+    "allowed_actions",
+    "forbidden_actions",
+    "max_steps",
+    "completion_boundary",
+    "keyboard_path",
+    "data_policy",
+    "conditions",
+    "reset_contract",
+    "collaboration_contract"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[TP][0-9]{2}$"
+    },
+    "domain": {
+      "enum": [
+        "travel",
+        "marketplace",
+        "appointment",
+        "account"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 20
+    },
+    "start_route": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "allowed_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "max_steps": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30
+    },
+    "completion_boundary": {
+      "type": "string",
+      "minLength": 10
+    },
+    "keyboard_path": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string"
+      }
+    },
+    "data_policy": {
+      "const": "synthetic_only"
+    },
+    "risk": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "const": [
+        "C0",
+        "C1",
+        "C2"
+      ]
+    },
+    "reset_contract": {
+      "type": "object"
+    },
+    "collaboration_contract": {
+      "type": "object",
+      "required": [
+        "task_map_required",
+        "completed_claim_policy",
+        "relevant_item_grounding",
+        "stale_entries_invalidated",
+        "takeover_supported",
+        "resume_requires_fresh_observation",
+        "focus_handoff_required_for_study"
+      ],
+      "properties": {
+        "task_map_required": {
+          "const": true
+        },
+        "completed_claim_policy": {
+          "const": "VERIFIED_ONLY"
+        },
+        "relevant_item_grounding": {
+          "const": "LATEST_AX_SNAPSHOT"
+        },
+        "stale_entries_invalidated": {
+          "const": true
+        },
+        "takeover_supported": {
+          "const": true
+        },
+        "resume_requires_fresh_observation": {
+          "const": true
+        },
+        "focus_handoff_required_for_study": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

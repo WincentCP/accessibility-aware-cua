@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/a11y-cua/task-map-snapshot.schema.json",
+  "title": "Shared Accessible Task View snapshot",
+  "type": "object",
+  "required": [
+    "session_id",
+    "snapshot_version",
+    "goal",
+    "constraints",
+    "progress",
+    "verified_completed_steps",
+    "relevant_items",
+    "next_action",
+    "control_state"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "snapshot_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "goal": {
+      "type": "string"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "progress": {
+      "type": "string"
+    },
+    "verified_completed_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label",
+          "verification_status",
+          "evidence_ref"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "verification_status": {
+            "const": "VERIFIED"
+          },
+          "evidence_ref": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "relevant_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "semantic_ref",
+          "role",
+          "name",
+          "snapshot_version"
+        ],
+        "properties": {
+          "semantic_ref": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "snapshot_version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "next_action": {
+      "type": "object",
+      "required": [
+        "label",
+        "status"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "status": {
+          "const": "PLANNED_NOT_COMPLETED"
+        }
+      },
+      "additionalProperties": false
+    },
+    "control_state": {
+      "type": "object",
+      "required": [
+        "agent_paused",
+        "takeover_lock",
+        "available_controls"
+      ],
+      "properties": {
+        "agent_paused": {
+          "type": "boolean"
+        },
+        "takeover_lock": {
+          "type": "boolean"
+        },
+        "available_controls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
