@@ -41,7 +41,7 @@ class ResetRequest(BaseModel):
 
 class LiveRunRequest(BaseModel):
     benchmark_session_id: str = Field(min_length=24, max_length=128)
-    goal: str = Field(min_length=1, max_length=4_000)
+    goal: str | None = Field(default=None, min_length=1, max_length=4_000)
 
 
 class LiveCommandRequest(BaseModel):

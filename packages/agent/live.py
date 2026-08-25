@@ -47,7 +47,7 @@ class LiveAgentManager:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="cua-live-agent")
         self._compiler = TaskMapCompiler()
 
-    def start(self, *, benchmark_session_id: str, goal: str) -> LiveRun:
+    def start(self, *, benchmark_session_id: str, goal: str | None = None) -> LiveRun:
         if not self.settings.live_agent_enabled:
             raise RuntimeError("Live agent dinonaktifkan oleh konfigurasi.")
         if not self.settings.openai_api_key:
@@ -58,12 +58,13 @@ class LiveAgentManager:
             page.health()
         finally:
             page.close()
+        benchmark_goal = str(view["task"]["goal"])
         run = LiveRun(
             run_id=uuid4(),
             agent_session_id=uuid4(),
             benchmark_session_id=benchmark_session_id,
             task_id=view["task_id"],
-            goal=" ".join(goal.split()).strip(),
+            goal=" ".join((goal or benchmark_goal).split()).strip(),
         )
         if not run.goal:
             raise ValueError("Tujuan tidak boleh kosong.")

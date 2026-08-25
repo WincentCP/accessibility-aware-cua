@@ -45,10 +45,22 @@ const apiJson = async (path: string, init?: RequestInit): Promise<Record<string,
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (!message || typeof message !== "object") return false;
   const payload = message as { type?: string; goal?: string; runId?: string; command?: string };
+  if (payload.type === "GET_ACTIVE_TASK") {
+    void activeBenchmarkTab().then(async ({ sessionId }) => {
+      const session = await apiJson(`/api/benchmark/sessions/${sessionId}`);
+      const task = session.task as { id?: string; goal?: string } | undefined;
+      if (!task?.id || !task.goal) throw new Error("Tujuan task publik tidak tersedia.");
+      sendResponse({
+        success: true,
+        task: { session_id: sessionId, task_id: task.id, goal: task.goal }
+      });
+    }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  }
   if (payload.type === "START_LIVE_AGENT") {
     void activeBenchmarkTab().then(async ({ sessionId }) => apiJson("/api/agent/runs", {
       method: "POST",
-      body: JSON.stringify({ benchmark_session_id: sessionId, goal: payload.goal })
+      body: JSON.stringify({ benchmark_session_id: sessionId, ...(payload.goal ? { goal: payload.goal } : {}) })
     })).then((result) => {
       latestLiveRunId = String(result.run_id);
       sendResponse({ success: true, run: result });

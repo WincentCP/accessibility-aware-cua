@@ -238,3 +238,9 @@ export interface LiveRunResponse {
   task_map: AccessibleTaskMap | null;
   error: string | null;
 }
+
+export interface ActiveBenchmarkTask {
+  session_id: string;
+  task_id: string;
+  goal: string;
+}

@@ -1,5 +1,5 @@
 import "./styles.css";
-import type { AccessibleTaskMap, LiveRunResponse, TaskMapItem } from "./contracts";
+import type { AccessibleTaskMap, ActiveBenchmarkTask, LiveRunResponse, TaskMapItem } from "./contracts";
 import { sanitizeTaskMap } from "./task-map";
 import { postToWhisperAdapter, WhisperPushToTalkAdapter } from "./voice";
 
@@ -23,6 +23,7 @@ const status = byId<HTMLElement>("status");
 const approvalAlert = byId<HTMLElement>("approval-alert");
 let activeRunId: string | null = null;
 let pollTimer: number | null = null;
+let activeBenchmarkTask: ActiveBenchmarkTask | null = null;
 
 const announce = (message: string): void => { status.textContent = message; };
 
@@ -87,6 +88,29 @@ confirmTranscript.addEventListener("click", () => {
 });
 editTranscript.addEventListener("click", () => transcript.focus());
 
+const loadActiveTask = async (): Promise<void> => {
+  if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
+    submitGoal.disabled = false;
+    return;
+  }
+  announce("Mengambil tujuan task yang sedang dibuka.");
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "GET_ACTIVE_TASK" });
+    if (!result?.success || !result.task) throw new Error(result?.error ?? "Task tidak ditemukan.");
+    activeBenchmarkTask = result.task as ActiveBenchmarkTask;
+    goal.value = activeBenchmarkTask.goal;
+    byId("active-goal").textContent = activeBenchmarkTask.goal;
+    submitGoal.disabled = false;
+    announce(`Tugas ${activeBenchmarkTask.task_id} dimuat otomatis. Tekan Mulai tugas.`);
+    submitGoal.focus();
+  } catch (error) {
+    activeBenchmarkTask = null;
+    submitGoal.disabled = false;
+    announce(`Tujuan otomatis belum tersedia. Gunakan input teks atau suara. ${error instanceof Error ? error.message : String(error)}`);
+    goal.focus();
+  }
+};
+
 const applyLiveRun = (run: LiveRunResponse): void => {
   activeRunId = run.run_id;
   announce(run.error ? `${run.announcement} ${run.error}` : run.announcement);
@@ -119,7 +143,11 @@ submitGoal.addEventListener("click", async () => {
   if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
   submitGoal.disabled = true;
   try {
-    const result = await chrome.runtime.sendMessage({ type: "START_LIVE_AGENT", goal: value });
+    const unchangedBenchmarkGoal = activeBenchmarkTask?.goal === value;
+    const result = await chrome.runtime.sendMessage({
+      type: "START_LIVE_AGENT",
+      ...(unchangedBenchmarkGoal ? {} : { goal: value })
+    });
     if (!result?.success || !result.run) throw new Error(result?.error ?? "Live agent tidak dapat dimulai.");
     applyLiveRun(result.run as LiveRunResponse);
     if (pollTimer !== null) window.clearInterval(pollTimer);
@@ -179,3 +207,5 @@ window.addEventListener("a11y-cua:voice-transcript", (event) => {
   announce("Transkrip siap. Periksa lalu konfirmasi atau ubah.");
   transcript.focus();
 });
+
+void loadActiveTask();

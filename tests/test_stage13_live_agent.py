@@ -147,6 +147,18 @@ def test_live_api_fails_closed_before_browser_when_key_is_missing() -> None:
     assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
 
 
+def test_live_request_accepts_automatic_public_benchmark_goal() -> None:
+    app = create_app(_settings(api_key=None))
+    reset = app.state.case_store.reset("T01", "C0", 456)
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/agent/runs",
+            json={"benchmark_session_id": reset["session_id"]},
+        )
+    assert response.status_code == 503
+    assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
+
+
 def test_live_api_rejects_unknown_session_before_starting_agent() -> None:
     app = create_app(_settings(api_key="test-key"))
     with TestClient(app) as client:

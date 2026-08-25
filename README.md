@@ -122,8 +122,8 @@ menuju adaptor Whisper lokal. Transkrip wajib ditinjau sebelum digunakan dan
 penolakan izin mikrofon tidak mengurangi fungsi input teks.
 
 Perintah `browser:open` juga menyalakan semantic browser bridge pada
-`127.0.0.1:8765`. Di halaman task, pilih **Mulai dan buka asisten**, masukkan
-tujuan yang lengkap, lalu pilih **Jalankan**. Status, rencana, dan hanya progres
+`127.0.0.1:8765`. Di halaman task, pilih **Mulai dan buka asisten**; tujuan task
+publik dimuat otomatis dan peserta cukup memilih **Mulai tugas**. Status, rencana, dan hanya progres
 yang lolos verifikasi pasca-aksi akan muncul di peta tugas. Lihat
 `docs/live_agent_quickstart.md` untuk urutan Windows dan batas implementasi.
 

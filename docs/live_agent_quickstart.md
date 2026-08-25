@@ -51,13 +51,9 @@ tidak pernah dikirim ke extension atau browser bridge.
    ```
 
 4. Jangan tekan Enter pada terminal kedua selama browser masih dipakai. Di
-   Chromium, pilih **Mulai dan buka asisten**, masukkan tujuan T01 secara lengkap,
-   lalu pilih **Jalankan**.
-
-Contoh tujuan aman:
-
-> Pilih rute yang sesuai dengan tiga batasan pada halaman. Jangan melakukan
-> pemesanan atau pembayaran. Berhenti setelah pilihan tersimpan.
+   Chromium, pilih **Mulai dan buka asisten**. Tujuan T01 dimuat otomatis dari
+   spesifikasi benchmark publik. Peserta cukup memilih **Mulai tugas**; mengetik
+   atau menyalin tujuan hanya menjadi fallback jika konteks task gagal dimuat.
 
 ## Definition of Done smoke test
 
