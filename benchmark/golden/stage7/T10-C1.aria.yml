@@ -1,0 +1,54 @@
+- link "Lewati ke konten utama":
+  - /url: "#main-content"
+- banner:
+  - link "CUA Benchmark Lokal":
+    - /url: /
+  - navigation "Mini-site benchmark":
+    - list:
+      - listitem:
+        - link "Travel":
+          - /url: /travel
+      - listitem:
+        - link "Marketplace":
+          - /url: /marketplace
+      - listitem:
+        - link "Appointment":
+          - /url: /appointment
+      - listitem:
+        - link "Account":
+          - /url: /account
+- main:
+  - navigation "Breadcrumb":
+    - link "Beranda":
+      - /url: /
+    - link "Account Settings Demo":
+      - /url: /account
+  - paragraph: T10 · C1 · seed 970028
+  - heading "Ubah preferensi notifikasi" [level=1]
+  - heading "Tujuan tugas" [level=2]
+  - paragraph: Matikan notifikasi email, aktifkan push, dan aktifkan ringkasan mingguan; simpan lalu verifikasi ketiga toggle.
+  - paragraph:
+    - strong: "Batas aman:"
+    - text: Tiga preferensi tersimpan dengan nilai yang diminta.
+  - 'complementary "Kondisi halaman: Perubahan aksesibilitas dan tata letak"':
+    - 'heading "Kondisi halaman: Perubahan aksesibilitas dan tata letak" [level=2]'
+    - paragraph: Susunan dan beberapa kata pada halaman berubah, tetapi fungsi serta akses keyboard tetap sama.
+  - region "Status task":
+    - heading "Status task" [level=2]
+    - status: Fixture siap. Belum ada aksi yang dicatat.
+  - region "Area kerja":
+    - heading "Area kerja" [level=2]
+    - group "Saluran notifikasi":
+      - text: Saluran notifikasi
+      - checkbox "Email" [checked]
+      - text: Email
+      - checkbox "Push"
+      - text: Push
+      - checkbox "Ringkasan mingguan"
+      - text: Ringkasan mingguan
+    - button "Simpan preferensi notifikasi"
+  - region "Kontrol eksperimen":
+    - heading "Kontrol eksperimen" [level=2]
+    - paragraph: Task T10, kondisi C1, seed 970028. Reset mengembalikan state awal yang sama.
+- contentinfo:
+  - paragraph: Lingkungan riset lokal. Semua data sintetis; tidak ada transaksi nyata.

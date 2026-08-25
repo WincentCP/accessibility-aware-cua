@@ -38,10 +38,11 @@ jobs:
           cache: npm
       - run: python -m pip install -r requirements-frozen.lock
       - run: npm ci --ignore-scripts
+      - run: python -m playwright install --with-deps chromium
       - run: python -m ruff check a11y_benchmark apps packages scripts tests
       - run: python -m pytest -q
       - run: python scripts/validate_stage6.py
+      - run: python scripts/validate_stage7.py
       - run: python scripts/check_dependencies.py
       - run: npm run test:frontend
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

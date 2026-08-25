@@ -64,8 +64,13 @@ export interface AXNode {
   name: string;
   description: string | null;
   value_summary: string | null;
+  states: Record<string, string | boolean | number>;
+  level: number | null;
   disabled: boolean;
   focused: boolean;
+  selected: boolean | null;
+  checked: boolean | string | null;
+  expanded: boolean | null;
   children: string[];
 }
 
@@ -78,6 +83,12 @@ export interface Observation {
   captured_at: string;
   nodes: AXNode[];
   focused_node_id: string | null;
+  content_hash: string;
+  source: string;
+  raw_char_count: number;
+  compact_char_count: number;
+  estimated_tokens: number;
+  capture_latency_ms: number;
 }
 
 export interface AgentAction {

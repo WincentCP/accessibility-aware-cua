@@ -1,0 +1,54 @@
+- link "Lewati ke konten utama":
+  - /url: "#main-content"
+- banner:
+  - link "CUA Benchmark Lokal":
+    - /url: /
+  - navigation "Mini-site benchmark":
+    - list:
+      - listitem:
+        - link "Travel":
+          - /url: /travel
+      - listitem:
+        - link "Marketplace":
+          - /url: /marketplace
+      - listitem:
+        - link "Appointment":
+          - /url: /appointment
+      - listitem:
+        - link "Account":
+          - /url: /account
+- main:
+  - navigation "Breadcrumb":
+    - link "Beranda":
+      - /url: /
+    - link "Account Settings Demo":
+      - /url: /account
+  - paragraph: T11 · C0 · seed 970030
+  - heading "Ubah bahasa dan tema setelah re-render" [level=1]
+  - heading "Tujuan tugas" [level=2]
+  - paragraph: Ubah bahasa menjadi Bahasa Indonesia dan tema menjadi Gelap, simpan, lalu pastikan kedua pilihan tetap aktif setelah halaman di-render ulang.
+  - paragraph:
+    - strong: "Batas aman:"
+    - text: Locale id-ID dan tema dark persisten setelah re-render.
+  - 'complementary "Kondisi halaman: Normal"':
+    - 'heading "Kondisi halaman: Normal" [level=2]'
+    - paragraph: Tampilan normal dengan target yang unik dan respons langsung.
+  - region "Status task":
+    - heading "Status task" [level=2]
+    - status: Fixture siap. Belum ada aksi yang dicatat.
+  - region "Area kerja":
+    - heading "Area kerja" [level=2]
+    - text: Bahasa
+    - combobox "Bahasa":
+      - option "English" [selected]
+      - option "Bahasa Indonesia"
+    - text: Tema
+    - combobox "Tema":
+      - option "Terang" [selected]
+      - option "Gelap"
+    - button "Terapkan dan render ulang"
+  - region "Kontrol eksperimen":
+    - heading "Kontrol eksperimen" [level=2]
+    - paragraph: Task T11, kondisi C0, seed 970030. Reset mengembalikan state awal yang sama.
+- contentinfo:
+  - paragraph: Lingkungan riset lokal. Semua data sintetis; tidak ada transaksi nyata.

@@ -12,15 +12,20 @@ from packages.agent.contracts import (
     VerificationResult,
     VerificationStatus,
 )
+from packages.agent.observer import AccessibilityObserver
+from packages.agent.semantic_snapshot import SnapshotRegistry, TargetQuery
 
 __all__ = [
     "AXNode",
+    "AccessibilityObserver",
     "AgentAction",
     "AgentState",
     "ErrorCode",
     "GoalSpec",
     "Observation",
     "RiskLevel",
+    "SnapshotRegistry",
+    "TargetQuery",
     "TerminalReason",
     "VerificationResult",
     "VerificationStatus",

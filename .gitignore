@@ -5,9 +5,11 @@
 __pycache__/
 *.py[cod]
 node_modules/
+.npm-cache/
 apps/extension/dist/
 .runtime/
 playwright-report/
+.playwright-browsers/
 test-results/
 coverage/
 reports/

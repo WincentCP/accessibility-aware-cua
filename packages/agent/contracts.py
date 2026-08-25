@@ -126,13 +126,20 @@ class GoalSpec(ClosedModel):
 
 
 class AXNode(ClosedModel):
+    """Compact semantic node; ``node_id`` is valid for one observation only."""
+
     node_id: str = Field(min_length=1, max_length=256)
     role: str = Field(min_length=1, max_length=128)
     name: str = Field(default="", max_length=1_000)
     description: str | None = Field(default=None, max_length=2_000)
     value_summary: str | None = Field(default=None, max_length=1_000)
+    states: dict[str, str | bool | int] = Field(default_factory=dict)
+    level: int | None = Field(default=None, ge=1, le=9)
     disabled: bool = False
     focused: bool = False
+    selected: bool | None = None
+    checked: bool | str | None = None
+    expanded: bool | None = None
     children: list[str] = Field(default_factory=list)
 
 
@@ -145,6 +152,12 @@ class Observation(ClosedModel):
     captured_at: datetime = Field(default_factory=utc_now)
     nodes: list[AXNode] = Field(default_factory=list)
     focused_node_id: str | None = None
+    content_hash: str = Field(default="", pattern=r"^(?:[a-f0-9]{64})?$")
+    source: str = Field(default="aria_snapshot", max_length=64)
+    raw_char_count: int = Field(default=0, ge=0)
+    compact_char_count: int = Field(default=0, ge=0)
+    estimated_tokens: int = Field(default=0, ge=0)
+    capture_latency_ms: int = Field(default=0, ge=0)
 
 
 class AgentAction(ClosedModel):

@@ -8,7 +8,9 @@ Status saat ini: Tahap 3 sudah mengunci benchmark; Tahap 4–5 sudah memiliki
 skeleton aplikasi, extension MV3, empat mini-site lokal, reset deterministik,
 hidden oracle, dan test browser. Tahap 6 menambahkan kontrak state tertutup,
 audit trail PostgreSQL, privasi/retensi, serta checkpoint LangGraph tahan-restart.
-Planner dan eksekusi browser agent baru diisi setelah kontrak data ini stabil.
+Tahap 7 menambahkan observer accessibility tree, snapshot semantik ringkas,
+observation-scoped references, stale/ambiguity errors, serta golden snapshot
+untuk 36 kasus. Planner dan eksekusi aksi browser tetap tahap berikutnya.
 
 ## Yang sudah bisa dibuka
 
@@ -30,7 +32,7 @@ agent tidak menerima target, expected state, predicate, atau near miss.
 ```text
 apps/api/          FastAPI + empat mini-site
 apps/extension/    extension MV3 TypeScript/Vite (side panel aksesibel)
-packages/agent/    typed state, privasi, audit PostgreSQL, checkpoint LangGraph
+packages/agent/    state, observer AX, privasi, audit PostgreSQL, checkpoint LangGraph
 benchmark/public/  kontrak yang boleh dilihat runner/agent
 benchmark/private/ oracle dan manifest evaluator
 evaluation/        boundary runner evaluasi berikutnya
@@ -65,7 +67,7 @@ Lalu instal dependency yang dikunci:
 ```bash
 python -m pip install -r requirements-frozen.lock
 npm ci --ignore-scripts
-npx playwright install chromium
+python -m playwright install chromium
 ```
 
 Salin `.env.example` menjadi `.env`, lalu ganti `CUA_APP_SECRET` dengan string
@@ -109,21 +111,24 @@ tahap implementasi agent.
 python -m ruff check a11y_benchmark apps packages scripts tests
 python -m pytest -q
 python scripts/validate_stage6.py
+python scripts/validate_stage7.py
 npm run test:frontend
 npm run browser:smoke
 npm run test:e2e
 python scripts/validate_stage4_5.py --with-browser
 ```
 
-Validator mencetak hasil machine-readable ke terminal dan tidak membuat report
-di repository. CI menjalankan PostgreSQL nyata, migration v1, simulasi restart
-checkpoint LangGraph, Python tests, extension build, Playwright, axe, dan
+Validator normal mencetak hasil machine-readable tanpa mengubah file. Khusus
+baseline Tahap 7, `python scripts/validate_stage7.py --update-assets` memperbarui
+36 golden ARIA snapshot dan dua laporan pengukuran yang memang menjadi bukti
+sistem. CI menjalankan PostgreSQL nyata, migration v1, simulasi restart
+checkpoint LangGraph, observer Chromium, extension build, Playwright, axe, dan
 keyboard smoke.
 
 ## Batas klaim
 
 Hasil otomatis membuktikan reset, state transition, oracle, leakage, rendered
-DOM, axe, dan jalur keyboard. Hasil tersebut **belum** membuktikan pengalaman
+DOM, axe, jalur keyboard, dan coverage observer semantik. Hasil tersebut **belum** membuktikan pengalaman
 NVDA atau bahwa sistem memudahkan pengguna tunanetra. Gate NVDA dan clean-clone
 Tahap 4–5 tetap dicatat di `docs/manual_windows_nvda_gate.md`; keduanya tidak
-digantikan oleh gate data Tahap 6.
+digantikan oleh gate otomatis Tahap 6–7.

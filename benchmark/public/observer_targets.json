@@ -1,0 +1,914 @@
+{
+  "version": "0.7.0-observer-targets",
+  "purpose": "Oracle-independent semantic targets for Stage 7 observer coverage.",
+  "forbidden_fields": [
+    "oracle",
+    "expected_record_id",
+    "data-testid",
+    "css_selector",
+    "x",
+    "y"
+  ],
+  "cases": [
+    {
+      "case_id": "T01-C0",
+      "task_id": "T01",
+      "condition_id": "C0",
+      "seed": 970000,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih rute sesuai tiga batasan",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan pilihan dan buka review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T01-C1",
+      "task_id": "T01",
+      "condition_id": "C1",
+      "seed": 970001,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih rute sesuai tiga batasan",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan pilihan dan buka review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T01-C2",
+      "task_id": "T01",
+      "condition_id": "C2",
+      "seed": 970002,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih rute sesuai tiga batasan",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan pilihan dan buka review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T02-C0",
+      "task_id": "T02",
+      "condition_id": "C0",
+      "seed": 970003,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih rute langsung termurah",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Terapkan filter dan buka review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T02-C1",
+      "task_id": "T02",
+      "condition_id": "C1",
+      "seed": 970004,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih rute langsung termurah",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Terapkan filter dan buka review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T02-C2",
+      "task_id": "T02",
+      "condition_id": "C2",
+      "seed": 970005,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih rute langsung termurah",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Terapkan filter dan buka review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T03-C0",
+      "task_id": "T03",
+      "condition_id": "C0",
+      "seed": 970006,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Isi penumpang dummy dan tangani perubahan jadwal",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan data dummy dan lanjut ke review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T03-C1",
+      "task_id": "T03",
+      "condition_id": "C1",
+      "seed": 970007,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Isi penumpang dummy dan tangani perubahan jadwal",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan data dummy dan lanjut ke review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T03-C2",
+      "task_id": "T03",
+      "condition_id": "C2",
+      "seed": 970008,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Isi penumpang dummy dan tangani perubahan jadwal",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan data dummy dan lanjut ke review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T04-C0",
+      "task_id": "T04",
+      "condition_id": "C0",
+      "seed": 970009,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Cari produk sesuai anggaran dan rating",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan ke perbandingan",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T04-C1",
+      "task_id": "T04",
+      "condition_id": "C1",
+      "seed": 970010,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Cari produk sesuai anggaran dan rating",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan ke perbandingan",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T04-C2",
+      "task_id": "T04",
+      "condition_id": "C2",
+      "seed": 970011,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Cari produk sesuai anggaran dan rating",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan ke perbandingan",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T05-C0",
+      "task_id": "T05",
+      "condition_id": "C0",
+      "seed": 970012,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih variasi dan jumlah",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Tambahkan ke cart sintetis",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T05-C1",
+      "task_id": "T05",
+      "condition_id": "C1",
+      "seed": 970013,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih variasi dan jumlah",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Tambahkan ke cart sintetis",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T05-C2",
+      "task_id": "T05",
+      "condition_id": "C2",
+      "seed": 970014,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih variasi dan jumlah",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Tambahkan ke cart sintetis",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T06-C0",
+      "task_id": "T06",
+      "condition_id": "C0",
+      "seed": 970015,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Simpan alamat dummy sebagai draft",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan sebagai draft",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T06-C1",
+      "task_id": "T06",
+      "condition_id": "C1",
+      "seed": 970016,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Simpan alamat dummy sebagai draft",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan sebagai draft",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T06-C2",
+      "task_id": "T06",
+      "condition_id": "C2",
+      "seed": 970017,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Simpan alamat dummy sebagai draft",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan sebagai draft",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T07-C0",
+      "task_id": "T07",
+      "condition_id": "C0",
+      "seed": 970018,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih slot valid",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan slot untuk review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T07-C1",
+      "task_id": "T07",
+      "condition_id": "C1",
+      "seed": 970019,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih slot valid",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan slot untuk review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T07-C2",
+      "task_id": "T07",
+      "condition_id": "C2",
+      "seed": 970020,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Pilih slot valid",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan slot untuk review",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T08-C0",
+      "task_id": "T08",
+      "condition_id": "C0",
+      "seed": 970021,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Isi form lalu minta approval",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan form dan minta approval",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T08-C1",
+      "task_id": "T08",
+      "condition_id": "C1",
+      "seed": 970022,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Isi form lalu minta approval",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan form dan minta approval",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T08-C2",
+      "task_id": "T08",
+      "condition_id": "C2",
+      "seed": 970023,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Isi form lalu minta approval",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan form dan minta approval",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T09-C0",
+      "task_id": "T09",
+      "condition_id": "C0",
+      "seed": 970024,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Siapkan reschedule pada checkpoint",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan draft di checkpoint approval",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T09-C1",
+      "task_id": "T09",
+      "condition_id": "C1",
+      "seed": 970025,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Siapkan reschedule pada checkpoint",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan draft di checkpoint approval",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T09-C2",
+      "task_id": "T09",
+      "condition_id": "C2",
+      "seed": 970026,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Siapkan reschedule pada checkpoint",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan draft di checkpoint approval",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T10-C0",
+      "task_id": "T10",
+      "condition_id": "C0",
+      "seed": 970027,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Ubah preferensi notifikasi",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan preferensi notifikasi",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T10-C1",
+      "task_id": "T10",
+      "condition_id": "C1",
+      "seed": 970028,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Ubah preferensi notifikasi",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan preferensi notifikasi",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T10-C2",
+      "task_id": "T10",
+      "condition_id": "C2",
+      "seed": 970029,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Ubah preferensi notifikasi",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan preferensi notifikasi",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T11-C0",
+      "task_id": "T11",
+      "condition_id": "C0",
+      "seed": 970030,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Ubah bahasa dan tema setelah re-render",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Terapkan dan render ulang",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T11-C1",
+      "task_id": "T11",
+      "condition_id": "C1",
+      "seed": 970031,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Ubah bahasa dan tema setelah re-render",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Terapkan dan render ulang",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T11-C2",
+      "task_id": "T11",
+      "condition_id": "C2",
+      "seed": 970032,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Ubah bahasa dan tema setelah re-render",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Terapkan dan render ulang",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T12-C0",
+      "task_id": "T12",
+      "condition_id": "C0",
+      "seed": 970033,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Perbarui profil dummy sebagai draft",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan draft profil",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T12-C1",
+      "task_id": "T12",
+      "condition_id": "C1",
+      "seed": 970034,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Perbarui profil dummy sebagai draft",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan draft profil",
+          "states": {}
+        }
+      ]
+    },
+    {
+      "case_id": "T12-C2",
+      "task_id": "T12",
+      "condition_id": "C2",
+      "seed": 970035,
+      "targets": [
+        {
+          "role": "heading",
+          "name": "Perbarui profil dummy sebagai draft",
+          "states": {
+            "level": 1
+          }
+        },
+        {
+          "role": "status",
+          "name": "Fixture siap. Belum ada aksi yang dicatat.",
+          "states": {}
+        },
+        {
+          "role": "button",
+          "name": "Simpan draft profil",
+          "states": {}
+        }
+      ]
+    }
+  ]
+}
