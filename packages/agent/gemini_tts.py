@@ -10,13 +10,17 @@ from typing import Any
 import httpx
 
 
-INDONESIAN_TTS_DIRECTION = """Synthesize speech for the transcript below.
-Audio profile: a friendly Indonesian accessibility guide.
-Director's notes: speak entirely in natural Indonesian with a warm, upbeat, cheerful
-conversational tone. Sound lively but calm, never stiff or robotic. Use clear articulation,
-a moderate pace, and short natural pauses. Read only the transcript, not these directions.
+INDONESIAN_TTS_DIRECTION = """Bacakan teks berikut sepenuhnya dalam Bahasa Indonesia.
 
-TRANSCRIPT:
+Gunakan pelafalan dan intonasi penutur asli Indonesia (id-ID).
+Jangan menggunakan aksen Inggris, Amerika, atau aksen asing.
+Berbicaralah seperti pemandu aksesibilitas Indonesia yang ramah dan natural:
+hangat, santai, jelas, tidak kaku, dan tidak terdengar seperti robot.
+Gunakan kecepatan sedang dan jeda pendek yang alami.
+
+Jangan bacakan instruksi ini. Bacakan hanya teks setelah bagian TEKS.
+
+TEKS:
 """
 
 
