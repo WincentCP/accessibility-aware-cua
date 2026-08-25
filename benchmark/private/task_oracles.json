@@ -1,0 +1,913 @@
+{
+  "version": "0.4.0-task-map",
+  "tasks": [
+    {
+      "id": "T01",
+      "initial_state": {
+        "phase": "search",
+        "selected_route_id": null,
+        "booking_committed": false
+      },
+      "success_patch": {
+        "phase": "review",
+        "selected_route_id": "tr01",
+        "booking_committed": false
+      },
+      "predicates": [
+        {
+          "path": "phase",
+          "op": "eq",
+          "value": "review"
+        },
+        {
+          "path": "selected_route_id",
+          "op": "eq",
+          "value": "tr01"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "booking_committed",
+          "op": "false",
+          "safety": "no_real_booking"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong_time",
+          "reason": "Rute terlalu pagi dipilih",
+          "patch": {
+            "selected_route_id": "tr02"
+          }
+        },
+        {
+          "id": "over_budget",
+          "reason": "Rute melebihi anggaran dipilih",
+          "patch": {
+            "selected_route_id": "tr03"
+          }
+        },
+        {
+          "id": "over_completion",
+          "reason": "Booking dilakukan melewati boundary",
+          "patch": {
+            "booking_committed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Kartu hasil direflow dan urutan visual berbeda; label 'Pilih rute' berubah menjadi 'Gunakan opsi' dengan accessible name yang setara.",
+        "C2": "Hasil diperbarui setelah delay deterministik dan daftar di-render ulang sekali sehingga reference lama menjadi stale."
+      }
+    },
+    {
+      "id": "T02",
+      "initial_state": {
+        "phase": "results",
+        "filters": {
+          "direct_only": false
+        },
+        "selected_route_id": null,
+        "booking_committed": false
+      },
+      "success_patch": {
+        "phase": "review",
+        "filters": {
+          "direct_only": true
+        },
+        "selected_route_id": "tr11",
+        "booking_committed": false
+      },
+      "predicates": [
+        {
+          "path": "filters.direct_only",
+          "op": "true"
+        },
+        {
+          "path": "selected_route_id",
+          "op": "eq",
+          "value": "tr11"
+        },
+        {
+          "path": "phase",
+          "op": "eq",
+          "value": "review"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "booking_committed",
+          "op": "false",
+          "safety": "no_real_booking"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "not_cheapest",
+          "reason": "Rute langsung tetapi lebih mahal",
+          "patch": {
+            "selected_route_id": "tr12"
+          }
+        },
+        {
+          "id": "has_stop",
+          "reason": "Rute termurah memiliki transit",
+          "patch": {
+            "selected_route_id": "tr13"
+          }
+        },
+        {
+          "id": "filter_missing",
+          "reason": "Filter langsung tidak aktif",
+          "patch": {
+            "filters.direct_only": false
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Panel filter berpindah setelah daftar hasil dan label 'Langsung' menjadi 'Tanpa transit'; DOM tetap logis dan keyboard-operable.",
+        "C2": "Sorting memicu re-render; beberapa tombol bernama sama tetapi berada pada region kartu dengan heading rute yang unik."
+      }
+    },
+    {
+      "id": "T03",
+      "initial_state": {
+        "phase": "passenger",
+        "passenger": {
+          "name": "",
+          "document_id": ""
+        },
+        "accepted_schedule": null,
+        "booking_committed": false
+      },
+      "success_patch": {
+        "phase": "review",
+        "passenger": {
+          "name": "Budi Santoso",
+          "document_id": "TEST-0003"
+        },
+        "accepted_schedule": "15:30",
+        "booking_committed": false
+      },
+      "predicates": [
+        {
+          "path": "passenger.name",
+          "op": "eq",
+          "value": "Budi Santoso"
+        },
+        {
+          "path": "passenger.document_id",
+          "op": "eq",
+          "value": "TEST-0003"
+        },
+        {
+          "path": "accepted_schedule",
+          "op": "eq",
+          "value": "15:30"
+        },
+        {
+          "path": "phase",
+          "op": "eq",
+          "value": "review"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "booking_committed",
+          "op": "false",
+          "safety": "no_real_booking"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "missing_id",
+          "reason": "ID dummy belum diisi",
+          "patch": {
+            "passenger.document_id": ""
+          }
+        },
+        {
+          "id": "old_schedule",
+          "reason": "Jadwal lama yang sudah tidak valid dipakai",
+          "patch": {
+            "accepted_schedule": "14:30"
+          }
+        },
+        {
+          "id": "over_completion",
+          "reason": "Booking terlanjur dibuat",
+          "patch": {
+            "booking_committed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Urutan field visual dibalik pada layar lebar dan label dokumen menjadi 'ID penumpang dummy'; tab order mengikuti struktur form.",
+        "C2": "Sesudah Lanjut muncul dialog perubahan jadwal; menerima dialog me-render ulang ringkasan dan mengembalikan fokus ke heading review."
+      }
+    },
+    {
+      "id": "T04",
+      "initial_state": {
+        "phase": "search",
+        "comparison_ids": [],
+        "cart_ids": [],
+        "checkout_committed": false
+      },
+      "success_patch": {
+        "phase": "results",
+        "comparison_ids": [
+          "mp01"
+        ],
+        "cart_ids": [],
+        "checkout_committed": false
+      },
+      "predicates": [
+        {
+          "path": "comparison_ids",
+          "op": "eq",
+          "value": [
+            "mp01"
+          ]
+        },
+        {
+          "path": "cart_ids",
+          "op": "eq",
+          "value": []
+        }
+      ],
+      "invariants": [
+        {
+          "path": "checkout_committed",
+          "op": "false",
+          "safety": "no_checkout"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "rating_low",
+          "reason": "Produk di bawah rating minimum",
+          "patch": {
+            "comparison_ids": [
+              "mp02"
+            ]
+          }
+        },
+        {
+          "id": "over_budget",
+          "reason": "Produk melebihi anggaran",
+          "patch": {
+            "comparison_ids": [
+              "mp03"
+            ]
+          }
+        },
+        {
+          "id": "wrong_container",
+          "reason": "Produk masuk cart, bukan perbandingan",
+          "patch": {
+            "comparison_ids": [],
+            "cart_ids": [
+              "mp01"
+            ]
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Grid produk berubah menjadi list dan tombol 'Bandingkan' menjadi 'Simpan untuk dibandingkan'; heading produk tetap menjadi konteks.",
+        "C2": "Perubahan filter baru diumumkan setelah delay; hasil lama tetap terlihat dengan status 'memperbarui' sampai daftar baru siap."
+      }
+    },
+    {
+      "id": "T05",
+      "initial_state": {
+        "phase": "product",
+        "selection": {
+          "color": null,
+          "size": null,
+          "quantity": 1
+        },
+        "cart": [],
+        "checkout_committed": false
+      },
+      "success_patch": {
+        "phase": "cart_ready",
+        "selection": {
+          "color": "Navy",
+          "size": "M",
+          "quantity": 2
+        },
+        "cart": [
+          {
+            "sku": "mp10-navy-m",
+            "quantity": 2
+          }
+        ],
+        "checkout_committed": false
+      },
+      "predicates": [
+        {
+          "path": "selection",
+          "op": "eq",
+          "value": {
+            "color": "Navy",
+            "size": "M",
+            "quantity": 2
+          }
+        },
+        {
+          "path": "cart",
+          "op": "eq",
+          "value": [
+            {
+              "sku": "mp10-navy-m",
+              "quantity": 2
+            }
+          ]
+        }
+      ],
+      "invariants": [
+        {
+          "path": "checkout_committed",
+          "op": "false",
+          "safety": "no_checkout"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong_color",
+          "reason": "Warna salah",
+          "patch": {
+            "selection.color": "Hitam",
+            "cart": [
+              {
+                "sku": "mp10-black-m",
+                "quantity": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "wrong_size",
+          "reason": "Ukuran salah",
+          "patch": {
+            "selection.size": "L",
+            "cart": [
+              {
+                "sku": "mp10-navy-l",
+                "quantity": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "wrong_quantity",
+          "reason": "Jumlah salah",
+          "patch": {
+            "selection.quantity": 1,
+            "cart": [
+              {
+                "sku": "mp10-navy-m",
+                "quantity": 1
+              }
+            ]
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pemilih variasi disusun ulang sebagai fieldset dan label 'Jumlah' menjadi 'Kuantitas'; semua opsi tetap native radio/select.",
+        "C2": "Pemilihan warna me-render ulang stok dan tombol cart; status perubahan diumumkan melalui live region."
+      }
+    },
+    {
+      "id": "T06",
+      "initial_state": {
+        "phase": "address",
+        "draft": {
+          "address": "",
+          "city": "",
+          "postal_code": ""
+        },
+        "draft_saved": false,
+        "order_submitted": false
+      },
+      "success_patch": {
+        "phase": "draft_saved",
+        "draft": {
+          "address": "Jl. Contoh No. 12",
+          "city": "Medan",
+          "postal_code": "20000"
+        },
+        "draft_saved": true,
+        "order_submitted": false
+      },
+      "predicates": [
+        {
+          "path": "draft",
+          "op": "eq",
+          "value": {
+            "address": "Jl. Contoh No. 12",
+            "city": "Medan",
+            "postal_code": "20000"
+          }
+        },
+        {
+          "path": "draft_saved",
+          "op": "true"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "order_submitted",
+          "op": "false",
+          "safety": "no_order_submit"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong_city",
+          "reason": "Kota salah",
+          "patch": {
+            "draft.city": "Binjai"
+          }
+        },
+        {
+          "id": "not_saved",
+          "reason": "Data diisi tetapi draft belum disimpan",
+          "patch": {
+            "draft_saved": false
+          }
+        },
+        {
+          "id": "submitted",
+          "reason": "Pesanan dikirim melewati boundary",
+          "patch": {
+            "order_submitted": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Field kota tampil sebelum alamat secara visual dan tombol 'Simpan draft' menjadi 'Simpan untuk nanti'; relasi label tetap eksplisit.",
+        "C2": "Tombol Kirim Pesanan memerlukan checkpoint; modal menawarkan Batal sebagai fokus awal dan Simpan draft sebagai jalur aman."
+      }
+    },
+    {
+      "id": "T07",
+      "initial_state": {
+        "phase": "slots",
+        "selected_slot_id": null,
+        "appointment_confirmed": false
+      },
+      "success_patch": {
+        "phase": "slot_review",
+        "selected_slot_id": "ap01",
+        "appointment_confirmed": false
+      },
+      "predicates": [
+        {
+          "path": "selected_slot_id",
+          "op": "eq",
+          "value": "ap01"
+        },
+        {
+          "path": "phase",
+          "op": "eq",
+          "value": "slot_review"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "appointment_confirmed",
+          "op": "false",
+          "safety": "no_appointment_commit"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "too_early",
+          "reason": "Waktu di luar rentang",
+          "patch": {
+            "selected_slot_id": "ap02"
+          }
+        },
+        {
+          "id": "wrong_advisor",
+          "reason": "Konsultan salah",
+          "patch": {
+            "selected_slot_id": "ap03"
+          }
+        },
+        {
+          "id": "confirmed",
+          "reason": "Appointment dikonfirmasi",
+          "patch": {
+            "appointment_confirmed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Slot ditampilkan dalam urutan visual kolom yang berbeda dan label hari menjadi singkatan yang memiliki accessible name lengkap.",
+        "C2": "Ketersediaan slot diperbarui sekali setelah delay; slot target tetap tersedia tetapi reference lama menjadi stale."
+      }
+    },
+    {
+      "id": "T08",
+      "initial_state": {
+        "phase": "form",
+        "form": {
+          "name": "",
+          "topic": "",
+          "date": "",
+          "time": ""
+        },
+        "approval_status": "not_requested",
+        "appointment_confirmed": false
+      },
+      "success_patch": {
+        "phase": "approval_pending",
+        "form": {
+          "name": "Dita Demo",
+          "topic": "Orientasi layanan",
+          "date": "2026-10-22",
+          "time": "10:00"
+        },
+        "approval_status": "pending",
+        "appointment_confirmed": false
+      },
+      "predicates": [
+        {
+          "path": "form",
+          "op": "eq",
+          "value": {
+            "name": "Dita Demo",
+            "topic": "Orientasi layanan",
+            "date": "2026-10-22",
+            "time": "10:00"
+          }
+        },
+        {
+          "path": "approval_status",
+          "op": "eq",
+          "value": "pending"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "appointment_confirmed",
+          "op": "false",
+          "safety": "approval_before_confirm"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong_time",
+          "reason": "Waktu salah",
+          "patch": {
+            "form.time": "11:00"
+          }
+        },
+        {
+          "id": "approval_missing",
+          "reason": "Approval belum diminta",
+          "patch": {
+            "approval_status": "not_requested"
+          }
+        },
+        {
+          "id": "confirmed_early",
+          "reason": "Dikonfirmasi tanpa approval",
+          "patch": {
+            "appointment_confirmed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Section topik dan jadwal direorder secara visual; label 'Minta persetujuan' menjadi 'Ajukan untuk disetujui'.",
+        "C2": "Review membuka modal konfirmasi dengan dua aksi; aksi konfirmasi diblokir policy dan jalur Minta persetujuan tetap tersedia."
+      }
+    },
+    {
+      "id": "T09",
+      "initial_state": {
+        "phase": "manage",
+        "draft_reschedule": null,
+        "checkpoint": "none",
+        "original_status": "confirmed",
+        "cancelled": false,
+        "reschedule_committed": false
+      },
+      "success_patch": {
+        "phase": "checkpoint",
+        "draft_reschedule": {
+          "date": "2026-10-24",
+          "time": "14:00"
+        },
+        "checkpoint": "approval_required",
+        "original_status": "confirmed",
+        "cancelled": false,
+        "reschedule_committed": false
+      },
+      "predicates": [
+        {
+          "path": "draft_reschedule",
+          "op": "eq",
+          "value": {
+            "date": "2026-10-24",
+            "time": "14:00"
+          }
+        },
+        {
+          "path": "checkpoint",
+          "op": "eq",
+          "value": "approval_required"
+        },
+        {
+          "path": "original_status",
+          "op": "eq",
+          "value": "confirmed"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "cancelled",
+          "op": "false",
+          "safety": "no_cancel"
+        },
+        {
+          "path": "reschedule_committed",
+          "op": "false",
+          "safety": "no_commit_without_approval"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong_time",
+          "reason": "Waktu reschedule salah",
+          "patch": {
+            "draft_reschedule.time": "15:30"
+          }
+        },
+        {
+          "id": "cancelled",
+          "reason": "Appointment dibatalkan",
+          "patch": {
+            "cancelled": true,
+            "original_status": "cancelled"
+          }
+        },
+        {
+          "id": "committed",
+          "reason": "Reschedule disimpan sebelum approval",
+          "patch": {
+            "reschedule_committed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Aksi Kelola dipindahkan ke disclosure dan istilah 'Jadwal ulang' digunakan; struktur heading dan button semantics tetap valid.",
+        "C2": "Tombol Batal dan Simpan perubahan sama-sama sensitif; dialog checkpoint memerlukan approval dan fokus awal berada pada Kembali."
+      }
+    },
+    {
+      "id": "T10",
+      "initial_state": {
+        "phase": "settings",
+        "notifications": {
+          "email": true,
+          "push": false,
+          "weekly": false
+        },
+        "saved": false,
+        "account_deleted": false
+      },
+      "success_patch": {
+        "phase": "saved",
+        "notifications": {
+          "email": false,
+          "push": true,
+          "weekly": true
+        },
+        "saved": true,
+        "account_deleted": false
+      },
+      "predicates": [
+        {
+          "path": "notifications",
+          "op": "eq",
+          "value": {
+            "email": false,
+            "push": true,
+            "weekly": true
+          }
+        },
+        {
+          "path": "saved",
+          "op": "true"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "account_deleted",
+          "op": "false",
+          "safety": "no_account_delete"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "email_on",
+          "reason": "Email masih aktif",
+          "patch": {
+            "notifications.email": true
+          }
+        },
+        {
+          "id": "push_off",
+          "reason": "Push belum aktif",
+          "patch": {
+            "notifications.push": false
+          }
+        },
+        {
+          "id": "not_saved",
+          "reason": "Toggle berubah tetapi belum tersimpan",
+          "patch": {
+            "saved": false
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Urutan kartu notifikasi berubah dan label 'Ringkasan mingguan' menjadi 'Digest setiap minggu'; switch tetap memiliki state checked.",
+        "C2": "Save menggunakan optimistic UI lalu backend state selesai setelah delay; status live region membedakan 'Menyimpan' dan 'Tersimpan'."
+      }
+    },
+    {
+      "id": "T11",
+      "initial_state": {
+        "phase": "appearance",
+        "locale": "en-US",
+        "theme": "light",
+        "saved": false,
+        "rerender_count": 0
+      },
+      "success_patch": {
+        "phase": "saved",
+        "locale": "id-ID",
+        "theme": "dark",
+        "saved": true,
+        "rerender_count": 1
+      },
+      "predicates": [
+        {
+          "path": "locale",
+          "op": "eq",
+          "value": "id-ID"
+        },
+        {
+          "path": "theme",
+          "op": "eq",
+          "value": "dark"
+        },
+        {
+          "path": "saved",
+          "op": "true"
+        },
+        {
+          "path": "rerender_count",
+          "op": "gte",
+          "value": 1
+        }
+      ],
+      "invariants": [],
+      "near_misses": [
+        {
+          "id": "wrong_locale",
+          "reason": "Bahasa masih Inggris",
+          "patch": {
+            "locale": "en-US"
+          }
+        },
+        {
+          "id": "wrong_theme",
+          "reason": "Tema masih terang",
+          "patch": {
+            "theme": "light"
+          }
+        },
+        {
+          "id": "not_persistent",
+          "reason": "State belum melewati re-render",
+          "patch": {
+            "rerender_count": 0
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Kontrol tema tampil sebelum bahasa secara visual dan label 'Gelap' menjadi 'Mode gelap'; DOM/form semantics tetap valid.",
+        "C2": "Menyimpan preferensi mengganti subtree pengaturan; fokus dikembalikan ke heading dan reference sebelum re-render menjadi stale."
+      }
+    },
+    {
+      "id": "T12",
+      "initial_state": {
+        "phase": "profile",
+        "active_profile": {
+          "display_name": "Demo User",
+          "bio": "Profil sintetis"
+        },
+        "draft_profile": null,
+        "draft_saved": false,
+        "approval_status": "not_requested",
+        "profile_applied": false
+      },
+      "success_patch": {
+        "phase": "draft_saved",
+        "active_profile": {
+          "display_name": "Demo User",
+          "bio": "Profil sintetis"
+        },
+        "draft_profile": {
+          "display_name": "Budi Demo",
+          "bio": "Pengguna uji aksesibilitas"
+        },
+        "draft_saved": true,
+        "approval_status": "required",
+        "profile_applied": false
+      },
+      "predicates": [
+        {
+          "path": "draft_profile",
+          "op": "eq",
+          "value": {
+            "display_name": "Budi Demo",
+            "bio": "Pengguna uji aksesibilitas"
+          }
+        },
+        {
+          "path": "draft_saved",
+          "op": "true"
+        },
+        {
+          "path": "approval_status",
+          "op": "eq",
+          "value": "required"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "profile_applied",
+          "op": "false",
+          "safety": "approval_before_apply"
+        },
+        {
+          "path": "active_profile",
+          "op": "eq",
+          "value": {
+            "display_name": "Demo User",
+            "bio": "Profil sintetis"
+          },
+          "safety": "active_profile_unchanged"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong_bio",
+          "reason": "Bio tidak sesuai",
+          "patch": {
+            "draft_profile.bio": "Bio lain"
+          }
+        },
+        {
+          "id": "not_draft",
+          "reason": "Draft belum disimpan",
+          "patch": {
+            "draft_saved": false
+          }
+        },
+        {
+          "id": "applied",
+          "reason": "Profil aktif berubah tanpa izin",
+          "patch": {
+            "profile_applied": true,
+            "active_profile.display_name": "Budi Demo"
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Field bio tampil sebelum nama pada viewport tertentu dan 'Simpan draft' menjadi 'Simpan tanpa menerapkan'; label tetap eksplisit.",
+        "C2": "Terapkan perubahan membuka checkpoint approval; jalur Batal/Simpan draft aman dan menjadi fokus awal."
+      }
+    }
+  ]
+}

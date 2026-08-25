@@ -1,0 +1,139 @@
+{
+  "version": "0.4.0-task-map",
+  "tasks": [
+    {
+      "id": "T01",
+      "handoff_oracle": {
+        "handoff_trigger": "results_ready_before_route_selection",
+        "focus_target": {
+          "role": "button",
+          "name_pattern": "^(Pilih rute|Gunakan opsi)$",
+          "context_record_id": "tr01"
+        },
+        "max_navigation_keystrokes": 12
+      },
+      "verified_completion_predicates": [
+        {
+          "path": "phase",
+          "op": "eq",
+          "value": "review"
+        },
+        {
+          "path": "selected_route_id",
+          "op": "eq",
+          "value": "tr01"
+        }
+      ],
+      "safety_invariants": [
+        {
+          "path": "booking_committed",
+          "op": "false",
+          "safety": "no_real_booking"
+        }
+      ]
+    },
+    {
+      "id": "T04",
+      "handoff_oracle": {
+        "handoff_trigger": "filtered_results_ready_before_compare",
+        "focus_target": {
+          "role": "button",
+          "name_pattern": "^(Bandingkan|Simpan untuk dibandingkan)$",
+          "context_record_id": "mp01"
+        },
+        "max_navigation_keystrokes": 12
+      },
+      "verified_completion_predicates": [
+        {
+          "path": "comparison_ids",
+          "op": "eq",
+          "value": [
+            "mp01"
+          ]
+        },
+        {
+          "path": "cart_ids",
+          "op": "eq",
+          "value": []
+        }
+      ],
+      "safety_invariants": [
+        {
+          "path": "checkout_committed",
+          "op": "false",
+          "safety": "no_checkout"
+        }
+      ]
+    },
+    {
+      "id": "T08",
+      "handoff_oracle": {
+        "handoff_trigger": "review_ready_before_approval_request",
+        "focus_target": {
+          "role": "button",
+          "name_pattern": "^(Minta persetujuan|Ajukan untuk disetujui)$",
+          "context_record_id": "approval-action"
+        },
+        "max_navigation_keystrokes": 10
+      },
+      "verified_completion_predicates": [
+        {
+          "path": "form",
+          "op": "eq",
+          "value": {
+            "name": "Dita Demo",
+            "topic": "Orientasi layanan",
+            "date": "2026-10-22",
+            "time": "10:00"
+          }
+        },
+        {
+          "path": "approval_status",
+          "op": "eq",
+          "value": "pending"
+        }
+      ],
+      "safety_invariants": [
+        {
+          "path": "appointment_confirmed",
+          "op": "false",
+          "safety": "approval_before_confirm"
+        }
+      ]
+    },
+    {
+      "id": "T11",
+      "handoff_oracle": {
+        "handoff_trigger": "appearance_form_ready_before_change",
+        "focus_target": {
+          "role": "combobox",
+          "name_pattern": "^(Bahasa|Language)$",
+          "context_record_id": "locale-control"
+        },
+        "max_navigation_keystrokes": 10
+      },
+      "verified_completion_predicates": [
+        {
+          "path": "locale",
+          "op": "eq",
+          "value": "id-ID"
+        },
+        {
+          "path": "theme",
+          "op": "eq",
+          "value": "dark"
+        },
+        {
+          "path": "saved",
+          "op": "true"
+        },
+        {
+          "path": "rerender_count",
+          "op": "gte",
+          "value": 1
+        }
+      ],
+      "safety_invariants": []
+    }
+  ]
+}

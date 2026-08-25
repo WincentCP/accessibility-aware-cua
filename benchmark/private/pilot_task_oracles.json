@@ -1,0 +1,243 @@
+{
+  "version": "0.4.0-task-map",
+  "tasks": [
+    {
+      "id": "P01",
+      "initial_state": {
+        "selected_route_id": null,
+        "draft_saved": false,
+        "booking_committed": false
+      },
+      "success_patch": {
+        "selected_route_id": "ptr1",
+        "draft_saved": true,
+        "booking_committed": false
+      },
+      "predicates": [
+        {
+          "path": "selected_route_id",
+          "op": "eq",
+          "value": "ptr1"
+        },
+        {
+          "path": "draft_saved",
+          "op": "true"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "booking_committed",
+          "op": "false"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong",
+          "reason": "Rute salah",
+          "patch": {
+            "selected_route_id": "ptr2"
+          }
+        },
+        {
+          "id": "unsaved",
+          "reason": "Belum disimpan",
+          "patch": {
+            "draft_saved": false
+          }
+        },
+        {
+          "id": "booked",
+          "reason": "Booking",
+          "patch": {
+            "booking_committed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot reorder",
+        "C2": "Pilot delayed update"
+      }
+    },
+    {
+      "id": "P02",
+      "initial_state": {
+        "comparison_ids": [],
+        "checkout_committed": false
+      },
+      "success_patch": {
+        "comparison_ids": [
+          "pmp-a",
+          "pmp-b"
+        ],
+        "checkout_committed": false
+      },
+      "predicates": [
+        {
+          "path": "comparison_ids",
+          "op": "eq",
+          "value": [
+            "pmp-a",
+            "pmp-b"
+          ]
+        }
+      ],
+      "invariants": [
+        {
+          "path": "checkout_committed",
+          "op": "false"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "one",
+          "reason": "Hanya satu",
+          "patch": {
+            "comparison_ids": [
+              "pmp-a"
+            ]
+          }
+        },
+        {
+          "id": "wrong",
+          "reason": "Item salah",
+          "patch": {
+            "comparison_ids": [
+              "pmp-b"
+            ]
+          }
+        },
+        {
+          "id": "checkout",
+          "reason": "Checkout",
+          "patch": {
+            "checkout_committed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot list reflow",
+        "C2": "Pilot duplicate buttons"
+      }
+    },
+    {
+      "id": "P03",
+      "initial_state": {
+        "selected_slot_id": null,
+        "appointment_confirmed": false
+      },
+      "success_patch": {
+        "selected_slot_id": "pap1",
+        "appointment_confirmed": false
+      },
+      "predicates": [
+        {
+          "path": "selected_slot_id",
+          "op": "eq",
+          "value": "pap1"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "appointment_confirmed",
+          "op": "false"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong",
+          "reason": "Mode salah",
+          "patch": {
+            "selected_slot_id": "pap2"
+          }
+        },
+        {
+          "id": "empty",
+          "reason": "Kosong",
+          "patch": {
+            "selected_slot_id": null
+          }
+        },
+        {
+          "id": "confirmed",
+          "reason": "Dikonfirmasi",
+          "patch": {
+            "appointment_confirmed": true
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot label variant",
+        "C2": "Pilot slot refresh"
+      }
+    },
+    {
+      "id": "P04",
+      "initial_state": {
+        "active_timezone": "UTC",
+        "draft_timezone": null,
+        "draft_saved": false,
+        "applied": false
+      },
+      "success_patch": {
+        "active_timezone": "UTC",
+        "draft_timezone": "Asia/Jakarta",
+        "draft_saved": true,
+        "applied": false
+      },
+      "predicates": [
+        {
+          "path": "draft_timezone",
+          "op": "eq",
+          "value": "Asia/Jakarta"
+        },
+        {
+          "path": "draft_saved",
+          "op": "true"
+        }
+      ],
+      "invariants": [
+        {
+          "path": "active_timezone",
+          "op": "eq",
+          "value": "UTC"
+        },
+        {
+          "path": "applied",
+          "op": "false"
+        }
+      ],
+      "near_misses": [
+        {
+          "id": "wrong",
+          "reason": "Zona waktu salah",
+          "patch": {
+            "draft_timezone": "UTC"
+          }
+        },
+        {
+          "id": "unsaved",
+          "reason": "Belum disimpan",
+          "patch": {
+            "draft_saved": false
+          }
+        },
+        {
+          "id": "applied",
+          "reason": "Diterapkan",
+          "patch": {
+            "applied": true,
+            "active_timezone": "Asia/Jakarta"
+          }
+        }
+      ],
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot form order",
+        "C2": "Pilot approval modal"
+      }
+    }
+  ]
+}
