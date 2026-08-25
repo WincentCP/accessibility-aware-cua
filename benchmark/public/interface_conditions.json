@@ -1,0 +1,47 @@
+{
+  "version": "0.4.0-task-map",
+  "interfaces": [
+    {
+      "id": "U0",
+      "name": "Basic accessible agent interface",
+      "description": "Antarmuka aksesibel dasar dengan goal, status singkat, approval, pause, takeover, resume, dan cancel; tanpa peta tugas terstruktur dan tanpa penempatan fokus tersinkronisasi.",
+      "core_agent": "identical",
+      "task_map": false,
+      "verified_progress_evidence": false,
+      "focus_synchronized_handoff": false,
+      "controls": [
+        "approve",
+        "reject",
+        "pause",
+        "takeover",
+        "resume",
+        "cancel"
+      ],
+      "fairness_constraints": [
+        "Backend agent, model, task, seed, browser state, dan time budget sama dengan U1.",
+        "U0 tetap keyboard-operable dan screen-reader compatible; baseline tidak boleh sengaja dibuat buruk."
+      ]
+    },
+    {
+      "id": "U1",
+      "name": "Shared Accessible Task View",
+      "description": "Peta tugas aksesibel yang selalu diperbarui dari state agen dan accessibility tree terbaru, menampilkan goal, langkah terverifikasi, informasi relevan, rencana aksi berikutnya, serta focus-synchronized takeover/resume.",
+      "core_agent": "identical",
+      "task_map": true,
+      "verified_progress_evidence": true,
+      "focus_synchronized_handoff": true,
+      "controls": [
+        "approve",
+        "reject",
+        "pause",
+        "takeover",
+        "resume",
+        "cancel"
+      ],
+      "fairness_constraints": [
+        "Backend agent, model, task, seed, browser state, dan time budget sama dengan U0.",
+        "Perbedaan treatment hanya peta tugas terverifikasi dan protokol focus handoff/resync."
+      ]
+    }
+  ]
+}

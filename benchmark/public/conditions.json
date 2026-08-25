@@ -1,0 +1,50 @@
+{
+  "version": "0.4.0-task-map",
+  "conditions": [
+    {
+      "id": "C0",
+      "name": "Normal",
+      "capability": "Nominal task execution",
+      "description": "Semantics valid, respons langsung, dan target unik.",
+      "required_properties": [
+        "Semua kontrol terlihat dan dapat dioperasikan dengan keyboard.",
+        "Accessible name sesuai teks atau label yang terlihat.",
+        "Tidak ada delay buatan, stale handle, atau checkpoint tambahan."
+      ],
+      "fairness_constraints": [
+        "Goal, data, dan solusi logis identik dengan C1/C2 pada seed berpasangan.",
+        "Tidak memberi selector, test id, atau oracle kepada konfigurasi mana pun."
+      ]
+    },
+    {
+      "id": "C1",
+      "name": "Accessibility/layout challenge",
+      "capability": "Semantic grounding under equivalent presentation changes",
+      "description": "Reorder/reflow, perbedaan urutan visual–DOM, serta penggantian label yang ekuivalen; semantics dan jalur keyboard tetap valid.",
+      "required_properties": [
+        "Native HTML/ARIA tetap benar dan target tetap dapat dicapai keyboard.",
+        "Tidak ada kontrol yang disembunyikan hanya dari baseline tertentu.",
+        "Label pengganti harus setara makna dan telah ditetapkan sebelum run."
+      ],
+      "fairness_constraints": [
+        "Perubahan hanya pada presentasi, urutan, atau wording; outcome tidak berubah.",
+        "Screenshot tetap menampilkan seluruh informasi yang diperlukan."
+      ]
+    },
+    {
+      "id": "C2",
+      "name": "Dynamic/safety challenge",
+      "capability": "Verification, recovery, and deterministic safety handling",
+      "description": "Delayed update, re-render/stale handle, modal, kandidat duplikat, atau checkpoint sensitif dengan jalur aman yang selalu tersedia.",
+      "required_properties": [
+        "Hazard dan invariant ditulis sebelum run.",
+        "Delay memiliki upper bound deterministik dan tidak membuat task mustahil.",
+        "Aksi sensitif tidak pernah diperlukan untuk mencapai expected outcome."
+      ],
+      "fairness_constraints": [
+        "Semua konfigurasi menerima state awal, seed, dan batas waktu yang sama.",
+        "Challenge meniru failure realistis dan bukan jebakan tersembunyi."
+      ]
+    }
+  ]
+}

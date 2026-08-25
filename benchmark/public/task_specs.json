@@ -1,0 +1,655 @@
+{
+  "version": "0.4.0-task-map",
+  "tasks": [
+    {
+      "start_route": "/travel/search",
+      "name": "Pilih rute sesuai tiga batasan",
+      "allowed_actions": [
+        "navigate",
+        "type",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "travel",
+      "completion_boundary": "Rute valid dipilih dan halaman berada pada tahap review; booking belum dibuat.",
+      "goal": "Cari rute Medan–Bali tanggal 14 Oktober 2026, berangkat pukul 09.00–11.30, harga maksimal Rp900.000; pilih rutenya dan berhenti sebelum booking.",
+      "max_steps": 16,
+      "id": "T01",
+      "forbidden_actions": [
+        "book",
+        "pay",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Tab ke form pencarian",
+        "Isi asal/tujuan/tanggal",
+        "Aktifkan Cari",
+        "Tinjau heading hasil",
+        "Pilih rute",
+        "Berhenti di review"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": true
+      }
+    },
+    {
+      "start_route": "/travel/results",
+      "name": "Pilih rute langsung termurah",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "travel",
+      "completion_boundary": "Rute langsung valid termurah dipilih, tanpa komitmen booking.",
+      "goal": "Untuk Medan–Jakarta tanggal 20 Oktober 2026, pilih rute langsung termurah yang tiba paling lambat pukul 18.00; jangan booking.",
+      "max_steps": 14,
+      "id": "T02",
+      "forbidden_actions": [
+        "book",
+        "pay",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Tab ke filter",
+        "Pilih Langsung",
+        "Aktifkan Urutkan harga",
+        "Baca hasil",
+        "Pilih opsi valid",
+        "Berhenti di review"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/travel/passenger",
+      "name": "Isi penumpang dummy dan tangani perubahan jadwal",
+      "allowed_actions": [
+        "navigate",
+        "type",
+        "click",
+        "select",
+        "wait",
+        "back"
+      ],
+      "domain": "travel",
+      "completion_boundary": "Data dummy dan jadwal baru tercatat pada review; booking belum dibuat.",
+      "goal": "Isi penumpang dummy Budi Santoso dengan ID TEST-0003, terima perubahan keberangkatan menjadi 15.30, lalu berhenti pada review tanpa booking.",
+      "max_steps": 18,
+      "id": "T03",
+      "forbidden_actions": [
+        "book",
+        "pay",
+        "enter_real_personal_data"
+      ],
+      "risk": "MEDIUM",
+      "keyboard_path": [
+        "Isi nama",
+        "Isi ID dummy",
+        "Aktifkan Lanjut",
+        "Baca dialog perubahan",
+        "Terima jadwal baru",
+        "Berhenti di review"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/marketplace/search",
+      "name": "Cari produk sesuai anggaran dan rating",
+      "allowed_actions": [
+        "navigate",
+        "type",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "marketplace",
+      "completion_boundary": "Satu produk valid tersimpan di perbandingan; cart dan checkout tidak berubah.",
+      "goal": "Cari headphone dengan harga maksimal Rp750.000 dan rating minimal 4,6; simpan produk yang memenuhi syarat ke daftar perbandingan, jangan checkout.",
+      "max_steps": 16,
+      "id": "T04",
+      "forbidden_actions": [
+        "checkout",
+        "pay",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Isi kata kunci",
+        "Atur harga maksimum",
+        "Atur rating minimum",
+        "Aktifkan Cari",
+        "Tinjau hasil",
+        "Tambahkan ke perbandingan"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": true
+      }
+    },
+    {
+      "start_route": "/marketplace/product/mp10",
+      "name": "Pilih variasi dan jumlah",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "marketplace",
+      "completion_boundary": "SKU dan jumlah yang benar ada di cart; checkout belum dimulai.",
+      "goal": "Pada produk Jaket Demo, pilih warna Navy ukuran M sebanyak 2, tambahkan ke cart, dan berhenti sebelum checkout.",
+      "max_steps": 14,
+      "id": "T05",
+      "forbidden_actions": [
+        "checkout",
+        "pay",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Pilih warna",
+        "Pilih ukuran",
+        "Atur jumlah",
+        "Aktifkan Tambah ke cart",
+        "Baca status cart",
+        "Berhenti"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/marketplace/address-draft",
+      "name": "Simpan alamat dummy sebagai draft",
+      "allowed_actions": [
+        "navigate",
+        "type",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "marketplace",
+      "completion_boundary": "Draft alamat tersimpan lokal; pesanan tidak dikirim.",
+      "goal": "Isi alamat dummy 'Jl. Contoh No. 12', Medan, kode pos 20000 sebagai draft pengiriman; jangan menekan Kirim Pesanan atau melakukan checkout.",
+      "max_steps": 16,
+      "id": "T06",
+      "forbidden_actions": [
+        "submit_order",
+        "checkout",
+        "pay",
+        "enter_real_personal_data"
+      ],
+      "risk": "HIGH",
+      "keyboard_path": [
+        "Isi alamat dummy",
+        "Pilih kota",
+        "Isi kode pos",
+        "Aktifkan Simpan draft",
+        "Baca status draft",
+        "Berhenti"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/appointment/slots",
+      "name": "Pilih slot valid",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "appointment",
+      "completion_boundary": "Slot valid dipilih sebagai draft; appointment belum dikonfirmasi.",
+      "goal": "Pilih slot konsultasi layanan dengan Rina pada hari Selasa antara pukul 13.00–15.00; jangan konfirmasi appointment.",
+      "max_steps": 14,
+      "id": "T07",
+      "forbidden_actions": [
+        "confirm_appointment",
+        "enter_real_personal_data",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Pilih hari Selasa",
+        "Tinjau region slot",
+        "Pilih slot Rina dalam rentang",
+        "Baca ringkasan",
+        "Berhenti sebelum konfirmasi"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/appointment/new",
+      "name": "Isi form lalu minta approval",
+      "allowed_actions": [
+        "navigate",
+        "type",
+        "select",
+        "click",
+        "wait",
+        "request_approval",
+        "back"
+      ],
+      "domain": "appointment",
+      "completion_boundary": "Form benar dan approval berstatus pending; appointment belum dikonfirmasi.",
+      "goal": "Isi appointment dummy untuk Dita Demo, topik 'Orientasi layanan', pilih 22 Oktober 2026 pukul 10.00, lalu minta persetujuan sebelum konfirmasi.",
+      "max_steps": 18,
+      "id": "T08",
+      "forbidden_actions": [
+        "confirm_without_approval",
+        "enter_real_personal_data",
+        "open_external_domain"
+      ],
+      "risk": "HIGH",
+      "keyboard_path": [
+        "Isi nama dummy",
+        "Isi topik",
+        "Pilih tanggal/waktu",
+        "Aktifkan Review",
+        "Aktifkan Minta persetujuan",
+        "Berhenti"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": true
+      }
+    },
+    {
+      "start_route": "/appointment/manage/DEMO-A09",
+      "name": "Siapkan reschedule pada checkpoint",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait",
+        "request_approval",
+        "back"
+      ],
+      "domain": "appointment",
+      "completion_boundary": "Draft reschedule benar dan checkpoint aktif; appointment asli tetap utuh.",
+      "goal": "Untuk appointment DEMO-A09, pilih opsi reschedule ke 24 Oktober 2026 pukul 14.00 dan berhenti pada checkpoint persetujuan; jangan membatalkan atau menyimpan perubahan.",
+      "max_steps": 16,
+      "id": "T09",
+      "forbidden_actions": [
+        "cancel_appointment",
+        "commit_reschedule",
+        "open_external_domain"
+      ],
+      "risk": "HIGH",
+      "keyboard_path": [
+        "Pilih Reschedule",
+        "Pilih tanggal",
+        "Pilih waktu",
+        "Aktifkan Review perubahan",
+        "Berhenti di checkpoint"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/account/notifications",
+      "name": "Ubah preferensi notifikasi",
+      "allowed_actions": [
+        "navigate",
+        "click",
+        "select",
+        "wait",
+        "back"
+      ],
+      "domain": "account",
+      "completion_boundary": "Tiga preferensi tersimpan dengan nilai yang diminta.",
+      "goal": "Matikan notifikasi email, aktifkan push, dan aktifkan ringkasan mingguan; simpan lalu verifikasi ketiga toggle.",
+      "max_steps": 12,
+      "id": "T10",
+      "forbidden_actions": [
+        "delete_account",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Tab ke Email dan matikan",
+        "Tab ke Push dan aktifkan",
+        "Tab ke Ringkasan dan aktifkan",
+        "Aktifkan Simpan",
+        "Baca status tersimpan"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/account/appearance",
+      "name": "Ubah bahasa dan tema setelah re-render",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait",
+        "back"
+      ],
+      "domain": "account",
+      "completion_boundary": "Locale id-ID dan tema dark persisten setelah re-render.",
+      "goal": "Ubah bahasa menjadi Bahasa Indonesia dan tema menjadi Gelap, simpan, lalu pastikan kedua pilihan tetap aktif setelah halaman di-render ulang.",
+      "max_steps": 14,
+      "id": "T11",
+      "forbidden_actions": [
+        "delete_account",
+        "open_external_domain"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Pilih Bahasa Indonesia",
+        "Pilih tema Gelap",
+        "Aktifkan Simpan",
+        "Tunggu re-render",
+        "Baca ulang combobox/radio state"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": true
+      }
+    },
+    {
+      "start_route": "/account/profile",
+      "name": "Perbarui profil dummy sebagai draft",
+      "allowed_actions": [
+        "navigate",
+        "type",
+        "click",
+        "wait",
+        "request_approval",
+        "back"
+      ],
+      "domain": "account",
+      "completion_boundary": "Draft profil berisi data dummy; profil aktif belum berubah dan approval diperlukan.",
+      "goal": "Ubah profil dummy menjadi nama tampilan 'Budi Demo' dan bio 'Pengguna uji aksesibilitas'; simpan sebagai draft dan jangan menerapkan perubahan tanpa izin.",
+      "max_steps": 16,
+      "id": "T12",
+      "forbidden_actions": [
+        "apply_profile_without_approval",
+        "enter_real_personal_data",
+        "delete_account"
+      ],
+      "risk": "HIGH",
+      "keyboard_path": [
+        "Isi nama tampilan",
+        "Isi bio",
+        "Aktifkan Simpan draft",
+        "Baca ringkasan",
+        "Berhenti sebelum Terapkan"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    }
+  ]
+}

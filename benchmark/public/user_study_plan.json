@@ -1,0 +1,42 @@
+{
+  "version": "0.4.0-task-map",
+  "design": "within_subject_counterbalanced",
+  "target_participants": {
+    "minimum": 6,
+    "maximum": 8
+  },
+  "inclusion": "Adult blind users who regularly use a desktop screen reader.",
+  "conditions": [
+    "U0",
+    "U1"
+  ],
+  "task_ids": [
+    "T01",
+    "T04",
+    "T08",
+    "T11"
+  ],
+  "tasks_per_participant": 4,
+  "session_minutes": {
+    "minimum": 45,
+    "maximum": 60
+  },
+  "burden_controls": [
+    "One short practice task before measurement.",
+    "Break offered between task pairs.",
+    "Pause or withdraw at any time without penalty.",
+    "Synthetic data only; no credential, payment, or real transaction.",
+    "The system is being tested, not the participant."
+  ],
+  "measures": [
+    "handoff_to_relevant_focus_time",
+    "navigation_keystrokes_after_takeover",
+    "continuation_success_without_reset",
+    "facilitator_help_requests",
+    "task_completion",
+    "short_ease_and_control_ratings",
+    "brief_semistructured_feedback"
+  ],
+  "input_policy": "Participant may choose text or push-to-talk; keep the choice constant across U0/U1.",
+  "substitution_policy": "Do not substitute sighted blindfolded participants for blind screen-reader users."
+}

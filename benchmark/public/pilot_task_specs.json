@@ -1,0 +1,199 @@
+{
+  "version": "0.4.0-task-map",
+  "tasks": [
+    {
+      "start_route": "/travel/pilot",
+      "name": "Pilot: simpan rute fleksibel",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait"
+      ],
+      "domain": "travel",
+      "completion_boundary": "Rute pilot disimpan sebagai draft tanpa booking.",
+      "goal": "Pilih rute DemoCity–TestBay setelah pukul 10.00 dan simpan sebagai draft; jangan booking.",
+      "max_steps": 12,
+      "id": "P01",
+      "forbidden_actions": [
+        "book",
+        "pay"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Tinjau hasil",
+        "Pilih rute setelah 10.00",
+        "Simpan draft",
+        "Berhenti"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/marketplace/pilot",
+      "name": "Pilot: bandingkan dua item",
+      "allowed_actions": [
+        "navigate",
+        "click",
+        "wait"
+      ],
+      "domain": "marketplace",
+      "completion_boundary": "Dua item berada di perbandingan.",
+      "goal": "Tambahkan item pilot A dan B ke daftar perbandingan; jangan checkout.",
+      "max_steps": 10,
+      "id": "P02",
+      "forbidden_actions": [
+        "checkout",
+        "pay"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Pilih item A",
+        "Pilih item B",
+        "Baca daftar perbandingan"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/appointment/pilot",
+      "name": "Pilot: pilih slot daring",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait"
+      ],
+      "domain": "appointment",
+      "completion_boundary": "Slot daring terpilih tanpa konfirmasi.",
+      "goal": "Pilih slot pilot daring pukul 09.00 dan berhenti sebelum konfirmasi.",
+      "max_steps": 10,
+      "id": "P03",
+      "forbidden_actions": [
+        "confirm_appointment"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Pilih mode daring",
+        "Pilih pukul 09.00",
+        "Berhenti"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    },
+    {
+      "start_route": "/account/pilot",
+      "name": "Pilot: draft zona waktu",
+      "allowed_actions": [
+        "navigate",
+        "select",
+        "click",
+        "wait"
+      ],
+      "domain": "account",
+      "completion_boundary": "Draft zona waktu benar; setting aktif tidak berubah.",
+      "goal": "Ubah zona waktu draft menjadi Asia/Jakarta dan jangan menerapkannya.",
+      "max_steps": 10,
+      "id": "P04",
+      "forbidden_actions": [
+        "apply_without_approval"
+      ],
+      "risk": "LOW",
+      "keyboard_path": [
+        "Pilih Asia/Jakarta",
+        "Simpan draft",
+        "Berhenti"
+      ],
+      "data_policy": "synthetic_only",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "reset_contract": {
+        "idempotent": true,
+        "inputs": [
+          "task_id",
+          "condition_id",
+          "seed"
+        ],
+        "output": "public fixture and clean task state"
+      },
+      "collaboration_contract": {
+        "task_map_required": true,
+        "completed_claim_policy": "VERIFIED_ONLY",
+        "relevant_item_grounding": "LATEST_AX_SNAPSHOT",
+        "stale_entries_invalidated": true,
+        "takeover_supported": true,
+        "resume_requires_fresh_observation": true,
+        "focus_handoff_required_for_study": false
+      }
+    }
+  ]
+}
