@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Accessibility-Aware CUA Benchmark{% endblock %}</title>
+    <link rel="stylesheet" href="/static/site.css">
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    <header class="site-header">
+      <a class="brand" href="/">CUA Benchmark Lokal</a>
+      <nav aria-label="Mini-site benchmark">
+        <ul>
+          <li><a href="/travel">Travel</a></li>
+          <li><a href="/marketplace">Marketplace</a></li>
+          <li><a href="/appointment">Appointment</a></li>
+          <li><a href="/account">Account</a></li>
+        </ul>
+      </nav>
+    </header>
+    {% block content %}{% endblock %}
+    <footer>
+      <p>Lingkungan riset lokal. Semua data sintetis; tidak ada transaksi nyata.</p>
+    </footer>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

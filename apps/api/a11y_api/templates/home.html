@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Beranda — CUA Benchmark Lokal{% endblock %}
+{% block content %}
+<main id="main-content" tabindex="-1" class="page-shell">
+  <section class="hero" aria-labelledby="page-title">
+    <p class="eyebrow">Versi {{ version }} · Tahap 5</p>
+    <h1 id="page-title">Empat mini-site benchmark yang aksesibel</h1>
+    <p>
+      Pilih domain dan task. Setiap halaman dapat dipakai dengan keyboard,
+      menggunakan data dummy, dan berhenti sebelum aksi berisiko.
+    </p>
+  </section>
+  <div class="domain-grid">
+    {% for item in domains %}
+    <section class="panel" aria-labelledby="domain-{{ item.id }}">
+      <h2 id="domain-{{ item.id }}"><a href="/{{ item.id }}">{{ item.label }}</a></h2>
+      <ul class="task-links">
+        {% for task in item.tasks %}
+        <li><a href="{{ task.route }}">{{ task.id }} — {{ task.name }}</a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+</main>
+{% endblock %}

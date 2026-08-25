@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}{{ task_id }} — {{ task.name }}{% endblock %}
+{% block body_class %}condition-{{ condition_id|lower }}{% if is_c1 %} reflowed{% endif %}{% endblock %}
+{% block content %}
+<main id="main-content" tabindex="-1" class="page-shell task-layout">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Beranda</a> <span aria-hidden="true">/</span>
+    <a href="/{{ domain }}">{{ domain_label }}</a>
+  </nav>
+
+  <header class="task-header">
+    <p class="eyebrow">{{ task_id }} · {{ condition_id }} · seed {{ seed }}</p>
+    <h1>{{ task.name }}</h1>
+    <div class="goal-box" aria-labelledby="goal-heading">
+      <h2 id="goal-heading">Tujuan tugas</h2>
+      <p>{{ task.goal }}</p>
+      <p><strong>Batas aman:</strong> {{ task.completion_boundary }}</p>
+    </div>
+  </header>
+
+  <aside class="condition-note" aria-labelledby="condition-heading">
+    <h2 id="condition-heading">Kondisi halaman:
+      {% if is_c1 %}Perubahan aksesibilitas dan tata letak{% elif is_c2 %}Tantangan dinamis dan keamanan{% else %}Normal{% endif %}
+    </h2>
+    {% if is_c1 %}
+    <p>Susunan dan beberapa kata pada halaman berubah, tetapi fungsi serta akses keyboard tetap sama.</p>
+    {% elif is_c2 %}
+    <p>Halaman memakai pembaruan tertunda dan re-render terkontrol. Status proses akan diumumkan.</p>
+    {% else %}
+    <p>Tampilan normal dengan target yang unik dan respons langsung.</p>
+    {% endif %}
+  </aside>
+
+  <section class="status-box status-{{ status.kind }}" aria-labelledby="status-heading">
+    <h2 id="status-heading">Status task</h2>
+    <p id="task-status" role="status" aria-live="polite" aria-atomic="true">{{ status.message }}</p>
+  </section>
+
+  <section class="workspace" aria-labelledby="workspace-heading">
+    <h2 id="workspace-heading">Area kerja</h2>
+    {% if is_c2 %}
+    <p class="dynamic-notice" role="note">
+      Mode dinamis aktif. Setelah formulir dikirim, tunggu pengumuman selesai sebelum melanjutkan.
+    </p>
+    {% endif %}
+
+    <form method="post" action="/api/benchmark/sessions/{{ session_id }}/actions" data-benchmark-form data-delay-ms="{{ presentation.delay_ms }}">
+      {% if task_id == "T01" %}
+      <fieldset>
+        <legend>Pilih satu rute Medan–Bali</legend>
+        <div class="record-list">
+          {% for record in records %}
+          <article class="record-card">
+            <h3>{{ record['from'] }} ke {{ record.to }} · {{ record.depart }}</h3>
+            <p>Tiba {{ record.arrive }} · Rp{{ "{:,}".format(record.price).replace(",", ".") }} · {{ record.stops }} transit</p>
+            <label>
+              <input type="radio" name="route_id" value="{{ record.id }}" required {% if form.route_id == record.id %}checked{% endif %}>
+              {% if is_c1 %}Gunakan opsi {{ record.depart }}{% else %}Pilih rute {{ record.depart }}{% endif %}
+            </label>
+          </article>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button type="submit">Simpan pilihan dan buka review</button>
+
+      {% elif task_id == "T02" %}
+      <fieldset>
+        <legend>Filter perjalanan</legend>
+        <label><input type="checkbox" name="direct_only" {% if form.direct_only %}checked{% endif %}> {% if is_c1 %}Tanpa transit{% else %}Langsung saja{% endif %}</label>
+      </fieldset>
+      <fieldset>
+        <legend>Pilih satu hasil perjalanan</legend>
+        <div class="record-list">
+          {% for record in records %}
+          <article class="record-card">
+            <h3>{{ record['from'] }} ke {{ record.to }} · {{ record.depart }}–{{ record.arrive }}</h3>
+            <p>Rp{{ "{:,}".format(record.price).replace(",", ".") }} · {{ record.stops }} transit</p>
+            <label><input type="radio" name="route_id" value="{{ record.id }}" required {% if form.route_id == record.id %}checked{% endif %}> {% if is_c1 %}Gunakan opsi ini{% else %}Pilih rute ini{% endif %}: tiba {{ record.arrive }}</label>
+          </article>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button type="submit">Terapkan filter dan buka review</button>
+
+      {% elif task_id == "T03" %}
+      <div class="form-grid">
+        <div><label for="name">Nama penumpang dummy</label><input id="name" name="name" autocomplete="off" value="{{ form.name }}" required></div>
+        <div><label for="document-id">{% if is_c1 %}ID penumpang dummy{% else %}ID dokumen dummy{% endif %}</label><input id="document-id" name="document_id" autocomplete="off" value="{{ form.document_id }}" required></div>
+      </div>
+      <fieldset>
+        <legend>Jadwal yang diterima</legend>
+        {% for record in records %}
+        <label class="stacked-option"><input type="radio" name="accepted_schedule" value="{{ record.depart }}" required {% if form.accepted_schedule == record.depart %}checked{% endif %}> {{ record.depart }} — {{ record.status }}</label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit">Simpan data dummy dan lanjut ke review</button>
+
+      {% elif task_id == "T04" %}
+      <fieldset>
+        <legend>Pilih produk untuk daftar perbandingan</legend>
+        <div class="record-list">
+          {% for record in records %}
+          <article class="record-card">
+            <h3>{{ record.name }}</h3>
+            <p>Rp{{ "{:,}".format(record.price).replace(",", ".") }} · rating {{ record.rating }}</p>
+            <label><input type="radio" name="product_id" value="{{ record.id }}" required {% if form.product_id == record.id %}checked{% endif %}> {% if is_c1 %}Simpan {{ record.name }} untuk dibandingkan{% else %}Bandingkan {{ record.name }}{% endif %}</label>
+          </article>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button type="submit">Simpan ke perbandingan</button>
+
+      {% elif task_id == "T05" %}
+      <fieldset>
+        <legend>Variasi Jaket Demo</legend>
+        <div class="form-grid">
+          <div><label for="color">Warna</label><select id="color" name="color" required><option value="">Pilih warna</option><option value="Navy" {% if form.color == "Navy" %}selected{% endif %}>Navy</option><option value="Hitam" {% if form.color == "Hitam" %}selected{% endif %}>Hitam</option></select></div>
+          <div><label for="size">Ukuran</label><select id="size" name="size" required><option value="">Pilih ukuran</option><option value="M" {% if form.size == "M" %}selected{% endif %}>M</option><option value="L" {% if form.size == "L" %}selected{% endif %}>L</option></select></div>
+          <div><label for="quantity">Jumlah</label><select id="quantity" name="quantity"><option value="1" {% if form.quantity == 1 %}selected{% endif %}>1</option><option value="2" {% if form.quantity == 2 %}selected{% endif %}>2</option><option value="3" {% if form.quantity == 3 %}selected{% endif %}>3</option></select></div>
+        </div>
+      </fieldset>
+      <button type="submit">Tambahkan ke cart sintetis</button>
+
+      {% elif task_id == "T06" %}
+      <div class="form-grid">
+        <div class="wide"><label for="address">Alamat dummy</label><input id="address" name="address" autocomplete="off" value="{{ form.address }}" required></div>
+        <div><label for="city">Kota</label><select id="city" name="city" required><option value="">Pilih kota</option>{% for record in records %}<option value="{{ record.city }}" {% if form.city == record.city %}selected{% endif %}>{{ record.city }}</option>{% endfor %}</select></div>
+        <div><label for="postal-code">Kode pos dummy</label><input id="postal-code" name="postal_code" inputmode="numeric" autocomplete="off" value="{{ form.postal_code }}" required></div>
+      </div>
+      <button type="submit">Simpan sebagai draft</button>
+
+      {% elif task_id == "T07" %}
+      <fieldset>
+        <legend>Pilih satu slot konsultasi</legend>
+        <div class="record-list">
+          {% for record in records %}
+          <article class="record-card">
+            <h3>{{ record.day }}, {{ record.time }}</h3>
+            <p>Pendamping {{ record.advisor }} · {% if record.available %}tersedia{% else %}tidak tersedia{% endif %}</p>
+            <label><input type="radio" name="slot_id" value="{{ record.id }}" required {% if form.slot_id == record.id %}checked{% endif %}> Pilih {{ record.day }} {{ record.time }} dengan {{ record.advisor }}</label>
+          </article>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button type="submit">Simpan slot untuk review</button>
+
+      {% elif task_id == "T08" %}
+      <div class="form-grid">
+        <div><label for="name">Nama dummy</label><input id="name" name="name" autocomplete="off" value="{{ form.name }}" required></div>
+        <div><label for="topic">Topik</label><input id="topic" name="topic" autocomplete="off" value="{{ form.topic }}" required></div>
+        <div><label for="date">Tanggal</label><input id="date" name="date" type="date" value="{{ form.date }}" required></div>
+        <div><label for="time">Waktu</label><select id="time" name="time" required><option value="">Pilih waktu</option>{% for record in records %}<option value="{{ record.time }}" {% if form.time == record.time %}selected{% endif %}>{{ record.time }}</option>{% endfor %}</select></div>
+      </div>
+      <p id="approval-help">Tombol ini hanya meminta approval; janji belum dikonfirmasi.</p>
+      <button type="submit" aria-describedby="approval-help">Simpan form dan minta approval</button>
+
+      {% elif task_id == "T09" %}
+      <div class="form-grid">
+        <div><label for="date">Tanggal reschedule</label><input id="date" name="date" type="date" value="{{ form.date }}" required></div>
+        <div><label for="time">Waktu reschedule</label><select id="time" name="time" required><option value="">Pilih waktu</option>{% for record in records %}<option value="{{ record.time }}" {% if form.time == record.time %}selected{% endif %}>{{ record.time }}</option>{% endfor %}</select></div>
+      </div>
+      <p id="checkpoint-help">Jadwal asli tetap aktif. Tidak ada tombol konfirmasi atau pembatalan pada task ini.</p>
+      <button type="submit" aria-describedby="checkpoint-help">Simpan draft di checkpoint approval</button>
+
+      {% elif task_id == "T10" %}
+      <fieldset>
+        <legend>Saluran notifikasi</legend>
+        <label class="stacked-option"><input type="checkbox" name="email" {% if form.email %}checked{% endif %}> Email</label>
+        <label class="stacked-option"><input type="checkbox" name="push" {% if form.push %}checked{% endif %}> Push</label>
+        <label class="stacked-option"><input type="checkbox" name="weekly" {% if form.weekly %}checked{% endif %}> Ringkasan mingguan</label>
+      </fieldset>
+      <button type="submit">Simpan preferensi notifikasi</button>
+
+      {% elif task_id == "T11" %}
+      <div class="form-grid">
+        <div><label for="locale">Bahasa</label><select id="locale" name="locale" required><option value="en-US" {% if form.locale == "en-US" %}selected{% endif %}>English</option><option value="id-ID" {% if form.locale == "id-ID" %}selected{% endif %}>Bahasa Indonesia</option></select></div>
+        <div><label for="theme">Tema</label><select id="theme" name="theme" required><option value="light" {% if form.theme == "light" %}selected{% endif %}>Terang</option><option value="dark" {% if form.theme == "dark" %}selected{% endif %}>Gelap</option></select></div>
+      </div>
+      <button type="submit">Terapkan dan render ulang</button>
+
+      {% elif task_id == "T12" %}
+      <div class="form-grid">
+        <div><label for="display-name">Nama tampilan dummy</label><input id="display-name" name="display_name" autocomplete="off" value="{{ form.display_name }}" required></div>
+        <div class="wide"><label for="bio">Bio dummy</label><textarea id="bio" name="bio" rows="4" required>{{ form.bio }}</textarea></div>
+      </div>
+      <p id="profile-help">Perubahan hanya disimpan sebagai draft dan memerlukan approval sebelum diterapkan.</p>
+      <button type="submit" aria-describedby="profile-help">Simpan draft profil</button>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="replay-info" aria-labelledby="replay-heading">
+    <h2 id="replay-heading">Kontrol eksperimen</h2>
+    <p>Task {{ task_id }}, kondisi {{ condition_id }}, seed {{ seed }}. Reset mengembalikan state awal yang sama.</p>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}<script src="/static/benchmark.js" defer></script>{% endblock %}
