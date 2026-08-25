@@ -26,6 +26,20 @@ class AgentGraphState(TypedDict, total=False):
     pending_interrupt: dict[str, Any] | None
     terminal_reason: str | None
     error_code: str
+    raw_input: str
+    normalized_goal: dict[str, Any]
+    compact_observation: str
+    observation_ref: str
+    planner_decision: dict[str, Any] | None
+    planner_telemetry: list[dict[str, Any]]
+    execution: dict[str, Any] | None
+    verification_evidence: list[dict[str, Any]]
+    verified_progress: list[str]
+    relevant_items: list[str]
+    replan_count: int
+    token_usage: int
+    started_at_ms: int
+    route: str
 
 
 def to_graph_state(state: AgentState) -> AgentGraphState:

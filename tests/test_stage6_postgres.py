@@ -234,6 +234,8 @@ def test_langgraph_pending_interrupt_resumes_after_new_process_boundary(
             "announcement": "Konfirmasi sebelum melanjutkan",
         },
         intervention_count=1,
+        task_map_version=3,
+        handoff_status="REQUESTED",
     )
     config = {"configurable": {"thread_id": thread_id}}
 
@@ -249,6 +251,8 @@ def test_langgraph_pending_interrupt_resumes_after_new_process_boundary(
     assert snapshot.values["run_id"] == str(run_id)
     assert snapshot.values["pending_interrupt"]["status"] == "PENDING"
     assert snapshot.values["intervention_count"] == 1
+    assert snapshot.values["task_map_version"] == 3
+    assert snapshot.values["handoff_status"] == "REQUESTED"
 
 
 def test_retention_deletes_expired_audit_and_matching_checkpoint(

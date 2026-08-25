@@ -13,7 +13,8 @@ Tahap 8 menambahkan resolver target semantik dan executor deterministik berbasis
 keyboard dengan policy gate, stale-snapshot guard, serta audit log lengkap.
 Tahap 9 menambahkan postcondition terstruktur, verifikasi pasca-aksi, recovery
 terbatas, safe abstention, dan provenance klaim selesai. Planner LLM/LangGraph
-tetap Tahap 10.
+Tahap 10 menambahkan structured planner dan LangGraph single-agent dengan
+checkpoint, bounded context/budget, schema retry, correction, serta trajectory log.
 
 ## Yang sudah bisa dibuka
 
@@ -117,6 +118,7 @@ python scripts/validate_stage6.py
 python scripts/validate_stage7.py
 python scripts/validate_stage8.py
 python scripts/validate_stage9.py
+python scripts/validate_stage10.py
 npm run test:frontend
 npm run browser:smoke
 npm run test:e2e
@@ -130,7 +132,8 @@ sistem. Baseline Tahap 8 diperbarui dengan
 `python scripts/validate_stage8.py --update-assets`; laporan mencakup 288 aksi
 primitif berulang pada 36 kasus. Baseline Tahap 9 dibuat dengan
 `python scripts/validate_stage9.py --update-assets`; confusion matrix dan pilot
-report disimpan sebagai bukti sistem. CI menjalankan PostgreSQL nyata, migration, simulasi restart
+report disimpan sebagai bukti sistem. Baseline engineering Tahap 10 dibuat dengan
+`python scripts/validate_stage10.py --update-assets`. CI menjalankan PostgreSQL nyata, migration, simulasi restart
 checkpoint LangGraph, observer Chromium, extension build, Playwright, axe, dan
 keyboard smoke.
 

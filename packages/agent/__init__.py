@@ -13,7 +13,9 @@ from packages.agent.contracts import (
     VerificationStatus,
 )
 from packages.agent.executor import DeterministicExecutor, PrimitiveAction, PrimitiveActionRequest
+from packages.agent.graph import OrchestrationServices, build_agent_graph
 from packages.agent.observer import AccessibilityObserver
+from packages.agent.planner import PlannerDecision, StructuredPlanner, normalize_input
 from packages.agent.predicates import ExpectedPostcondition, PredicateKind, VerificationPlan
 from packages.agent.recovery import RecoveryController, RecoveryPolicy
 from packages.agent.resolver import SemanticTargetResolver
@@ -30,6 +32,8 @@ __all__ = [
     "DeterministicExecutor",
     "GoalSpec",
     "Observation",
+    "OrchestrationServices",
+    "PlannerDecision",
     "PrimitiveAction",
     "PrimitiveActionRequest",
     "PredicateKind",
@@ -38,10 +42,13 @@ __all__ = [
     "RecoveryPolicy",
     "RiskLevel",
     "SnapshotRegistry",
+    "StructuredPlanner",
     "SemanticTargetResolver",
     "TargetQuery",
     "TerminalReason",
     "VerificationResult",
     "VerificationPlan",
     "VerificationStatus",
+    "build_agent_graph",
+    "normalize_input",
 ]
