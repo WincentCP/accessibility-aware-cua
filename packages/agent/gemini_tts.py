@@ -12,15 +12,17 @@ import httpx
 
 
 TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
+AUTH_GEMINI_STATUS_CODES = {401, 403}
 
-INDONESIAN_TTS_DIRECTION = """Bacakan teks berikut sepenuhnya dalam Bahasa Indonesia.
+INDONESIAN_TTS_DIRECTION = """Bacakan teks berikut sepenuhnya dalam Bahasa Indonesia Indonesia.
 
 Gunakan pelafalan dan intonasi penutur asli Indonesia (id-ID).
 Jangan menggunakan aksen Inggris, Amerika, atau aksen asing.
 Berbicaralah seperti pemandu aksesibilitas Indonesia yang ramah dan natural:
 hangat, santai, jelas, tidak kaku, dan tidak terdengar seperti robot.
 Gunakan kecepatan sedang dan jeda pendek yang alami.
-Utamakan pengucapan Indonesia untuk nama, angka, tanggal, singkatan, dan istilah antarmuka.
+Utamakan cara baca Indonesia untuk nama tempat, angka, tanggal, waktu, mata uang,
+singkatan, dan istilah antarmuka.
 
 Jangan bacakan instruksi ini. Bacakan hanya teks setelah bagian TEKS.
 
@@ -36,8 +38,8 @@ class GeminiTTSClient:
         model: str = "gemini-3.1-flash-tts-preview",
         voice: str = "Sulafat",
         base_url: str = "https://generativelanguage.googleapis.com/v1beta",
-        timeout_seconds: float = 60.0,
-        max_retries: int = 2,
+        timeout_seconds: float = 45.0,
+        max_retries: int = 1,
         retry_base_seconds: float = 0.75,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
@@ -63,6 +65,9 @@ class GeminiTTSClient:
             output_audio = value.get("output_audio") or value.get("outputAudio")
             if isinstance(output_audio, dict) and isinstance(output_audio.get("data"), str):
                 return output_audio["data"]
+            inline_data = value.get("inline_data") or value.get("inlineData")
+            if isinstance(inline_data, dict) and isinstance(inline_data.get("data"), str):
+                return inline_data["data"]
             if value.get("type") == "audio" and isinstance(value.get("data"), str):
                 return value["data"]
             for child in value.values():
@@ -88,39 +93,89 @@ class GeminiTTSClient:
             writer.writeframes(pcm)
         return target.getvalue()
 
-    def generate(self, text: str) -> bytes:
-        body = {
-            "model": self.model,
-            "input": f"{INDONESIAN_TTS_DIRECTION}{text}",
-            "response_format": {"type": "audio"},
-            "generation_config": {"speech_config": [{"voice": self.voice}]},
-        }
-        last_error = "Gemini TTS gagal tanpa detail."
+    def _request_audio(
+        self,
+        *,
+        path: str,
+        body: dict[str, Any],
+        api_label: str,
+    ) -> tuple[bytes | None, str | None]:
+        last_error: str | None = None
         for attempt in range(self.max_retries + 1):
             try:
-                response = self.client.post("/interactions", json=body)
+                response = self.client.post(path, json=body)
             except httpx.TransportError as exc:
-                last_error = f"Gemini TTS transport error: {exc}"
+                last_error = f"Gemini TTS {api_label} transport error: {exc}"
                 if attempt < self.max_retries:
                     time.sleep(self.retry_base_seconds * (2**attempt))
                     continue
-                raise RuntimeError(last_error) from exc
+                return None, last_error
 
             if response.is_success:
                 encoded = self._audio_data(response.json())
                 if not encoded:
-                    raise RuntimeError("Gemini TTS tidak mengembalikan audio.")
-                return self._wav(base64.b64decode(encoded))
+                    return None, f"Gemini TTS {api_label} tidak mengembalikan audio."
+                return self._wav(base64.b64decode(encoded)), None
 
-            last_error = f"Gemini TTS API {response.status_code}: {response.text[:500]}"
-            if response.status_code not in TRANSIENT_GEMINI_STATUS_CODES:
+            last_error = (
+                f"Gemini TTS {api_label} API {response.status_code}: "
+                f"{response.text[:500]}"
+            )
+            if response.status_code in AUTH_GEMINI_STATUS_CODES:
                 raise RuntimeError(last_error)
+            if response.status_code not in TRANSIENT_GEMINI_STATUS_CODES:
+                return None, last_error
             if attempt < self.max_retries:
                 time.sleep(self.retry_base_seconds * (2**attempt))
                 continue
-            break
+            return None, last_error
 
-        raise RuntimeError(f"{last_error} TTS tetap tidak tersedia setelah retry.")
+        return None, last_error
+
+    def generate(self, text: str) -> bytes:
+        transcript = f"{INDONESIAN_TTS_DIRECTION}{text}"
+
+        # Primary: current Interactions API.
+        interaction_audio, interaction_error = self._request_audio(
+            path="/interactions",
+            api_label="Interactions",
+            body={
+                "model": self.model,
+                "input": transcript,
+                "response_format": {"type": "audio"},
+                "generation_config": {"speech_config": [{"voice": self.voice}]},
+            },
+        )
+        if interaction_audio is not None:
+            return interaction_audio
+
+        # Secondary path: GenerateContent uses the same supported TTS model but a
+        # different serving surface. This prevents a transient Interactions outage
+        # from silently pushing the extension to an English browser voice.
+        generate_audio, generate_error = self._request_audio(
+            path=f"/models/{self.model}:generateContent",
+            api_label="GenerateContent",
+            body={
+                "contents": [{"parts": [{"text": transcript}]}],
+                "generationConfig": {
+                    "responseModalities": ["AUDIO"],
+                    "speechConfig": {
+                        "voiceConfig": {
+                            "prebuiltVoiceConfig": {"voiceName": self.voice}
+                        }
+                    },
+                },
+            },
+        )
+        if generate_audio is not None:
+            return generate_audio
+
+        details = " | ".join(
+            value for value in (interaction_error, generate_error) if value
+        )
+        raise RuntimeError(
+            f"Gemini TTS Indonesia tidak tersedia setelah dua jalur API dan retry. {details}"
+        )
 
     def close(self) -> None:
         self.client.close()
