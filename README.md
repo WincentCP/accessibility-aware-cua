@@ -11,7 +11,9 @@ audit trail PostgreSQL, privasi/retensi, serta checkpoint LangGraph tahan-restar
 Tahap 7 menambahkan observer accessibility tree dan snapshot semantik ringkas.
 Tahap 8 menambahkan resolver target semantik dan executor deterministik berbasis
 keyboard dengan policy gate, stale-snapshot guard, serta audit log lengkap.
-Planner dan verifikasi pasca-aksi tetap tahap berikutnya.
+Tahap 9 menambahkan postcondition terstruktur, verifikasi pasca-aksi, recovery
+terbatas, safe abstention, dan provenance klaim selesai. Planner LLM/LangGraph
+tetap Tahap 10.
 
 ## Yang sudah bisa dibuka
 
@@ -114,6 +116,7 @@ python -m pytest -q
 python scripts/validate_stage6.py
 python scripts/validate_stage7.py
 python scripts/validate_stage8.py
+python scripts/validate_stage9.py
 npm run test:frontend
 npm run browser:smoke
 npm run test:e2e
@@ -125,7 +128,9 @@ baseline Tahap 7, `python scripts/validate_stage7.py --update-assets` memperbaru
 36 golden ARIA snapshot dan dua laporan pengukuran yang memang menjadi bukti
 sistem. Baseline Tahap 8 diperbarui dengan
 `python scripts/validate_stage8.py --update-assets`; laporan mencakup 288 aksi
-primitif berulang pada 36 kasus. CI menjalankan PostgreSQL nyata, migration, simulasi restart
+primitif berulang pada 36 kasus. Baseline Tahap 9 dibuat dengan
+`python scripts/validate_stage9.py --update-assets`; confusion matrix dan pilot
+report disimpan sebagai bukti sistem. CI menjalankan PostgreSQL nyata, migration, simulasi restart
 checkpoint LangGraph, observer Chromium, extension build, Playwright, axe, dan
 keyboard smoke.
 

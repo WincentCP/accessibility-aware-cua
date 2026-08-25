@@ -48,6 +48,7 @@ class VerificationStatus(StrEnum):
     VERIFIED = "VERIFIED"
     FAILED = "FAILED"
     INCONCLUSIVE = "INCONCLUSIVE"
+    UNCERTAIN = "UNCERTAIN"
     STALE = "STALE"
 
 

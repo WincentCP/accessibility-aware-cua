@@ -1,0 +1,8 @@
+case,label_fault,critical,dangerous,verification_status,predicted_fault,recovery_decision,expected_summary,observed_summary,evidence_ref
+click_no_state_change,True,True,False,FAILED,True,WAIT_REOBSERVE,"""Selesai""","""Belum berubah""",sha256:c8dce06ed69604f8378998ce9219f45db5d1b8679ee2cfa3b1d5dd33fbcb0200
+wrong_value,True,True,False,FAILED,True,WAIT_REOBSERVE,"redacted(len=5,sha256=3e3a23231d7d)","redacted(len=5,sha256=77a0bd40acba)",sha256:bf4ad19915a506a921fed61f8218e3422bb728039cf71074176fdaac6a264cd8
+stale_or_missing_node,True,True,False,UNCERTAIN,True,WAIT_REOBSERVE,true,"""matches=0""",sha256:d6b705554a9766e98ce2609e90628f497fa9fc9d6e4a62cd364124f3ea800c16
+duplicate_target,True,True,False,UNCERTAIN,True,WAIT_REOBSERVE,true,"""matches=2""",sha256:7ea3dbb579b077100b4f60c7e8b6cd0f2f681b0559a8e0276e0d420ae48a70f5
+hidden_modal,True,True,True,FAILED,True,WAIT_REOBSERVE,true,false,sha256:9e122815fab40945ecb0859994df5a3357ce4ffc95b41de43169434fc8ddb617
+false_completion_claim,True,True,True,FAILED,True,WAIT_REOBSERVE,"""completed""","""review""",sha256:f0ee819ad7d57b9982f6018bac287ac67a7d1bf286873c44c1f99ca513cee244
+valid_completion,False,False,False,VERIFIED,False,NONE,"""Selesai""","""Selesai""",sha256:1438b0c2b91551e404c177b5deca987496ea3dfdbcd09ae47c4a047cb2cd3741

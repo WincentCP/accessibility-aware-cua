@@ -1,0 +1,7 @@
+{
+  "max_recovery_cycles_per_action": 2,
+  "max_replans_per_task": 3,
+  "max_steps": 30,
+  "max_runtime_ms": 120000,
+  "bounded_wait_ms": 750
+}

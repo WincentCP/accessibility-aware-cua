@@ -22,6 +22,7 @@ export type VerificationStatus =
   | "VERIFIED"
   | "FAILED"
   | "INCONCLUSIVE"
+  | "UNCERTAIN"
   | "STALE";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
