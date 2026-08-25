@@ -1,0 +1,22 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #17202a;
+  background: #f3f6f9;
+  line-height: 1.5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { display: grid; gap: 1rem; padding: 1rem; }
+header, section { padding: 1rem; border: 1px solid #96a3af; border-radius: .5rem; background: #fff; }
+h1 { margin: .2rem 0; font-size: 1.55rem; }
+h2 { margin-top: 0; font-size: 1.15rem; }
+.eyebrow { margin: 0; color: #53606d; font-weight: 750; text-transform: uppercase; }
+label { display: block; font-weight: 700; }
+textarea { width: 100%; margin-top: .4rem; padding: .6rem; border: 2px solid #677685; border-radius: .3rem; font: inherit; }
+.button-row, .control-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin-top: .75rem; }
+button { min-height: 2.8rem; padding: .55rem; border: 2px solid #004b91; border-radius: .3rem; background: #075db7; color: #fff; font: inherit; font-weight: 750; }
+button:disabled { border-color: #6c7782; background: #dfe5eb; color: #3e4852; }
+a:focus-visible, button:focus-visible, textarea:focus-visible { outline: 4px solid #ffbf47; outline-offset: 2px; }
+.skip-link { position: absolute; left: .5rem; top: -4rem; padding: .5rem; background: #111; color: #fff; }
+.skip-link:focus { top: .5rem; }
+#voice-help { font-size: .9rem; color: #46515c; }
