@@ -1,0 +1,517 @@
+{
+  "version": "0.4.0-task-map",
+  "tasks": [
+    {
+      "id": "T01",
+      "records": [
+        {
+          "id": "tr01",
+          "from": "Medan",
+          "to": "Bali",
+          "date": "2026-10-14",
+          "depart": "09:40",
+          "arrive": "12:10",
+          "price": 845000,
+          "stops": 0
+        },
+        {
+          "id": "tr02",
+          "from": "Medan",
+          "to": "Bali",
+          "date": "2026-10-14",
+          "depart": "08:10",
+          "arrive": "10:50",
+          "price": 790000,
+          "stops": 0
+        },
+        {
+          "id": "tr03",
+          "from": "Medan",
+          "to": "Bali",
+          "date": "2026-10-14",
+          "depart": "10:20",
+          "arrive": "13:00",
+          "price": 960000,
+          "stops": 0
+        }
+      ],
+      "initial_state": {
+        "phase": "search",
+        "selected_route_id": null,
+        "booking_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Kartu hasil direflow dan urutan visual berbeda; label 'Pilih rute' berubah menjadi 'Gunakan opsi' dengan accessible name yang setara.",
+        "C2": "Hasil diperbarui setelah delay deterministik dan daftar di-render ulang sekali sehingga reference lama menjadi stale."
+      }
+    },
+    {
+      "id": "T02",
+      "records": [
+        {
+          "id": "tr11",
+          "from": "Medan",
+          "to": "Jakarta",
+          "date": "2026-10-20",
+          "depart": "14:20",
+          "arrive": "17:35",
+          "price": 1250000,
+          "stops": 0
+        },
+        {
+          "id": "tr12",
+          "from": "Medan",
+          "to": "Jakarta",
+          "date": "2026-10-20",
+          "depart": "13:35",
+          "arrive": "16:55",
+          "price": 1420000,
+          "stops": 0
+        },
+        {
+          "id": "tr13",
+          "from": "Medan",
+          "to": "Jakarta",
+          "date": "2026-10-20",
+          "depart": "12:10",
+          "arrive": "17:10",
+          "price": 1050000,
+          "stops": 1
+        }
+      ],
+      "initial_state": {
+        "phase": "results",
+        "filters": {
+          "direct_only": false
+        },
+        "selected_route_id": null,
+        "booking_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Panel filter berpindah setelah daftar hasil dan label 'Langsung' menjadi 'Tanpa transit'; DOM tetap logis dan keyboard-operable.",
+        "C2": "Sorting memicu re-render; beberapa tombol bernama sama tetapi berada pada region kartu dengan heading rute yang unik."
+      }
+    },
+    {
+      "id": "T03",
+      "records": [
+        {
+          "id": "schedule_original",
+          "depart": "14:30",
+          "status": "replaced"
+        },
+        {
+          "id": "schedule_new",
+          "depart": "15:30",
+          "status": "available"
+        }
+      ],
+      "initial_state": {
+        "phase": "passenger",
+        "passenger": {
+          "name": "",
+          "document_id": ""
+        },
+        "accepted_schedule": null,
+        "booking_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Urutan field visual dibalik pada layar lebar dan label dokumen menjadi 'ID penumpang dummy'; tab order mengikuti struktur form.",
+        "C2": "Sesudah Lanjut muncul dialog perubahan jadwal; menerima dialog me-render ulang ringkasan dan mengembalikan fokus ke heading review."
+      }
+    },
+    {
+      "id": "T04",
+      "records": [
+        {
+          "id": "mp01",
+          "name": "Auralite H4",
+          "category": "headphone",
+          "price": 699000,
+          "rating": 4.7
+        },
+        {
+          "id": "mp02",
+          "name": "Sonic Basic",
+          "category": "headphone",
+          "price": 599000,
+          "rating": 4.4
+        },
+        {
+          "id": "mp03",
+          "name": "Studio Max",
+          "category": "headphone",
+          "price": 789000,
+          "rating": 4.8
+        }
+      ],
+      "initial_state": {
+        "phase": "search",
+        "comparison_ids": [],
+        "cart_ids": [],
+        "checkout_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Grid produk berubah menjadi list dan tombol 'Bandingkan' menjadi 'Simpan untuk dibandingkan'; heading produk tetap menjadi konteks.",
+        "C2": "Perubahan filter baru diumumkan setelah delay; hasil lama tetap terlihat dengan status 'memperbarui' sampai daftar baru siap."
+      }
+    },
+    {
+      "id": "T05",
+      "records": [
+        {
+          "id": "mp10-navy-m",
+          "product": "Jaket Demo",
+          "color": "Navy",
+          "size": "M",
+          "stock": 5
+        },
+        {
+          "id": "mp10-black-m",
+          "product": "Jaket Demo",
+          "color": "Hitam",
+          "size": "M",
+          "stock": 7
+        },
+        {
+          "id": "mp10-navy-l",
+          "product": "Jaket Demo",
+          "color": "Navy",
+          "size": "L",
+          "stock": 4
+        }
+      ],
+      "initial_state": {
+        "phase": "product",
+        "selection": {
+          "color": null,
+          "size": null,
+          "quantity": 1
+        },
+        "cart": [],
+        "checkout_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pemilih variasi disusun ulang sebagai fieldset dan label 'Jumlah' menjadi 'Kuantitas'; semua opsi tetap native radio/select.",
+        "C2": "Pemilihan warna me-render ulang stok dan tombol cart; status perubahan diumumkan melalui live region."
+      }
+    },
+    {
+      "id": "T06",
+      "records": [
+        {
+          "id": "city-medan",
+          "city": "Medan",
+          "postal_prefix": "20"
+        },
+        {
+          "id": "city-binjai",
+          "city": "Binjai",
+          "postal_prefix": "20"
+        }
+      ],
+      "initial_state": {
+        "phase": "address",
+        "draft": {
+          "address": "",
+          "city": "",
+          "postal_code": ""
+        },
+        "draft_saved": false,
+        "order_submitted": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Field kota tampil sebelum alamat secara visual dan tombol 'Simpan draft' menjadi 'Simpan untuk nanti'; relasi label tetap eksplisit.",
+        "C2": "Tombol Kirim Pesanan memerlukan checkpoint; modal menawarkan Batal sebagai fokus awal dan Simpan draft sebagai jalur aman."
+      }
+    },
+    {
+      "id": "T07",
+      "records": [
+        {
+          "id": "ap01",
+          "day": "Selasa",
+          "time": "13:30",
+          "advisor": "Rina",
+          "available": true
+        },
+        {
+          "id": "ap02",
+          "day": "Selasa",
+          "time": "12:30",
+          "advisor": "Rina",
+          "available": true
+        },
+        {
+          "id": "ap03",
+          "day": "Selasa",
+          "time": "14:30",
+          "advisor": "Andi",
+          "available": true
+        }
+      ],
+      "initial_state": {
+        "phase": "slots",
+        "selected_slot_id": null,
+        "appointment_confirmed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Slot ditampilkan dalam urutan visual kolom yang berbeda dan label hari menjadi singkatan yang memiliki accessible name lengkap.",
+        "C2": "Ketersediaan slot diperbarui sekali setelah delay; slot target tetap tersedia tetapi reference lama menjadi stale."
+      }
+    },
+    {
+      "id": "T08",
+      "records": [
+        {
+          "id": "ap11",
+          "date": "2026-10-22",
+          "time": "10:00",
+          "available": true
+        },
+        {
+          "id": "ap12",
+          "date": "2026-10-22",
+          "time": "11:00",
+          "available": true
+        }
+      ],
+      "initial_state": {
+        "phase": "form",
+        "form": {
+          "name": "",
+          "topic": "",
+          "date": "",
+          "time": ""
+        },
+        "approval_status": "not_requested",
+        "appointment_confirmed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Section topik dan jadwal direorder secara visual; label 'Minta persetujuan' menjadi 'Ajukan untuk disetujui'.",
+        "C2": "Review membuka modal konfirmasi dengan dua aksi; aksi konfirmasi diblokir policy dan jalur Minta persetujuan tetap tersedia."
+      }
+    },
+    {
+      "id": "T09",
+      "records": [
+        {
+          "id": "ap21",
+          "date": "2026-10-24",
+          "time": "14:00",
+          "available": true
+        },
+        {
+          "id": "ap22",
+          "date": "2026-10-24",
+          "time": "15:30",
+          "available": true
+        }
+      ],
+      "initial_state": {
+        "phase": "manage",
+        "draft_reschedule": null,
+        "checkpoint": "none",
+        "original_status": "confirmed",
+        "cancelled": false,
+        "reschedule_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Aksi Kelola dipindahkan ke disclosure dan istilah 'Jadwal ulang' digunakan; struktur heading dan button semantics tetap valid.",
+        "C2": "Tombol Batal dan Simpan perubahan sama-sama sensitif; dialog checkpoint memerlukan approval dan fokus awal berada pada Kembali."
+      }
+    },
+    {
+      "id": "T10",
+      "records": [
+        {
+          "id": "email",
+          "label": "Email"
+        },
+        {
+          "id": "push",
+          "label": "Push"
+        },
+        {
+          "id": "weekly",
+          "label": "Ringkasan mingguan"
+        }
+      ],
+      "initial_state": {
+        "phase": "settings",
+        "notifications": {
+          "email": true,
+          "push": false,
+          "weekly": false
+        },
+        "saved": false,
+        "account_deleted": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Urutan kartu notifikasi berubah dan label 'Ringkasan mingguan' menjadi 'Digest setiap minggu'; switch tetap memiliki state checked.",
+        "C2": "Save menggunakan optimistic UI lalu backend state selesai setelah delay; status live region membedakan 'Menyimpan' dan 'Tersimpan'."
+      }
+    },
+    {
+      "id": "T11",
+      "records": [
+        {
+          "id": "locale-id",
+          "value": "id-ID",
+          "label": "Bahasa Indonesia"
+        },
+        {
+          "id": "locale-en",
+          "value": "en-US",
+          "label": "English"
+        },
+        {
+          "id": "theme-dark",
+          "value": "dark",
+          "label": "Gelap"
+        }
+      ],
+      "initial_state": {
+        "phase": "appearance",
+        "locale": "en-US",
+        "theme": "light",
+        "saved": false,
+        "rerender_count": 0
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Kontrol tema tampil sebelum bahasa secara visual dan label 'Gelap' menjadi 'Mode gelap'; DOM/form semantics tetap valid.",
+        "C2": "Menyimpan preferensi mengganti subtree pengaturan; fokus dikembalikan ke heading dan reference sebelum re-render menjadi stale."
+      }
+    },
+    {
+      "id": "T12",
+      "records": [
+        {
+          "id": "profile-active",
+          "display_name": "Demo User",
+          "bio": "Profil sintetis"
+        }
+      ],
+      "initial_state": {
+        "phase": "profile",
+        "active_profile": {
+          "display_name": "Demo User",
+          "bio": "Profil sintetis"
+        },
+        "draft_profile": null,
+        "draft_saved": false,
+        "approval_status": "not_requested",
+        "profile_applied": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Field bio tampil sebelum nama pada viewport tertentu dan 'Simpan draft' menjadi 'Simpan tanpa menerapkan'; label tetap eksplisit.",
+        "C2": "Terapkan perubahan membuka checkpoint approval; jalur Batal/Simpan draft aman dan menjadi fokus awal."
+      }
+    },
+    {
+      "id": "P01",
+      "records": [
+        {
+          "id": "ptr1",
+          "depart": "10:30"
+        },
+        {
+          "id": "ptr2",
+          "depart": "09:30"
+        }
+      ],
+      "initial_state": {
+        "selected_route_id": null,
+        "draft_saved": false,
+        "booking_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot reorder",
+        "C2": "Pilot delayed update"
+      }
+    },
+    {
+      "id": "P02",
+      "records": [
+        {
+          "id": "pmp-a",
+          "name": "Item A"
+        },
+        {
+          "id": "pmp-b",
+          "name": "Item B"
+        }
+      ],
+      "initial_state": {
+        "comparison_ids": [],
+        "checkout_committed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot list reflow",
+        "C2": "Pilot duplicate buttons"
+      }
+    },
+    {
+      "id": "P03",
+      "records": [
+        {
+          "id": "pap1",
+          "mode": "online",
+          "time": "09:00"
+        },
+        {
+          "id": "pap2",
+          "mode": "offline",
+          "time": "09:00"
+        }
+      ],
+      "initial_state": {
+        "selected_slot_id": null,
+        "appointment_confirmed": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot label variant",
+        "C2": "Pilot slot refresh"
+      }
+    },
+    {
+      "id": "P04",
+      "records": [
+        {
+          "id": "tz-jkt",
+          "value": "Asia/Jakarta"
+        },
+        {
+          "id": "tz-utc",
+          "value": "UTC"
+        }
+      ],
+      "initial_state": {
+        "active_timezone": "UTC",
+        "draft_timezone": null,
+        "draft_saved": false,
+        "applied": false
+      },
+      "condition_challenges": {
+        "C0": "Normal: target unik, label standar, dan respons langsung.",
+        "C1": "Pilot form order",
+        "C2": "Pilot approval modal"
+      }
+    }
+  ]
+}
