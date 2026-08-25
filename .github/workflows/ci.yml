@@ -43,6 +43,7 @@ jobs:
       - run: python -m pytest -q
       - run: python scripts/validate_stage6.py
       - run: python scripts/validate_stage7.py
+      - run: python scripts/validate_stage8.py
       - run: python scripts/check_dependencies.py
       - run: npm run test:frontend
       - run: npm run test:e2e

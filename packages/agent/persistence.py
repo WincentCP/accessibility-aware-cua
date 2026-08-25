@@ -43,14 +43,14 @@ class AuditRepository:
             yield connection
 
     def migrate(self) -> None:
-        sql = (MIGRATION_DIR / "001_stage6_up.sql").read_text(encoding="utf-8")
         with self.connection() as connection:
-            connection.execute(sql)
+            for migration in sorted(MIGRATION_DIR.glob("*_up.sql")):
+                connection.execute(migration.read_text(encoding="utf-8"))
 
     def rollback(self) -> None:
-        sql = (MIGRATION_DIR / "001_stage6_down.sql").read_text(encoding="utf-8")
         with self.connection() as connection:
-            connection.execute(sql)
+            for migration in sorted(MIGRATION_DIR.glob("*_down.sql"), reverse=True):
+                connection.execute(migration.read_text(encoding="utf-8"))
 
     def start_session(
         self, *, session_id: UUID, thread_id: str, input_modality: InputModality

@@ -1,0 +1,289 @@
+case_id,repeat,primitive,success,error_code,duration_ms,observation_version,target_role,target_name,locator_summary
+T01-C0,1,focus,True,NONE,32,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={}"
+T01-C0,1,scroll,True,NONE,67,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C0,1,wait,True,NONE,3,1,,,
+T01-C0,1,activate,True,NONE,45,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C1,1,focus,True,NONE,39,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={}"
+T01-C1,1,scroll,True,NONE,57,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C1,1,wait,True,NONE,2,1,,,
+T01-C1,1,activate,True,NONE,35,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C2,1,focus,True,NONE,24,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={}"
+T01-C2,1,scroll,True,NONE,42,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C2,1,wait,True,NONE,2,1,,,
+T01-C2,1,activate,True,NONE,61,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T02-C0,1,focus,True,NONE,23,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={}"
+T02-C0,1,scroll,True,NONE,48,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C0,1,wait,True,NONE,2,1,,,
+T02-C0,1,activate,True,NONE,31,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C1,1,focus,True,NONE,25,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={}"
+T02-C1,1,scroll,True,NONE,41,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C1,1,wait,True,NONE,2,1,,,
+T02-C1,1,activate,True,NONE,34,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C2,1,focus,True,NONE,33,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={}"
+T02-C2,1,scroll,True,NONE,43,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C2,1,wait,True,NONE,2,1,,,
+T02-C2,1,activate,True,NONE,55,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T03-C0,1,focus,True,NONE,31,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={}"
+T03-C0,1,scroll,True,NONE,48,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C0,1,wait,True,NONE,2,1,,,
+T03-C0,1,activate,True,NONE,37,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C1,1,focus,True,NONE,18,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={}"
+T03-C1,1,scroll,True,NONE,44,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C1,1,wait,True,NONE,2,1,,,
+T03-C1,1,activate,True,NONE,27,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C2,1,focus,True,NONE,24,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={}"
+T03-C2,1,scroll,True,NONE,56,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C2,1,wait,True,NONE,2,1,,,
+T03-C2,1,activate,True,NONE,27,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T04-C0,1,focus,True,NONE,46,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={}"
+T04-C0,1,scroll,True,NONE,41,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C0,1,wait,True,NONE,2,1,,,
+T04-C0,1,activate,True,NONE,41,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C1,1,focus,True,NONE,30,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={}"
+T04-C1,1,scroll,True,NONE,54,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C1,1,wait,True,NONE,1,1,,,
+T04-C1,1,activate,True,NONE,44,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C2,1,focus,True,NONE,28,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={}"
+T04-C2,1,scroll,True,NONE,44,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C2,1,wait,True,NONE,3,1,,,
+T04-C2,1,activate,True,NONE,55,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T05-C0,1,focus,True,NONE,25,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={}"
+T05-C0,1,scroll,True,NONE,56,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C0,1,wait,True,NONE,1,1,,,
+T05-C0,1,activate,True,NONE,55,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C1,1,focus,True,NONE,41,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={}"
+T05-C1,1,scroll,True,NONE,60,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C1,1,wait,True,NONE,2,1,,,
+T05-C1,1,activate,True,NONE,60,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C2,1,focus,True,NONE,38,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={}"
+T05-C2,1,scroll,True,NONE,45,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C2,1,wait,True,NONE,3,1,,,
+T05-C2,1,activate,True,NONE,76,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T06-C0,1,focus,True,NONE,40,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={}"
+T06-C0,1,scroll,True,NONE,44,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C0,1,wait,True,NONE,2,1,,,
+T06-C0,1,activate,True,NONE,29,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C1,1,focus,True,NONE,26,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={}"
+T06-C1,1,scroll,True,NONE,78,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C1,1,wait,True,NONE,29,1,,,
+T06-C1,1,activate,True,NONE,35,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C2,1,focus,True,NONE,34,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={}"
+T06-C2,1,scroll,True,NONE,60,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C2,1,wait,True,NONE,2,1,,,
+T06-C2,1,activate,True,NONE,106,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T07-C0,1,focus,True,NONE,27,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={}"
+T07-C0,1,scroll,True,NONE,89,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C0,1,wait,True,NONE,3,1,,,
+T07-C0,1,activate,True,NONE,108,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C1,1,focus,True,NONE,28,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={}"
+T07-C1,1,scroll,True,NONE,44,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C1,1,wait,True,NONE,2,1,,,
+T07-C1,1,activate,True,NONE,45,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C2,1,focus,True,NONE,46,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={}"
+T07-C2,1,scroll,True,NONE,62,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C2,1,wait,True,NONE,2,1,,,
+T07-C2,1,activate,True,NONE,45,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T08-C0,1,focus,True,NONE,31,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={}"
+T08-C0,1,scroll,True,NONE,45,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C0,1,wait,True,NONE,2,1,,,
+T08-C0,1,activate,True,NONE,47,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C1,1,focus,True,NONE,19,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={}"
+T08-C1,1,scroll,True,NONE,61,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C1,1,wait,True,NONE,2,1,,,
+T08-C1,1,activate,True,NONE,42,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C2,1,focus,True,NONE,33,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={}"
+T08-C2,1,scroll,True,NONE,43,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C2,1,wait,True,NONE,2,1,,,
+T08-C2,1,activate,True,NONE,35,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T09-C0,1,focus,True,NONE,30,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={}"
+T09-C0,1,scroll,True,NONE,49,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C0,1,wait,True,NONE,2,1,,,
+T09-C0,1,activate,True,NONE,40,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C1,1,focus,True,NONE,29,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={}"
+T09-C1,1,scroll,True,NONE,46,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C1,1,wait,True,NONE,2,1,,,
+T09-C1,1,activate,True,NONE,24,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C2,1,focus,True,NONE,19,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={}"
+T09-C2,1,scroll,True,NONE,62,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C2,1,wait,True,NONE,2,1,,,
+T09-C2,1,activate,True,NONE,39,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T10-C0,1,focus,True,NONE,34,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={}"
+T10-C0,1,scroll,True,NONE,39,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C0,1,wait,True,NONE,2,1,,,
+T10-C0,1,activate,True,NONE,35,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C1,1,focus,True,NONE,29,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={}"
+T10-C1,1,scroll,True,NONE,52,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C1,1,wait,True,NONE,3,1,,,
+T10-C1,1,activate,True,NONE,37,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C2,1,focus,True,NONE,30,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={}"
+T10-C2,1,scroll,True,NONE,52,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C2,1,wait,True,NONE,2,1,,,
+T10-C2,1,activate,True,NONE,694,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T11-C0,1,focus,True,NONE,19,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={}"
+T11-C0,1,scroll,True,NONE,45,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C0,1,wait,True,NONE,2,1,,,
+T11-C0,1,activate,True,NONE,39,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C1,1,focus,True,NONE,19,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={}"
+T11-C1,1,scroll,True,NONE,35,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C1,1,wait,True,NONE,2,1,,,
+T11-C1,1,activate,True,NONE,35,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C2,1,focus,True,NONE,21,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={}"
+T11-C2,1,scroll,True,NONE,29,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C2,1,wait,True,NONE,2,1,,,
+T11-C2,1,activate,True,NONE,685,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T12-C0,1,focus,True,NONE,19,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={}"
+T12-C0,1,scroll,True,NONE,55,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C0,1,wait,True,NONE,2,1,,,
+T12-C0,1,activate,True,NONE,26,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C1,1,focus,True,NONE,20,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={}"
+T12-C1,1,scroll,True,NONE,47,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C1,1,wait,True,NONE,2,1,,,
+T12-C1,1,activate,True,NONE,30,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C2,1,focus,True,NONE,22,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={}"
+T12-C2,1,scroll,True,NONE,64,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C2,1,wait,True,NONE,2,1,,,
+T12-C2,1,activate,True,NONE,30,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T01-C0,2,focus,True,NONE,21,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={}"
+T01-C0,2,scroll,True,NONE,44,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C0,2,wait,True,NONE,2,1,,,
+T01-C0,2,activate,True,NONE,28,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C1,2,focus,True,NONE,19,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={}"
+T01-C1,2,scroll,True,NONE,62,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C1,2,wait,True,NONE,2,1,,,
+T01-C1,2,activate,True,NONE,24,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C2,2,focus,True,NONE,24,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={}"
+T01-C2,2,scroll,True,NONE,54,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T01-C2,2,wait,True,NONE,2,1,,,
+T01-C2,2,activate,True,NONE,29,1,button,Simpan pilihan dan buka review,"role=button name=""Simpan pilihan dan buka review"" states={""focused"": true}"
+T02-C0,2,focus,True,NONE,37,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={}"
+T02-C0,2,scroll,True,NONE,38,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C0,2,wait,True,NONE,2,1,,,
+T02-C0,2,activate,True,NONE,39,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C1,2,focus,True,NONE,25,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={}"
+T02-C1,2,scroll,True,NONE,45,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C1,2,wait,True,NONE,8,1,,,
+T02-C1,2,activate,True,NONE,38,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C2,2,focus,True,NONE,24,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={}"
+T02-C2,2,scroll,True,NONE,58,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T02-C2,2,wait,True,NONE,2,1,,,
+T02-C2,2,activate,True,NONE,33,1,button,Terapkan filter dan buka review,"role=button name=""Terapkan filter dan buka review"" states={""focused"": true}"
+T03-C0,2,focus,True,NONE,20,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={}"
+T03-C0,2,scroll,True,NONE,54,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C0,2,wait,True,NONE,3,1,,,
+T03-C0,2,activate,True,NONE,24,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C1,2,focus,True,NONE,21,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={}"
+T03-C1,2,scroll,True,NONE,35,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C1,2,wait,True,NONE,2,1,,,
+T03-C1,2,activate,True,NONE,23,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C2,2,focus,True,NONE,35,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={}"
+T03-C2,2,scroll,True,NONE,36,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T03-C2,2,wait,True,NONE,1,1,,,
+T03-C2,2,activate,True,NONE,26,1,button,Simpan data dummy dan lanjut ke review,"role=button name=""Simpan data dummy dan lanjut ke review"" states={""focused"": true}"
+T04-C0,2,focus,True,NONE,22,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={}"
+T04-C0,2,scroll,True,NONE,58,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C0,2,wait,True,NONE,2,1,,,
+T04-C0,2,activate,True,NONE,29,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C1,2,focus,True,NONE,20,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={}"
+T04-C1,2,scroll,True,NONE,46,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C1,2,wait,True,NONE,2,1,,,
+T04-C1,2,activate,True,NONE,27,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C2,2,focus,True,NONE,49,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={}"
+T04-C2,2,scroll,True,NONE,42,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T04-C2,2,wait,True,NONE,2,1,,,
+T04-C2,2,activate,True,NONE,28,1,button,Simpan ke perbandingan,"role=button name=""Simpan ke perbandingan"" states={""focused"": true}"
+T05-C0,2,focus,True,NONE,21,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={}"
+T05-C0,2,scroll,True,NONE,60,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C0,2,wait,True,NONE,2,1,,,
+T05-C0,2,activate,True,NONE,44,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C1,2,focus,True,NONE,19,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={}"
+T05-C1,2,scroll,True,NONE,60,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C1,2,wait,True,NONE,2,1,,,
+T05-C1,2,activate,True,NONE,24,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C2,2,focus,True,NONE,20,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={}"
+T05-C2,2,scroll,True,NONE,66,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T05-C2,2,wait,True,NONE,2,1,,,
+T05-C2,2,activate,True,NONE,58,1,button,Tambahkan ke cart sintetis,"role=button name=""Tambahkan ke cart sintetis"" states={""focused"": true}"
+T06-C0,2,focus,True,NONE,17,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={}"
+T06-C0,2,scroll,True,NONE,60,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C0,2,wait,True,NONE,2,1,,,
+T06-C0,2,activate,True,NONE,23,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C1,2,focus,True,NONE,21,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={}"
+T06-C1,2,scroll,True,NONE,59,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C1,2,wait,True,NONE,4,1,,,
+T06-C1,2,activate,True,NONE,36,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C2,2,focus,True,NONE,30,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={}"
+T06-C2,2,scroll,True,NONE,41,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T06-C2,2,wait,True,NONE,2,1,,,
+T06-C2,2,activate,True,NONE,30,1,button,Simpan sebagai draft,"role=button name=""Simpan sebagai draft"" states={""focused"": true}"
+T07-C0,2,focus,True,NONE,77,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={}"
+T07-C0,2,scroll,True,NONE,39,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C0,2,wait,True,NONE,2,1,,,
+T07-C0,2,activate,True,NONE,34,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C1,2,focus,True,NONE,23,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={}"
+T07-C1,2,scroll,True,NONE,41,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C1,2,wait,True,NONE,2,1,,,
+T07-C1,2,activate,True,NONE,36,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C2,2,focus,True,NONE,24,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={}"
+T07-C2,2,scroll,True,NONE,48,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T07-C2,2,wait,True,NONE,2,1,,,
+T07-C2,2,activate,True,NONE,26,1,button,Simpan slot untuk review,"role=button name=""Simpan slot untuk review"" states={""focused"": true}"
+T08-C0,2,focus,True,NONE,19,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={}"
+T08-C0,2,scroll,True,NONE,32,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C0,2,wait,True,NONE,2,1,,,
+T08-C0,2,activate,True,NONE,39,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C1,2,focus,True,NONE,24,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={}"
+T08-C1,2,scroll,True,NONE,51,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C1,2,wait,True,NONE,2,1,,,
+T08-C1,2,activate,True,NONE,33,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C2,2,focus,True,NONE,73,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={}"
+T08-C2,2,scroll,True,NONE,40,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T08-C2,2,wait,True,NONE,2,1,,,
+T08-C2,2,activate,True,NONE,80,1,button,Simpan form dan minta approval,"role=button name=""Simpan form dan minta approval"" states={""focused"": true}"
+T09-C0,2,focus,True,NONE,19,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={}"
+T09-C0,2,scroll,True,NONE,32,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C0,2,wait,True,NONE,2,1,,,
+T09-C0,2,activate,True,NONE,24,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C1,2,focus,True,NONE,29,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={}"
+T09-C1,2,scroll,True,NONE,46,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C1,2,wait,True,NONE,2,1,,,
+T09-C1,2,activate,True,NONE,24,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C2,2,focus,True,NONE,24,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={}"
+T09-C2,2,scroll,True,NONE,53,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T09-C2,2,wait,True,NONE,2,1,,,
+T09-C2,2,activate,True,NONE,41,1,button,Simpan draft di checkpoint approval,"role=button name=""Simpan draft di checkpoint approval"" states={""focused"": true}"
+T10-C0,2,focus,True,NONE,21,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={}"
+T10-C0,2,scroll,True,NONE,59,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C0,2,wait,True,NONE,2,1,,,
+T10-C0,2,activate,True,NONE,35,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C1,2,focus,True,NONE,22,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={}"
+T10-C1,2,scroll,True,NONE,54,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C1,2,wait,True,NONE,2,1,,,
+T10-C1,2,activate,True,NONE,48,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C2,2,focus,True,NONE,31,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={}"
+T10-C2,2,scroll,True,NONE,37,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T10-C2,2,wait,True,NONE,2,1,,,
+T10-C2,2,activate,True,NONE,687,1,button,Simpan preferensi notifikasi,"role=button name=""Simpan preferensi notifikasi"" states={""focused"": true}"
+T11-C0,2,focus,True,NONE,19,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={}"
+T11-C0,2,scroll,True,NONE,57,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C0,2,wait,True,NONE,2,1,,,
+T11-C0,2,activate,True,NONE,55,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C1,2,focus,True,NONE,22,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={}"
+T11-C1,2,scroll,True,NONE,61,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C1,2,wait,True,NONE,2,1,,,
+T11-C1,2,activate,True,NONE,44,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C2,2,focus,True,NONE,18,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={}"
+T11-C2,2,scroll,True,NONE,31,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T11-C2,2,wait,True,NONE,1,1,,,
+T11-C2,2,activate,True,NONE,686,1,button,Terapkan dan render ulang,"role=button name=""Terapkan dan render ulang"" states={""focused"": true}"
+T12-C0,2,focus,True,NONE,22,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={}"
+T12-C0,2,scroll,True,NONE,63,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C0,2,wait,True,NONE,2,1,,,
+T12-C0,2,activate,True,NONE,52,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C1,2,focus,True,NONE,22,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={}"
+T12-C1,2,scroll,True,NONE,48,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C1,2,wait,True,NONE,2,1,,,
+T12-C1,2,activate,True,NONE,26,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C2,2,focus,True,NONE,37,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={}"
+T12-C2,2,scroll,True,NONE,32,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"
+T12-C2,2,wait,True,NONE,2,1,,,
+T12-C2,2,activate,True,NONE,25,1,button,Simpan draft profil,"role=button name=""Simpan draft profil"" states={""focused"": true}"

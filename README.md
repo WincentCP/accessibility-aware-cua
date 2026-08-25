@@ -8,9 +8,10 @@ Status saat ini: Tahap 3 sudah mengunci benchmark; Tahap 4–5 sudah memiliki
 skeleton aplikasi, extension MV3, empat mini-site lokal, reset deterministik,
 hidden oracle, dan test browser. Tahap 6 menambahkan kontrak state tertutup,
 audit trail PostgreSQL, privasi/retensi, serta checkpoint LangGraph tahan-restart.
-Tahap 7 menambahkan observer accessibility tree, snapshot semantik ringkas,
-observation-scoped references, stale/ambiguity errors, serta golden snapshot
-untuk 36 kasus. Planner dan eksekusi aksi browser tetap tahap berikutnya.
+Tahap 7 menambahkan observer accessibility tree dan snapshot semantik ringkas.
+Tahap 8 menambahkan resolver target semantik dan executor deterministik berbasis
+keyboard dengan policy gate, stale-snapshot guard, serta audit log lengkap.
+Planner dan verifikasi pasca-aksi tetap tahap berikutnya.
 
 ## Yang sudah bisa dibuka
 
@@ -112,6 +113,7 @@ python -m ruff check a11y_benchmark apps packages scripts tests
 python -m pytest -q
 python scripts/validate_stage6.py
 python scripts/validate_stage7.py
+python scripts/validate_stage8.py
 npm run test:frontend
 npm run browser:smoke
 npm run test:e2e
@@ -121,7 +123,9 @@ python scripts/validate_stage4_5.py --with-browser
 Validator normal mencetak hasil machine-readable tanpa mengubah file. Khusus
 baseline Tahap 7, `python scripts/validate_stage7.py --update-assets` memperbarui
 36 golden ARIA snapshot dan dua laporan pengukuran yang memang menjadi bukti
-sistem. CI menjalankan PostgreSQL nyata, migration v1, simulasi restart
+sistem. Baseline Tahap 8 diperbarui dengan
+`python scripts/validate_stage8.py --update-assets`; laporan mencakup 288 aksi
+primitif berulang pada 36 kasus. CI menjalankan PostgreSQL nyata, migration, simulasi restart
 checkpoint LangGraph, observer Chromium, extension build, Playwright, axe, dan
 keyboard smoke.
 

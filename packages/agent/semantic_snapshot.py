@@ -251,6 +251,18 @@ def _draft_payload(nodes: Iterable[DraftAXNode]) -> list[dict[str, Any]]:
     ]
 
 
+def semantic_content_hash(nodes: Iterable[DraftAXNode]) -> str:
+    """Hash normalized semantic content independent of observation refs/version."""
+
+    canonical = json.dumps(
+        _draft_payload(nodes),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def _state_boolean(states: dict[str, Any], key: str) -> bool | None:
     value = states.get(key)
     return value if isinstance(value, bool) else None
@@ -269,8 +281,7 @@ def build_observation(
 ) -> Observation:
     """Assign observation-scoped refs and construct the shared contract."""
 
-    canonical = json.dumps(_draft_payload(nodes), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    content_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    content_hash = semantic_content_hash(nodes)
     flattened: list[AXNode] = []
     focused_ref: str | None = None
     counter = 0
