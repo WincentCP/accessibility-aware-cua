@@ -22,6 +22,9 @@ Tahap 12 menambahkan task-map compiler verified-only, invalidasi reference stale
 extension MV3 dengan in-page landmark dan side panel, push-to-talk dengan review
 transkrip, serta shared-control keyboard. Gate otomatis PASS; gate NVDA Windows
 masih `PENDING_NVDA` dan sengaja tidak digantikan oleh axe/Playwright.
+Integrasi live berikutnya menghubungkan side panel, FastAPI, structured planner
+OpenAI, LangGraph, dan Chromium yang terlihat melalui loopback semantic bridge.
+API key tetap hanya di backend lokal; extension tidak menerima atau menyimpannya.
 
 ## Yang sudah bisa dibuka
 
@@ -82,7 +85,9 @@ python -m playwright install chromium
 ```
 
 Salin `.env.example` menjadi `.env`, lalu ganti `CUA_APP_SECRET` dengan string
-lokal acak minimal 24 karakter. Nilai contoh sengaja ditolak.
+lokal acak minimal 24 karakter. Untuk live agent, isi juga `OPENAI_API_KEY` di
+file `.env` lokal. Jangan menaruh key di source code, extension, screenshot, atau
+chat. Nilai contoh sengaja ditolak.
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
@@ -115,6 +120,12 @@ Runner memakai persistent profile khusus `.runtime/playwright-profile`, bukan
 profil Chrome pribadi. Input tujuan tersedia melalui teks atau push-to-talk
 menuju adaptor Whisper lokal. Transkrip wajib ditinjau sebelum digunakan dan
 penolakan izin mikrofon tidak mengurangi fungsi input teks.
+
+Perintah `browser:open` juga menyalakan semantic browser bridge pada
+`127.0.0.1:8765`. Di halaman task, pilih **Mulai dan buka asisten**, masukkan
+tujuan yang lengkap, lalu pilih **Jalankan**. Status, rencana, dan hanya progres
+yang lolos verifikasi pasca-aksi akan muncul di peta tugas. Lihat
+`docs/live_agent_quickstart.md` untuk urutan Windows dan batas implementasi.
 
 ## Semua quality gate
 

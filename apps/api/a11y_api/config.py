@@ -32,6 +32,10 @@ class Settings:
     database_url: str
     browser_profile_dir: Path
     browser_headless: bool
+    browser_bridge_url: str = "http://127.0.0.1:8765"
+    openai_api_key: str | None = None
+    planner_model: str = "gpt-4.1-mini-2025-04-14"
+    live_agent_enabled: bool = True
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -78,4 +82,10 @@ class Settings:
             ),
             browser_profile_dir=resolved_profile,
             browser_headless=_as_bool(os.getenv("CUA_BROWSER_HEADLESS", "false")),
+            browser_bridge_url=os.getenv(
+                "CUA_BROWSER_BRIDGE_URL", "http://127.0.0.1:8765"
+            ).rstrip("/"),
+            openai_api_key=os.getenv("OPENAI_API_KEY") or None,
+            planner_model=os.getenv("CUA_PLANNER_MODEL", "gpt-4.1-mini-2025-04-14"),
+            live_agent_enabled=_as_bool(os.getenv("CUA_LIVE_AGENT_ENABLED", "true")),
         )

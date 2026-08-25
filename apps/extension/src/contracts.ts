@@ -226,3 +226,15 @@ export interface AccessibleTaskMap {
   stale_invalidated_count: number;
   generated_at: string;
 }
+
+export type LiveRunStatus = "QUEUED" | "RUNNING" | "WAITING_USER" | "COMPLETED" | "FAILED" | "CANCELLED";
+
+export interface LiveRunResponse {
+  run_id: string;
+  benchmark_session_id: string;
+  task_id: string;
+  status: LiveRunStatus;
+  announcement: string;
+  task_map: AccessibleTaskMap | null;
+  error: string | null;
+}

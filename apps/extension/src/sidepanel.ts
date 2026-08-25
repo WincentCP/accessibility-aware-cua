@@ -1,5 +1,5 @@
 import "./styles.css";
-import type { AccessibleTaskMap, TaskMapItem } from "./contracts";
+import type { AccessibleTaskMap, LiveRunResponse, TaskMapItem } from "./contracts";
 import { sanitizeTaskMap } from "./task-map";
 import { postToWhisperAdapter, WhisperPushToTalkAdapter } from "./voice";
 
@@ -21,6 +21,8 @@ const editTranscript = byId<HTMLButtonElement>("edit-transcript");
 const submitGoal = byId<HTMLButtonElement>("submit-goal");
 const status = byId<HTMLElement>("status");
 const approvalAlert = byId<HTMLElement>("approval-alert");
+let activeRunId: string | null = null;
+let pollTimer: number | null = null;
 
 const announce = (message: string): void => { status.textContent = message; };
 
@@ -48,7 +50,10 @@ const renderTaskMap = (source: AccessibleTaskMap): void => {
   byId("final-summary").textContent = map.final_summary ?? "Tugas belum selesai.";
   approvalAlert.hidden = !map.control_state.approval_pending;
   approvalAlert.textContent = map.control_state.approval_pending
-    ? "Persetujuan diperlukan. Pilih Setujui, Ubah, atau Tolak." : "";
+    ? activeRunId
+      ? "Tindakan sensitif dihentikan dengan aman. Live MVP belum melanjutkan approval; pilih Tolak atau Batalkan."
+      : "Persetujuan diperlukan. Pilih Setujui, Ubah, atau Tolak."
+    : "";
   announce(invalidatedCount
     ? `Peta tugas diperbarui. ${invalidatedCount} item lama disembunyikan.`
     : `Peta tugas diperbarui. ${map.progress_label}`);
@@ -82,7 +87,26 @@ confirmTranscript.addEventListener("click", () => {
 });
 editTranscript.addEventListener("click", () => transcript.focus());
 
-submitGoal.addEventListener("click", () => {
+const applyLiveRun = (run: LiveRunResponse): void => {
+  activeRunId = run.run_id;
+  announce(run.error ? `${run.announcement} ${run.error}` : run.announcement);
+  if (run.task_map) renderTaskMap(run.task_map);
+  const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
+  if (terminal && pollTimer !== null) {
+    window.clearInterval(pollTimer);
+    pollTimer = null;
+    submitGoal.disabled = false;
+  }
+};
+
+const pollLiveRun = (): void => {
+  if (!activeRunId || typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
+  void chrome.runtime.sendMessage({ type: "GET_LIVE_RUN", runId: activeRunId }).then((result) => {
+    if (result?.success && result.run) applyLiveRun(result.run as LiveRunResponse);
+  });
+};
+
+submitGoal.addEventListener("click", async () => {
   const value = goal.value.trim();
   if (!value) {
     announce("Tujuan masih kosong. Ketik tujuan atau gunakan input suara.");
@@ -92,6 +116,18 @@ submitGoal.addEventListener("click", () => {
   byId("active-goal").textContent = value;
   announce("Tujuan diterima. Agen akan menampilkan tindakan sebagai direncanakan sebelum menjalankannya.");
   window.dispatchEvent(new CustomEvent("a11y-cua:goal", { detail: { goal: value } }));
+  if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
+  submitGoal.disabled = true;
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "START_LIVE_AGENT", goal: value });
+    if (!result?.success || !result.run) throw new Error(result?.error ?? "Live agent tidak dapat dimulai.");
+    applyLiveRun(result.run as LiveRunResponse);
+    if (pollTimer !== null) window.clearInterval(pollTimer);
+    pollTimer = window.setInterval(pollLiveRun, 750);
+  } catch (error) {
+    submitGoal.disabled = false;
+    announce(`Live agent belum berjalan. ${error instanceof Error ? error.message : String(error)}`);
+  }
 });
 
 const runCommand = (command: Command): void => {
@@ -101,9 +137,20 @@ const runCommand = (command: Command): void => {
     TAKE_OVER: "Mode ambil alih aktif. Fokus dikembalikan ke halaman web.",
     RESUME: "Agen dilanjutkan dari observasi baru.", CANCEL: "Tugas dibatalkan."
   };
+  if (activeRunId && (command === "APPROVE" || command === "EDIT")) {
+    announce(command === "APPROVE"
+      ? "Persetujuan live belum diaktifkan. Agen tetap berhenti dan tindakan tidak dijalankan."
+      : "Batalkan run ini terlebih dahulu, ubah tujuan, lalu jalankan kembali.");
+    if (command === "EDIT") goal.focus();
+    return;
+  }
   approvalAlert.hidden = true;
   announce(labels[command]);
   window.dispatchEvent(new CustomEvent("a11y-cua:command", { detail: { command } }));
+  if (activeRunId && typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+    const supported = command === "PAUSE" || command === "TAKE_OVER" || command === "RESUME" || command === "CANCEL" || command === "REJECT";
+    if (supported) void chrome.runtime.sendMessage({ type: "LIVE_COMMAND", runId: activeRunId, command });
+  }
   if (command === "EDIT") goal.focus();
 };
 

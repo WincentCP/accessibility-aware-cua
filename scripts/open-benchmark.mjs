@@ -5,6 +5,7 @@ import { resolve, sep } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import { chromium } from "playwright";
+import { startBrowserBridge } from "./browser-bridge.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const envPath = resolve(root, ".env");
@@ -75,11 +76,19 @@ const context = await chromium.launchPersistentContext(profile, { headless, args
 const page = context.pages()[0] ?? await context.newPage();
 const taskUrl = `${baseUrl}${reset.start_url}`;
 await page.goto(taskUrl, { waitUntil: "networkidle" });
+const bridgePort = Number(process.env.CUA_BROWSER_BRIDGE_PORT ?? 8765);
+const bridge = await startBrowserBridge({
+  page,
+  token: process.env.CUA_APP_SECRET,
+  port: bridgePort
+});
 console.log(`Membuka ${taskId} (${conditionId}, seed ${seed}) di ${taskUrl}`);
+console.log(`Live browser bridge siap di http://127.0.0.1:${bridgePort}`);
 console.log("Tekan Enter di terminal untuk menutup browser.");
 const readline = createInterface({ input: stdin, output: stdout });
 await readline.question("");
 readline.close();
+await bridge.close();
 await context.close().catch((error) => {
   if (!String(error).includes("Target page, context or browser has been closed")) throw error;
 });

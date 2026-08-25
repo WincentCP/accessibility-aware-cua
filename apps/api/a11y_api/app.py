@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from urllib.parse import parse_qs
+from uuid import UUID
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -18,6 +19,7 @@ from a11y_benchmark.manifests import final_seed
 from apps.api.a11y_api import APP_VERSION
 from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
+from packages.agent.live import LiveAgentManager
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
@@ -35,6 +37,15 @@ class ResetRequest(BaseModel):
     task_id: str = Field(pattern=r"^T(?:0[1-9]|1[0-2])$")
     condition_id: str = Field(pattern=r"^C[0-2]$")
     seed: int = Field(ge=0, le=2_147_483_647)
+
+
+class LiveRunRequest(BaseModel):
+    benchmark_session_id: str = Field(min_length=24, max_length=128)
+    goal: str = Field(min_length=1, max_length=4_000)
+
+
+class LiveCommandRequest(BaseModel):
+    command: str = Field(pattern=r"^(?:PAUSE|TAKE_OVER|RESUME|CANCEL|REJECT)$")
 
 
 def _postgres_health(settings: Settings) -> tuple[dict[str, str], bool]:
@@ -64,6 +75,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = active_settings
     app.state.case_store = CaseStore(active_settings.app_secret)
+    app.state.live_agent = LiveAgentManager(
+        settings=active_settings,
+        case_store=app.state.case_store,
+    )
     templates = Jinja2Templates(directory=PACKAGE_DIR / "templates")
     app.mount("/static", StaticFiles(directory=PACKAGE_DIR / "static"), name="static")
 
@@ -124,6 +139,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return app.state.case_store.reset(payload.task_id, payload.condition_id, payload.seed)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/agent/runs", tags=["agent"], status_code=202)
+    def start_live_run(payload: LiveRunRequest) -> dict:
+        try:
+            run = app.state.live_agent.start(
+                benchmark_session_id=payload.benchmark_session_id,
+                goal=payload.goal,
+            )
+            return app.state.live_agent.snapshot(run.run_id)
+        except SessionNotFound as exc:
+            raise HTTPException(status_code=404, detail="Sesi benchmark tidak ditemukan.") from exc
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.get("/api/agent/runs/{run_id}", tags=["agent"])
+    def get_live_run(run_id: UUID) -> dict:
+        try:
+            return app.state.live_agent.snapshot(run_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.post("/api/agent/runs/{run_id}/commands", tags=["agent"])
+    def command_live_run(run_id: UUID, payload: LiveCommandRequest) -> dict:
+        try:
+            return app.state.live_agent.command(run_id, payload.command)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @app.get("/api/benchmark/sessions/{session_id}", tags=["benchmark"])
     def session_view(session_id: str) -> dict:
