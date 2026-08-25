@@ -21,6 +21,7 @@ for (const control of ["APPROVE", "EDIT", "REJECT", "PAUSE", "TAKE_OVER", "RESUM
 }
 if (!contentScript.includes("a11y-cua-in-page-panel")) failures.push("in-page landmark bridge is missing");
 if (!contentScript.includes("Mulai dan buka asisten")) failures.push("single-action assistant launcher is missing");
+if (/^\s*import\s/mu.test(contentScript)) failures.push("manifest content script must be a standalone classic script");
 if (!(await assets).some((name) => name.endsWith(".js"))) failures.push("side-panel bundle is missing");
 if (failures.length) {
   throw new Error(failures.join("; "));

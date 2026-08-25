@@ -80,4 +80,6 @@ console.log("Tekan Enter di terminal untuk menutup browser.");
 const readline = createInterface({ input: stdin, output: stdout });
 await readline.question("");
 readline.close();
-await context.close();
+await context.close().catch((error) => {
+  if (!String(error).includes("Target page, context or browser has been closed")) throw error;
+});
