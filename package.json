@@ -1,0 +1,22 @@
+{
+  "name": "accessibility-aware-cua-monorepo",
+  "version": "0.5.0",
+  "private": true,
+  "workspaces": [
+    "apps/extension"
+  ],
+  "scripts": {
+    "extension:build": "npm run build --workspace @a11y-cua/extension",
+    "extension:typecheck": "npm run typecheck --workspace @a11y-cua/extension",
+    "extension:validate": "npm run validate --workspace @a11y-cua/extension",
+    "test:frontend": "npm run extension:typecheck && npm run extension:build && npm run extension:validate",
+    "browser:smoke": "node scripts/smoke-persistent-browser.mjs",
+    "browser:open": "node scripts/open-benchmark.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.52.0"
+  }
+}
