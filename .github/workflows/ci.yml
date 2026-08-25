@@ -40,6 +40,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: python -m ruff check a11y_benchmark apps packages scripts tests
       - run: python -m pytest -q
+      - run: python scripts/validate_stage6.py
       - run: python scripts/check_dependencies.py
       - run: npm run test:frontend
       - run: npx playwright install --with-deps chromium
