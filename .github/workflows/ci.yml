@@ -1,0 +1,46 @@
+name: quality-gates
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.5-alpine
+        env:
+          POSTGRES_DB: cua
+          POSTGRES_USER: cua
+          POSTGRES_PASSWORD: cua_local_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cua -d cua"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      CUA_ENV: test
+      CUA_APP_SECRET: ci-only-secret-not-for-production
+      CUA_REQUIRE_POSTGRES: "true"
+      DATABASE_URL: postgresql://cua:cua_local_only@127.0.0.1:5432/cua
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: python -m pip install -r requirements-frozen.lock
+      - run: npm ci --ignore-scripts
+      - run: python -m ruff check a11y_benchmark apps packages scripts tests
+      - run: python -m pytest -q
+      - run: python scripts/check_dependencies.py
+      - run: npm run test:frontend
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
