@@ -4,6 +4,13 @@ import { sanitizeTaskMap } from "./task-map";
 import { postToWhisperAdapter, WhisperPushToTalkAdapter } from "./voice";
 
 type Command = "APPROVE" | "EDIT" | "REJECT" | "PAUSE" | "TAKE_OVER" | "RESUME" | "CANCEL";
+type AgentActivity = {
+  key: string;
+  phase: string;
+  detail: string;
+  progress: string;
+  spoken: string;
+};
 
 const byId = <T extends HTMLElement>(id: string): T => {
   const element = document.getElementById(id);
@@ -22,15 +29,19 @@ const submitGoal = byId<HTMLButtonElement>("submit-goal");
 const repeatGuide = byId<HTMLButtonElement>("repeat-guide");
 const toggleGuide = byId<HTMLButtonElement>("toggle-guide");
 const status = byId<HTMLElement>("status");
+const voiceState = byId<HTMLElement>("voice-state");
+const activityPhase = byId<HTMLElement>("activity-phase");
+const activityDetail = byId<HTMLElement>("activity-detail");
+const activityProgress = byId<HTMLElement>("activity-progress");
 const approvalAlert = byId<HTMLElement>("approval-alert");
 let activeRunId: string | null = null;
 let pollTimer: number | null = null;
 let activeBenchmarkTask: ActiveBenchmarkTask | null = null;
 let voiceGuideEnabled = true;
-let lastSpokenRunStatus: LiveRunResponse["status"] | null = null;
 let activeGuideAudio: HTMLAudioElement | null = null;
 let activeGuideAudioUrl: string | null = null;
 let speechRequestSequence = 0;
+let lastSpokenActivityKey: string | null = null;
 
 const announce = (message: string): void => { status.textContent = message; };
 
@@ -47,15 +58,42 @@ const stopSpeech = (): void => {
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 };
 
-const speakWithBrowser = (message: string): void => {
-  if (!voiceGuideEnabled || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+const findIndonesianBrowserVoice = (): SpeechSynthesisVoice | null => {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find((item) => item.lang.toLowerCase() === "id-id")
+    ?? voices.find((item) => item.lang.toLowerCase().startsWith("id"))
+    ?? null;
+};
+
+const waitForIndonesianBrowserVoice = async (): Promise<SpeechSynthesisVoice | null> => {
+  const existing = findIndonesianBrowserVoice();
+  if (existing || !("speechSynthesis" in window)) return existing;
+  return await new Promise((resolve) => {
+    let settled = false;
+    const finish = (): void => {
+      if (settled) return;
+      settled = true;
+      window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
+      resolve(findIndonesianBrowserVoice());
+    };
+    const onVoicesChanged = (): void => finish();
+    window.speechSynthesis.addEventListener("voiceschanged", onVoicesChanged, { once: true });
+    window.setTimeout(finish, 700);
+  });
+};
+
+const speakWithBrowserIndonesian = async (message: string): Promise<boolean> => {
+  if (!voiceGuideEnabled || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return false;
+  const indonesianVoice = await waitForIndonesianBrowserVoice();
+  if (!indonesianVoice) return false;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(message);
   utterance.lang = "id-ID";
+  utterance.voice = indonesianVoice;
   utterance.rate = 0.95;
-  const indonesianVoice = window.speechSynthesis.getVoices().find((item) => item.lang.toLowerCase().startsWith("id"));
-  if (indonesianVoice) utterance.voice = indonesianVoice;
   window.speechSynthesis.speak(utterance);
+  return true;
 };
 
 const speak = async (message: string): Promise<void> => {
@@ -68,7 +106,10 @@ const speak = async (message: string): Promise<void> => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text: message })
     });
-    if (!response.ok) throw new Error(`Speech API ${response.status}`);
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      throw new Error(`Speech API ${response.status}${detail ? `: ${detail}` : ""}`);
+    }
     const audioBlob = await response.blob();
     if (!voiceGuideEnabled || requestSequence !== speechRequestSequence) return;
     activeGuideAudioUrl = URL.createObjectURL(audioBlob);
@@ -79,8 +120,16 @@ const speak = async (message: string): Promise<void> => {
       activeGuideAudioUrl = null;
     }, { once: true });
     await activeGuideAudio.play();
-  } catch {
-    if (voiceGuideEnabled && requestSequence === speechRequestSequence) speakWithBrowser(message);
+    voiceState.textContent = "Panduan suara Indonesia aktif melalui Gemini.";
+  } catch (error) {
+    if (!voiceGuideEnabled || requestSequence !== speechRequestSequence) return;
+    const usedIndonesianFallback = await speakWithBrowserIndonesian(message);
+    if (usedIndonesianFallback) {
+      voiceState.textContent = "Gemini TTS sementara tidak tersedia. Menggunakan suara Bahasa Indonesia dari perangkat.";
+    } else {
+      voiceState.textContent = "Panduan suara Indonesia sementara tidak tersedia. Fallback suara Inggris sengaja tidak digunakan.";
+      console.warn("Indonesian voice unavailable", error);
+    }
   }
 };
 
@@ -97,7 +146,7 @@ const renderItems = (targetId: string, items: TaskMapItem[], empty: string): voi
 };
 
 const renderTaskMap = (source: AccessibleTaskMap): void => {
-  const { map, invalidatedCount } = sanitizeTaskMap(source);
+  const { map } = sanitizeTaskMap(source);
   byId("active-goal").textContent = map.goal;
   byId("progress").textContent = map.progress_label;
   renderItems("verified-list", map.verified_completed, "Belum ada.");
@@ -112,9 +161,56 @@ const renderTaskMap = (source: AccessibleTaskMap): void => {
       ? "Tindakan sensitif dihentikan dengan aman. Live MVP belum melanjutkan approval; pilih Tolak atau Batalkan."
       : "Persetujuan diperlukan. Pilih Setujui, Ubah, atau Tolak."
     : "";
-  announce(invalidatedCount
-    ? `Peta tugas diperbarui. ${invalidatedCount} item lama disembunyikan.`
-    : `Peta tugas diperbarui. ${map.progress_label}`);
+};
+
+const activityForRun = (run: LiveRunResponse): AgentActivity => {
+  const map = run.task_map;
+  const progress = map?.progress_label ?? "0 langkah terverifikasi selesai.";
+  const announcement = run.announcement.toLowerCase();
+
+  if (run.status === "QUEUED") {
+    return { key: "queued", phase: "Bersiap", detail: "Tugas diterima. Agen sedang menyiapkan sesi browser.", progress, spoken: "Tugas diterima. Saya sedang bersiap." };
+  }
+  if (run.status === "WAITING_USER") {
+    return { key: `waiting:${run.announcement}`, phase: "Menunggu Anda", detail: run.announcement, progress, spoken: `Saya berhenti sementara dan membutuhkan bantuan Anda. ${run.announcement}` };
+  }
+  if (run.status === "COMPLETED") {
+    return { key: "completed", phase: "Selesai", detail: "Semua tindakan yang diklaim selesai sudah melewati verifikasi pasca-aksi.", progress, spoken: "Tugas selesai. Hasil tindakan sudah diverifikasi." };
+  }
+  if (run.status === "FAILED") {
+    return { key: `failed:${run.error ?? "unknown"}`, phase: "Belum berhasil", detail: run.error ? `${run.announcement} ${run.error}` : run.announcement, progress, spoken: "Tugas belum berhasil. Agen berhenti dengan aman." };
+  }
+  if (run.status === "CANCELLED") {
+    return { key: "cancelled", phase: "Dibatalkan", detail: "Tugas dihentikan oleh pengguna.", progress, spoken: "Tugas dibatalkan." };
+  }
+
+  if (announcement.includes("diverifikasi") || announcement.includes("verifikasi")) {
+    return { key: `verify:${map?.next_action?.item_id ?? progress}`, phase: "Memverifikasi hasil", detail: map?.next_action ? `Memeriksa hasil dari tindakan: ${map.next_action.label}.` : "Memeriksa apakah tindakan terakhir benar-benar berhasil.", progress, spoken: "Saya sedang memeriksa apakah tindakan terakhir berhasil." };
+  }
+  if (announcement.includes("recovery") || announcement.includes("pemulihan")) {
+    return { key: `recover:${progress}`, phase: "Memulihkan langkah", detail: "Hasil belum sesuai. Agen menjalankan pemulihan terbatas lalu akan membaca halaman lagi.", progress, spoken: "Hasil belum sesuai. Saya sedang mencoba langkah pemulihan." };
+  }
+  if (map?.next_action) {
+    return { key: `action:${map.next_action.item_id}`, phase: "Menyiapkan tindakan", detail: `Tindakan berikutnya: ${map.next_action.label}. Tindakan ini masih direncanakan dan belum dianggap selesai.`, progress, spoken: `Saya sedang menyiapkan tindakan berikutnya: ${map.next_action.label}.` };
+  }
+  if (map?.relevant_options?.length) {
+    return { key: `plan:${map.observation_version}:${map.relevant_options.length}`, phase: "Menganalisis pilihan", detail: `Ditemukan ${map.relevant_options.length} kontrol yang relevan. AI sedang menentukan tindakan yang paling sesuai dengan tujuan dan batasan Anda.`, progress, spoken: "Saya sudah membaca halaman. Sekarang saya sedang menganalisis pilihan yang tersedia." };
+  }
+  if (announcement.includes("mengamati") || announcement.includes("diamati")) {
+    return { key: `observe:${map?.observation_version ?? 0}`, phase: "Membaca halaman", detail: "Agen sedang membaca accessibility tree untuk memahami kontrol dan isi halaman tanpa bergantung pada tampilan visual.", progress, spoken: "Saya sedang membaca struktur halaman." };
+  }
+  return { key: `running:${run.announcement}`, phase: "Memproses tujuan", detail: run.announcement, progress, spoken: "Saya sedang memproses tujuan Anda." };
+};
+
+const renderActivity = (run: LiveRunResponse): void => {
+  const activity = activityForRun(run);
+  activityPhase.textContent = activity.phase;
+  activityDetail.textContent = activity.detail;
+  activityProgress.textContent = activity.progress;
+  if (activity.key !== lastSpokenActivityKey) {
+    lastSpokenActivityKey = activity.key;
+    void speak(activity.spoken);
+  }
 };
 
 const voice = new WhisperPushToTalkAdapter({
@@ -175,19 +271,7 @@ const applyLiveRun = (run: LiveRunResponse): void => {
   activeRunId = run.run_id;
   announce(run.error ? `${run.announcement} ${run.error}` : run.announcement);
   if (run.task_map) renderTaskMap(run.task_map);
-  if (run.status !== lastSpokenRunStatus) {
-    lastSpokenRunStatus = run.status;
-    const spokenStatus: Partial<Record<LiveRunResponse["status"], string>> = {
-      QUEUED: "Tugas diterima. Agen sedang bersiap.",
-      RUNNING: "Agen mulai mengerjakan tugas.",
-      WAITING_USER: `Agen berhenti dan membutuhkan bantuan Anda. ${run.announcement}`,
-      COMPLETED: "Tugas selesai dan hasil tindakan telah diverifikasi.",
-      FAILED: `Tugas belum berhasil. ${run.announcement}`,
-      CANCELLED: "Tugas dibatalkan."
-    };
-    const message = spokenStatus[run.status];
-    if (message) void speak(message);
-  }
+  renderActivity(run);
   const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
   if (terminal && pollTimer !== null) {
     window.clearInterval(pollTimer);
@@ -196,10 +280,28 @@ const applyLiveRun = (run: LiveRunResponse): void => {
   }
 };
 
+const stopMissingRunPolling = (message: string): void => {
+  if (pollTimer !== null) window.clearInterval(pollTimer);
+  pollTimer = null;
+  activeRunId = null;
+  submitGoal.disabled = false;
+  activityPhase.textContent = "Run tidak tersedia";
+  activityDetail.textContent = message;
+  announce(message);
+};
+
 const pollLiveRun = (): void => {
   if (!activeRunId || typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
   void chrome.runtime.sendMessage({ type: "GET_LIVE_RUN", runId: activeRunId }).then((result) => {
-    if (result?.success && result.run) applyLiveRun(result.run as LiveRunResponse);
+    if (result?.success && result.run) {
+      applyLiveRun(result.run as LiveRunResponse);
+      return;
+    }
+    if (result && result.success === false) {
+      stopMissingRunPolling("Run lama tidak ditemukan, biasanya karena backend baru direstart. Tekan Mulai tugas untuk membuat run baru.");
+    }
+  }).catch(() => {
+    stopMissingRunPolling("Status agen tidak dapat dibaca. Pastikan backend masih berjalan, lalu mulai tugas kembali.");
   });
 };
 
@@ -211,6 +313,10 @@ submitGoal.addEventListener("click", async () => {
     return;
   }
   byId("active-goal").textContent = value;
+  activityPhase.textContent = "Mengirim tujuan";
+  activityDetail.textContent = "Tujuan sedang dikirim ke live agent.";
+  activityProgress.textContent = "0 langkah terverifikasi selesai.";
+  lastSpokenActivityKey = null;
   announce("Tujuan diterima. Agen akan menampilkan tindakan sebagai direncanakan sebelum menjalankannya.");
   window.dispatchEvent(new CustomEvent("a11y-cua:goal", { detail: { goal: value } }));
   if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
@@ -244,9 +350,10 @@ toggleGuide.addEventListener("click", () => {
   toggleGuide.setAttribute("aria-pressed", String(voiceGuideEnabled));
   toggleGuide.textContent = `Panduan suara: ${voiceGuideEnabled ? "aktif" : "mati"}`;
   if (voiceGuideEnabled) {
-    void speak("Panduan suara aktif.");
+    void speak("Panduan suara Bahasa Indonesia aktif.");
   } else {
     stopSpeech();
+    voiceState.textContent = "Panduan suara dimatikan.";
     announce("Panduan suara dimatikan. Semua informasi tetap tersedia sebagai teks.");
   }
 });
