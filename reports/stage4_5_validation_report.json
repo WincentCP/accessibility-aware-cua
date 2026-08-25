@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-08-25T11:52:42+08:00",
+  "stage4_status": "CONDITIONAL_PASS",
+  "stage5_status": "PASS_AUTOMATED",
+  "ready_for_stage6": false,
+  "stage4_checks": {
+    "git_repository_initialized": {
+      "status": "PASS",
+      "evidence": ".git pada branch main"
+    },
+    "monorepo_boundaries": {
+      "status": "PASS",
+      "evidence": "apps, packages, benchmark, evaluation, tests, docs, evidence"
+    },
+    "exact_dependency_locks": {
+      "status": "PASS",
+      "evidence": "requirements-frozen.lock + package-lock.json"
+    },
+    "environment_and_secret_validation": {
+      "status": "PASS",
+      "evidence": "test missing/example secret dan profil browser pribadi"
+    },
+    "api_health_and_readiness": {
+      "status": "PASS",
+      "evidence": "/health dan /health/ready diuji"
+    },
+    "mv3_extension_shell": {
+      "status": "PASS",
+      "evidence": "TypeScript typecheck, Vite build, manifest/accessibility validator"
+    },
+    "isolated_persistent_chromium": {
+      "status": "PASS",
+      "evidence": "npm run browser:smoke"
+    },
+    "lint_and_tests": {
+      "status": "PASS",
+      "evidence": "Ruff + Pytest"
+    },
+    "clean_room_source_install": {
+      "status": "PASS",
+      "evidence": "evidence/stage4_cleanroom_run.md"
+    },
+    "postgres_live_container": {
+      "status": "PENDING_ENV",
+      "evidence": "compose.yaml tersedia; Docker tidak tersedia pada sandbox ini"
+    },
+    "clean_clone_second_machine": {
+      "status": "PENDING_MANUAL",
+      "evidence": "ikuti docs/stage4_5_quickstart.md pada mesin/dir baru"
+    },
+    "headed_extension_and_nvda_smoke": {
+      "status": "PENDING_WINDOWS",
+      "evidence": "ikuti docs/manual_windows_nvda_gate.md"
+    }
+  },
+  "stage5_checks": {
+    "four_local_mini_sites_and_twelve_routes": {
+      "status": "PASS",
+      "evidence": "36 halaman membuka goal dan form yang sesuai"
+    },
+    "thirty_six_cases_render": {
+      "status": "PASS",
+      "evidence": "Playwright membuka T01–T12 pada C0/C1/C2"
+    },
+    "hidden_oracle_leakage_zero": {
+      "status": "PASS",
+      "evidence": "recursive public HTTP/OpenAPI leakage test"
+    },
+    "correct_state_passes_oracle_36_of_36": {
+      "status": "PASS",
+      "evidence": "server action → private evaluator"
+    },
+    "reset_stress_100_of_100": {
+      "status": "PASS",
+      "evidence": "mutate → reset → double reset tanpa stale state"
+    },
+    "c1_equivalent_reorder": {
+      "status": "PASS",
+      "evidence": "record truth sama; layout/wording berubah"
+    },
+    "c2_deterministic_delay_rerender": {
+      "status": "PASS",
+      "evidence": "elapsed time ≥ declared delay dan page re-render"
+    },
+    "axe_automated_scan_36_pages": {
+      "status": "PASS",
+      "evidence": "0 violations pada 36 rendered pages"
+    },
+    "keyboard_browser_path_12_tasks": {
+      "status": "PASS",
+      "evidence": "skip link, focus main, dan semua form control enabled"
+    },
+    "no_external_network_or_real_commit_controls": {
+      "status": "PASS",
+      "evidence": "request audit + unsafe-control test"
+    },
+    "nvda_walkthrough": {
+      "status": "PENDING_WINDOWS",
+      "evidence": "tidak boleh diklaim dari Linux/headless; gunakan checklist manual"
+    }
+  },
+  "commands": [
+    {
+      "name": "Ruff",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "/workspace/scratch/06f7f51f95a5/accessibility_aware_cua/.venv/bin/python",
+        "-m",
+        "ruff",
+        "check",
+        "a11y_benchmark",
+        "apps",
+        "packages",
+        "scripts",
+        "tests"
+      ],
+      "output_tail": "All checks passed!"
+    },
+    {
+      "name": "Pytest",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "/workspace/scratch/06f7f51f95a5/accessibility_aware_cua/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "output_tail": "..............................                                           [100%]\n30 passed in 11.73s"
+    },
+    {
+      "name": "Extension build",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "npm",
+        "run",
+        "test:frontend"
+      ],
+      "output_tail": "transforming...\n✓ 5 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/sidepanel.html                 2.24 kB │ gzip: 0.89 kB\ndist/assets/sidepanel-C-fmEW3e.css  1.16 kB │ gzip: 0.58 kB\ndist/service-worker.js              0.11 kB │ gzip: 0.12 kB\ndist/assets/sidepanel-B4bIfSzX.js   1.96 kB │ gzip: 1.01 kB\n✓ built in 75ms\n\n> accessibility-aware-cua-monorepo@0.5.0 extension:validate\n> npm run validate --workspace @a11y-cua/extension\n\n\n> @a11y-cua/extension@0.5.0 validate\n> node scripts/validate-extension.mjs\n\nExtension artifact PASS: MV3, side panel, least privilege, and accessible shell present."
+    },
+    {
+      "name": "Persistent Chromium",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "npm",
+        "run",
+        "browser:smoke"
+      ],
+      "output_tail": "> accessibility-aware-cua-monorepo@0.5.0 browser:smoke\n> node scripts/smoke-persistent-browser.mjs\n\nPersistent Chromium PASS: isolated project profile rendered successfully."
+    },
+    {
+      "name": "Playwright + axe + keyboard",
+      "status": "PASS",
+      "exit_code": 0,
+      "command": [
+        "npm",
+        "run",
+        "test:e2e"
+      ],
+      "output_tail": "> accessibility-aware-cua-monorepo@0.5.0 test:e2e\n> playwright test\n\n\nRunning 4 tests using 1 worker\n\n  ✓  1 [chromium] › tests/e2e/stage5.spec.ts:20:7 › 36-case rendered accessibility scan: C0 (5.3s)\n  ✓  2 [chromium] › tests/e2e/stage5.spec.ts:20:7 › 36-case rendered accessibility scan: C1 (5.2s)\n  ✓  3 [chromium] › tests/e2e/stage5.spec.ts:20:7 › 36-case rendered accessibility scan: C2 (5.4s)\n  ✓  4 [chromium] › tests/e2e/stage5.spec.ts:48:5 › keyboard can reach and operate every task form (1.2s)\n\n  4 passed (18.3s)\n\nTo open last HTML report run:\n\n  npx playwright show-report\n"
+    }
+  ]
+}
