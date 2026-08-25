@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0-stage6 — 2026-08-25
+
+- Added closed, versioned Pydantic contracts and strict TypeScript mirrors for
+  command, goal, accessibility observation, action, verification, task map,
+  focus handoff, agent state, and run result.
+- Added PostgreSQL migration v1 plus rollback, typed metric columns, structured
+  audit reconstruction, and correlation IDs for reproducible experiments.
+- Integrated the official LangGraph PostgreSQL checkpointer with strict msgpack
+  and a state-only graph that preserves pending approval across process restart.
+- Added recursive privacy redaction, zero-retention raw-audio policy, ERD, data
+  dictionary, retention policy, quickstart, DoD, and CI integration gates.
+- Kept planner, observer, executor, and verifier behavior out of this stage so
+  data contracts are tested before browser autonomy is introduced.
+
 ## 0.5.0-stage4-5 — 2026-08-25
 
 - Initialized the Git monorepo and separated API, extension, future agent,
