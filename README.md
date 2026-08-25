@@ -6,8 +6,9 @@ PENGGUNA TUNANETRA**.
 
 Status saat ini: Tahap 3 sudah mengunci benchmark; Tahap 4–5 sudah memiliki
 skeleton aplikasi, extension MV3, empat mini-site lokal, reset deterministik,
-hidden oracle, dan test browser. Runtime agent/LangGraph belum dibangun pada
-tahap ini agar benchmark tidak tercampur dengan sistem yang kelak diuji.
+hidden oracle, dan test browser. Tahap 6 menambahkan kontrak state tertutup,
+audit trail PostgreSQL, privasi/retensi, serta checkpoint LangGraph tahan-restart.
+Planner dan eksekusi browser agent baru diisi setelah kontrak data ini stabil.
 
 ## Yang sudah bisa dibuka
 
@@ -29,7 +30,7 @@ agent tidak menerima target, expected state, predicate, atau near miss.
 ```text
 apps/api/          FastAPI + empat mini-site
 apps/extension/    extension MV3 TypeScript/Vite (side panel aksesibel)
-packages/agent/    boundary agent/LangGraph untuk tahap berikutnya
+packages/agent/    typed state, privasi, audit PostgreSQL, checkpoint LangGraph
 benchmark/public/  kontrak yang boleh dilihat runner/agent
 benchmark/private/ oracle dan manifest evaluator
 evaluation/        boundary runner evaluasi berikutnya
@@ -107,21 +108,22 @@ tahap implementasi agent.
 ```bash
 python -m ruff check a11y_benchmark apps packages scripts tests
 python -m pytest -q
+python scripts/validate_stage6.py
 npm run test:frontend
 npm run browser:smoke
 npm run test:e2e
 python scripts/validate_stage4_5.py --with-browser
 ```
 
-Laporan validasi dibuat lokal di `reports/` saat perintah validasi dijalankan.
-Folder tersebut merupakan artefak generated dan tidak disimpan di Git. CI juga
-menjalankan PostgreSQL, Python tests, extension build, Playwright, axe, dan
+Validator mencetak hasil machine-readable ke terminal dan tidak membuat report
+di repository. CI menjalankan PostgreSQL nyata, migration v1, simulasi restart
+checkpoint LangGraph, Python tests, extension build, Playwright, axe, dan
 keyboard smoke.
 
 ## Batas klaim
 
 Hasil otomatis membuktikan reset, state transition, oracle, leakage, rendered
 DOM, axe, dan jalur keyboard. Hasil tersebut **belum** membuktikan pengalaman
-NVDA atau bahwa sistem memudahkan pengguna tunanetra. Sebelum lanjut ke tahap
-berikutnya, selesaikan `docs/manual_windows_nvda_gate.md` dan clean-clone check
-pada mesin/direktori kedua.
+NVDA atau bahwa sistem memudahkan pengguna tunanetra. Gate NVDA dan clean-clone
+Tahap 4–5 tetap dicatat di `docs/manual_windows_nvda_gate.md`; keduanya tidak
+digantikan oleh gate data Tahap 6.
