@@ -13,6 +13,7 @@ os.environ.setdefault("CUA_APP_SECRET", "test-secret")
 from apps.api.a11y_api.app import create_app
 from apps.api.a11y_api.config import Settings
 from packages.agent.openai_client import OpenAIResponsesClient
+from packages.agent.openai_tts import INDONESIAN_GUIDE_INSTRUCTIONS, OpenAITTSClient
 from packages.agent.planner import PlannerDecision
 from packages.agent.remote_page import RemoteBridgeError, RemotePage
 
@@ -82,6 +83,36 @@ def test_openai_adapter_normalizes_pydantic_schema_for_strict_outputs() -> None:
     assert "schema_version" in action["required"]
     assert "target_ref" in action["required"]
     assert "requires_approval" in action["required"]
+
+
+def test_openai_tts_requests_cheerful_indonesian_audio() -> None:
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.update(json.loads(request.content))
+        assert request.headers["authorization"] == "Bearer test-key"
+        return httpx.Response(200, content=b"fake-mp3")
+
+    client = OpenAITTSClient(
+        "test-key",
+        model="test-tts",
+        voice="coral",
+        base_url="https://unit.test/v1",
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        audio = client.generate("Tugas siap. Silakan mulai.")
+    finally:
+        client.close()
+
+    assert audio == b"fake-mp3"
+    assert captured == {
+        "model": "test-tts",
+        "voice": "coral",
+        "input": "Tugas siap. Silakan mulai.",
+        "instructions": INDONESIAN_GUIDE_INSTRUCTIONS,
+        "response_format": "mp3",
+    }
 
 
 def test_remote_page_uses_bearer_token_and_semantic_actions_only() -> None:
@@ -167,6 +198,14 @@ def test_live_api_fails_closed_before_browser_when_key_is_missing() -> None:
                 "goal": "Pilih rute yang memenuhi batasan lalu berhenti sebelum pemesanan.",
             },
         )
+    assert response.status_code == 503
+    assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
+
+
+def test_voice_api_fails_closed_when_key_is_missing() -> None:
+    app = create_app(_settings(api_key=None))
+    with TestClient(app) as client:
+        response = client.post("/api/voice/speech", json={"text": "Halo!"})
     assert response.status_code == 503
     assert response.json()["detail"] == "OPENAI_API_KEY belum diisi di .env lokal."
 

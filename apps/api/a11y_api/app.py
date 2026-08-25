@@ -9,7 +9,7 @@ from uuid import UUID
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -20,6 +20,7 @@ from apps.api.a11y_api import APP_VERSION
 from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
 from packages.agent.live import LiveAgentManager
+from packages.agent.openai_tts import OpenAITTSClient
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
@@ -46,6 +47,10 @@ class LiveRunRequest(BaseModel):
 
 class LiveCommandRequest(BaseModel):
     command: str = Field(pattern=r"^(?:PAUSE|TAKE_OVER|RESUME|CANCEL|REJECT)$")
+
+
+class SpeechRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2_000)
 
 
 def _postgres_health(settings: Settings) -> tuple[dict[str, str], bool]:
@@ -168,6 +173,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except (ValueError, RuntimeError) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/voice/speech", tags=["voice"], response_class=Response)
+    def synthesize_speech(payload: SpeechRequest) -> Response:
+        if not active_settings.tts_enabled:
+            raise HTTPException(status_code=503, detail="Panduan suara AI dinonaktifkan.")
+        if not active_settings.openai_api_key:
+            raise HTTPException(status_code=503, detail="OPENAI_API_KEY belum diisi di .env lokal.")
+        client = OpenAITTSClient(
+            active_settings.openai_api_key,
+            model=active_settings.tts_model,
+            voice=active_settings.tts_voice,
+        )
+        try:
+            audio = client.generate(payload.text)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        finally:
+            client.close()
+        return Response(
+            content=audio,
+            media_type="audio/mpeg",
+            headers={"Cache-Control": "private, max-age=300"},
+        )
 
     @app.get("/api/benchmark/sessions/{session_id}", tags=["benchmark"])
     def session_view(session_id: str) -> dict:

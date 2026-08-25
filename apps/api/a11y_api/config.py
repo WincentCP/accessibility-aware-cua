@@ -36,6 +36,9 @@ class Settings:
     openai_api_key: str | None = None
     planner_model: str = "gpt-4.1-mini-2025-04-14"
     live_agent_enabled: bool = True
+    tts_enabled: bool = True
+    tts_model: str = "gpt-4o-mini-tts"
+    tts_voice: str = "coral"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -88,4 +91,7 @@ class Settings:
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
             planner_model=os.getenv("CUA_PLANNER_MODEL", "gpt-4.1-mini-2025-04-14"),
             live_agent_enabled=_as_bool(os.getenv("CUA_LIVE_AGENT_ENABLED", "true")),
+            tts_enabled=_as_bool(os.getenv("CUA_TTS_ENABLED", "true")),
+            tts_model=os.getenv("CUA_TTS_MODEL", "gpt-4o-mini-tts"),
+            tts_voice=os.getenv("CUA_TTS_VOICE", "coral"),
         )

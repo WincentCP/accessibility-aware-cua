@@ -28,10 +28,26 @@ let pollTimer: number | null = null;
 let activeBenchmarkTask: ActiveBenchmarkTask | null = null;
 let voiceGuideEnabled = true;
 let lastSpokenRunStatus: LiveRunResponse["status"] | null = null;
+let activeGuideAudio: HTMLAudioElement | null = null;
+let activeGuideAudioUrl: string | null = null;
+let speechRequestSequence = 0;
 
 const announce = (message: string): void => { status.textContent = message; };
 
-const speak = (message: string): void => {
+const stopSpeech = (): void => {
+  speechRequestSequence += 1;
+  if (activeGuideAudio) {
+    activeGuideAudio.pause();
+    activeGuideAudio = null;
+  }
+  if (activeGuideAudioUrl) {
+    URL.revokeObjectURL(activeGuideAudioUrl);
+    activeGuideAudioUrl = null;
+  }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+};
+
+const speakWithBrowser = (message: string): void => {
   if (!voiceGuideEnabled || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(message);
@@ -40,6 +56,32 @@ const speak = (message: string): void => {
   const indonesianVoice = window.speechSynthesis.getVoices().find((item) => item.lang.toLowerCase().startsWith("id"));
   if (indonesianVoice) utterance.voice = indonesianVoice;
   window.speechSynthesis.speak(utterance);
+};
+
+const speak = async (message: string): Promise<void> => {
+  if (!voiceGuideEnabled) return;
+  stopSpeech();
+  const requestSequence = speechRequestSequence;
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/voice/speech", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: message })
+    });
+    if (!response.ok) throw new Error(`Speech API ${response.status}`);
+    const audioBlob = await response.blob();
+    if (!voiceGuideEnabled || requestSequence !== speechRequestSequence) return;
+    activeGuideAudioUrl = URL.createObjectURL(audioBlob);
+    activeGuideAudio = new Audio(activeGuideAudioUrl);
+    activeGuideAudio.addEventListener("ended", () => {
+      if (activeGuideAudioUrl) URL.revokeObjectURL(activeGuideAudioUrl);
+      activeGuideAudio = null;
+      activeGuideAudioUrl = null;
+    }, { once: true });
+    await activeGuideAudio.play();
+  } catch {
+    if (voiceGuideEnabled && requestSequence === speechRequestSequence) speakWithBrowser(message);
+  }
 };
 
 const renderItems = (targetId: string, items: TaskMapItem[], empty: string): void => {
@@ -117,9 +159,9 @@ const loadActiveTask = async (): Promise<void> => {
     byId("active-goal").textContent = activeBenchmarkTask.goal;
     submitGoal.disabled = false;
     repeatGuide.disabled = false;
-    const instruction = `Tugas ${activeBenchmarkTask.task_id} siap. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`;
+    const instruction = `Halo! Saya panduan suara AI. Tugas ${activeBenchmarkTask.task_id} sudah siap. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`;
     announce(`Tugas ${activeBenchmarkTask.task_id} dimuat otomatis. Tekan Mulai tugas.`);
-    speak(instruction);
+    void speak(instruction);
     submitGoal.focus();
   } catch (error) {
     activeBenchmarkTask = null;
@@ -144,7 +186,7 @@ const applyLiveRun = (run: LiveRunResponse): void => {
       CANCELLED: "Tugas dibatalkan."
     };
     const message = spokenStatus[run.status];
-    if (message) speak(message);
+    if (message) void speak(message);
   }
   const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
   if (terminal && pollTimer !== null) {
@@ -194,7 +236,7 @@ repeatGuide.addEventListener("click", () => {
     announce("Instruksi task belum tersedia.");
     return;
   }
-  speak(`Tugas ${activeBenchmarkTask.task_id}. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`);
+  void speak(`Tugas ${activeBenchmarkTask.task_id}. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`);
 });
 
 toggleGuide.addEventListener("click", () => {
@@ -202,9 +244,9 @@ toggleGuide.addEventListener("click", () => {
   toggleGuide.setAttribute("aria-pressed", String(voiceGuideEnabled));
   toggleGuide.textContent = `Panduan suara: ${voiceGuideEnabled ? "aktif" : "mati"}`;
   if (voiceGuideEnabled) {
-    speak("Panduan suara aktif.");
-  } else if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+    void speak("Panduan suara aktif.");
+  } else {
+    stopSpeech();
     announce("Panduan suara dimatikan. Semua informasi tetap tersedia sebagai teks.");
   }
 });
