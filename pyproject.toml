@@ -1,11 +1,13 @@
 [project]
 name = "accessibility-aware-cua"
-version = "0.5.0"
+version = "0.6.0"
 description = "Accessibility-aware CUA research monorepo, deterministic benchmark, and hidden oracle"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi==0.115.12",
   "jinja2==3.1.6",
+  "langgraph==1.2.11",
+  "langgraph-checkpoint-postgres==3.1.2",
   "psycopg[binary]==3.2.9",
   "python-dotenv==1.1.0",
   "uvicorn[standard]==0.34.2",
