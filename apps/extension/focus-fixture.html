@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus bridge fixture</title>
+    <script>
+      window.bridgeListener = null;
+      window.chrome = {
+        runtime: {
+          sendMessage: async () => ({ success: true }),
+          onMessage: { addListener: (listener) => { window.bridgeListener = listener; } }
+        }
+      };
+    </script>
+    <script type="module" src="/src/content-script.ts"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Focus bridge QA</h1>
+      <button id="travel">Pilih rute</button>
+      <label for="marketplace">Cari produk</label><input id="marketplace">
+      <label for="appointment">Pilih dokter</label><select id="appointment"><option>A</option></select>
+      <label><input id="account" type="checkbox"> Notifikasi email</label>
+    </main>
+  </body>
+</html>

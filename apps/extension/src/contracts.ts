@@ -187,3 +187,42 @@ export interface RunResult {
   intervention_count: number;
   duration_ms: number;
 }
+
+export type DisplayStatus = "VERIFIED_COMPLETED" | "PLANNED" | "UNCERTAIN" | "RELEVANT";
+
+export interface TaskMapItem {
+  item_id: string;
+  label: string;
+  status: DisplayStatus;
+  semantic_ref: string | null;
+  observation_version: number;
+  verification_id: string | null;
+  evidence: string[];
+  reason: string | null;
+}
+
+export interface MapControlState {
+  paused: boolean;
+  takeover_active: boolean;
+  approval_pending: boolean;
+  handoff_status: "NONE" | "REQUESTED" | "ACTIVE" | "RESUMING" | "COMPLETED";
+}
+
+export interface AccessibleTaskMap {
+  schema_version: "1.0.0";
+  map_id: string;
+  session_id: string;
+  run_id: string;
+  version: number;
+  observation_version: number;
+  goal: string;
+  progress_label: string;
+  verified_completed: TaskMapItem[];
+  relevant_options: TaskMapItem[];
+  next_action: TaskMapItem | null;
+  uncertain_items: TaskMapItem[];
+  control_state: MapControlState;
+  final_summary: string | null;
+  stale_invalidated_count: number;
+  generated_at: string;
+}

@@ -10,42 +10,63 @@
     <a class="skip-link" href="#main-content">Lewati ke kontrol utama</a>
     <main id="main-content" tabindex="-1">
       <header>
-        <p class="eyebrow">Research prototype</p>
+        <p class="eyebrow">Prototipe penelitian</p>
         <h1>Accessibility-Aware CUA</h1>
-        <p id="shell-description">Berikan tujuan lewat teks atau suara, lalu pantau dan kendalikan prosesnya.</p>
+        <p id="shell-description">Sampaikan tujuan, pantau bukti, dan ambil kendali kapan saja.</p>
       </header>
-
       <section aria-labelledby="goal-heading">
         <h2 id="goal-heading">Tujuan pengguna</h2>
         <label for="goal">Apa yang ingin dilakukan di halaman web?</label>
-        <textarea id="goal" rows="4" aria-describedby="shell-description voice-help"></textarea>
+        <textarea id="goal" rows="3" aria-describedby="shell-description voice-help"></textarea>
         <div class="button-row">
           <button id="voice" type="button" aria-pressed="false">Mulai input suara</button>
-          <button id="submit-goal" type="button">Jalankan tujuan</button>
+          <button id="cancel-voice" type="button" disabled>Batalkan suara</button>
         </div>
-        <p id="voice-help">Input suara memakai fitur pengenal suara browser jika tersedia. Teks tetap dapat diedit sebelum dijalankan.</p>
+        <div id="transcript-review" hidden>
+          <label for="transcript">Periksa hasil suara</label>
+          <textarea id="transcript" rows="2"></textarea>
+          <div class="button-row">
+            <button id="confirm-transcript" type="button">Benar, gunakan</button>
+            <button id="edit-transcript" type="button">Ubah transkrip</button>
+          </div>
+        </div>
+        <button id="submit-goal" type="button">Jalankan tujuan</button>
+        <p id="voice-help">Mikrofon hanya aktif saat tombol suara digunakan, maksimum 20 detik. Hasil suara wajib diperiksa. Teks selalu tersedia.</p>
       </section>
-
       <section aria-labelledby="status-heading">
         <h2 id="status-heading">Status</h2>
-        <p id="status" role="status" aria-live="polite" aria-atomic="true">Shell siap. Agent belum dijalankan pada Tahap 4.</p>
+        <p id="status" role="status" aria-live="polite" aria-atomic="true">Panel siap.</p>
+        <p id="approval-alert" class="approval" role="alert" aria-live="assertive" hidden></p>
       </section>
-
-      <section aria-labelledby="map-heading">
+      <section id="task-map" aria-labelledby="map-heading">
         <h2 id="map-heading">Peta tugas aksesibel</h2>
-        <ol id="task-map">
-          <li>Belum ada tujuan aktif.</li>
-        </ol>
+        <dl class="summary-list">
+          <dt>Tujuan aktif</dt><dd id="active-goal">Belum ada tujuan aktif.</dd>
+          <dt>Progres</dt><dd id="progress">0 langkah terverifikasi selesai.</dd>
+        </dl>
+        <h3>Sudah selesai dan terverifikasi</h3>
+        <ol id="verified-list"><li>Belum ada.</li></ol>
+        <h3>Pilihan yang relevan</h3>
+        <ul id="relevant-list"><li>Belum ada.</li></ul>
+        <h3>Tindakan berikutnya — direncanakan, belum selesai</h3>
+        <p id="next-action">Belum ada.</p>
+        <h3>Belum pasti</h3>
+        <ul id="uncertain-list"><li>Belum ada.</li></ul>
+        <h3>Ringkasan akhir</h3>
+        <p id="final-summary">Tugas belum selesai.</p>
       </section>
-
       <section aria-labelledby="control-heading">
-        <h2 id="control-heading">Shared control</h2>
+        <h2 id="control-heading">Shared control (kontrol bersama)</h2>
         <div class="control-grid">
-          <button type="button" disabled>Jeda</button>
-          <button type="button" disabled>Ambil alih</button>
-          <button type="button" disabled>Lanjutkan</button>
-          <button type="button" disabled>Batalkan</button>
+          <button type="button" data-command="APPROVE">Setujui <kbd>Alt+A</kbd></button>
+          <button type="button" data-command="EDIT">Ubah <kbd>Alt+E</kbd></button>
+          <button type="button" data-command="REJECT">Tolak <kbd>Esc</kbd></button>
+          <button type="button" data-command="PAUSE">Jeda <kbd>Alt+P</kbd></button>
+          <button type="button" data-command="TAKE_OVER">Ambil alih <kbd>Alt+T</kbd></button>
+          <button type="button" data-command="RESUME">Lanjutkan <kbd>Alt+R</kbd></button>
+          <button type="button" data-command="CANCEL">Batalkan tugas <kbd>Alt+C</kbd></button>
         </div>
+        <p>Semua kontrol dapat digunakan tanpa mouse. Pintasan hanya bekerja saat panel ini aktif.</p>
       </section>
     </main>
   </body>

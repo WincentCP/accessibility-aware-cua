@@ -18,6 +18,10 @@ checkpoint, bounded context/budget, schema retry, correction, serta trajectory l
 Tahap 11 menambahkan deterministic safety policy, approval one-shot, pause/takeover
 atomik, focus handoff terverifikasi, fresh-observation resume, dan audit koreksi
 percakapan berversi.
+Tahap 12 menambahkan task-map compiler verified-only, invalidasi reference stale,
+extension MV3 dengan in-page landmark dan side panel, push-to-talk dengan review
+transkrip, serta shared-control keyboard. Gate otomatis PASS; gate NVDA Windows
+masih `PENDING_NVDA` dan sengaja tidak digantikan oleh axe/Playwright.
 
 ## Yang sudah bisa dibuka
 
@@ -108,9 +112,9 @@ npm run browser:open -- --task T01 --condition C0 --with-extension
 ```
 
 Runner memakai persistent profile khusus `.runtime/playwright-profile`, bukan
-profil Chrome pribadi. Input tujuan pada shell tersedia melalui teks dan tombol
-suara berbasis pengenal suara browser; koneksi goal ke agent baru diisi pada
-tahap implementasi agent.
+profil Chrome pribadi. Input tujuan tersedia melalui teks atau push-to-talk
+menuju adaptor Whisper lokal. Transkrip wajib ditinjau sebelum digunakan dan
+penolakan izin mikrofon tidak mengurangi fungsi input teks.
 
 ## Semua quality gate
 
@@ -123,6 +127,7 @@ python scripts/validate_stage8.py
 python scripts/validate_stage9.py
 python scripts/validate_stage10.py
 python scripts/validate_stage11.py
+python scripts/validate_stage12.py
 npm run test:frontend
 npm run browser:smoke
 npm run test:e2e
@@ -139,6 +144,8 @@ primitif berulang pada 36 kasus. Baseline Tahap 9 dibuat dengan
 report disimpan sebagai bukti sistem. Baseline engineering Tahap 10 dibuat dengan
 `python scripts/validate_stage10.py --update-assets`. Bukti safety/shared control
 Tahap 11 dibuat dengan `python scripts/validate_stage11.py --update-assets`. CI
+menjalankan gate task-map/extension Tahap 12 melalui
+`python scripts/validate_stage12.py`; walkthrough NVDA tetap manual. CI
 menjalankan PostgreSQL nyata, migration, simulasi restart
 checkpoint LangGraph, observer Chromium, extension build, Playwright, axe, dan
 keyboard smoke.
@@ -146,7 +153,7 @@ keyboard smoke.
 ## Batas klaim
 
 Hasil otomatis membuktikan reset, state transition, oracle, leakage, rendered
-DOM, axe, jalur keyboard, dan coverage observer semantik. Hasil tersebut **belum** membuktikan pengalaman
-NVDA atau bahwa sistem memudahkan pengguna tunanetra. Gate NVDA dan clean-clone
-Tahap 4–5 tetap dicatat di `docs/manual_windows_nvda_gate.md`; keduanya tidak
-digantikan oleh gate otomatis Tahap 6–7.
+DOM, axe, jalur keyboard, task-map provenance, dan coverage observer semantik.
+Hasil tersebut **belum** membuktikan pengalaman NVDA atau bahwa sistem memudahkan
+pengguna tunanetra. Gate NVDA dan clean-clone dicatat di
+`docs/manual_windows_nvda_gate.md`; keduanya tidak digantikan gate otomatis.

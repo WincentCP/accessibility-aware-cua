@@ -30,6 +30,17 @@ pengguna tunanetra menguji build yang belum lolos checklist ini.
 - [ ] Tombol input suara memberi status tersedia/tidak tersedia tanpa membuat
       input teks macet.
 - [ ] Focus indicator terlihat dan focus order logis.
+- [ ] Tujuan, progres, selesai terverifikasi, pilihan relevan, tindakan berikutnya,
+      item belum pasti, dan ringkasan akhir dibaca sebagai bagian yang berbeda.
+- [ ] Tindakan berikutnya selalu disebut “direncanakan, belum selesai”.
+- [ ] Update biasa dibaca `polite`; hanya error/approval yang menginterupsi.
+- [ ] Push-to-talk dapat dibatalkan, berhenti maksimum 20 detik, dan transkrip
+      harus dikonfirmasi atau diubah sebelum digunakan.
+- [ ] Saat izin mikrofon ditolak, input teks dan seluruh kontrol tetap berfungsi.
+- [ ] Setujui/Ubah/Tolak/Jeda/Ambil alih/Lanjutkan/Batalkan dapat dijalankan
+      dengan keyboard dan tidak terjadi aksi ganda.
+- [ ] Empat tipe task (travel, marketplace, appointment, account) melakukan
+      takeover → focus handoff → resume tanpa focus hilang atau ref lama dipakai.
 
 ## Mini-site
 

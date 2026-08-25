@@ -7,8 +7,10 @@ bukan pengganti lembar persetujuan etik ketika studi pengguna dimulai.
 
 - Studi benchmark hanya memakai data sintetis; jangan masukkan akun, identitas,
   alamat, pembayaran, password, OTP, token, API key, atau cookie nyata.
-- Voice input diubah menjadi teks di sisi extension. Audio mentah tidak dikirim ke
-  API, tidak ditulis ke PostgreSQL, dan dihapus saat sesi pengenalan suara selesai.
+- Push-to-talk mengirim audio hanya ke adaptor Whisper lokal selama transkripsi.
+  Audio berada sementara di memori extension/API, tidak ditulis ke file atau
+  PostgreSQL, lalu dibuang setelah transkripsi, pembatalan, atau error. Transkrip
+  selalu ditinjau pengguna sebelum menjadi input final.
 - Accessibility snapshot menyimpan struktur semantik relevan, bukan dump halaman
   penuh. Nilai field sensitif tidak boleh masuk `AXNode.value_summary`.
 - Semua payload melewati `redact_payload()` sebelum write database/log.

@@ -22,11 +22,13 @@ from packages.agent.resolver import SemanticTargetResolver
 from packages.agent.safety import ApprovalRegistry, RiskClass, SafetyPolicy
 from packages.agent.semantic_snapshot import SnapshotRegistry, TargetQuery
 from packages.agent.shared_control import AtomicControlGate, SharedControlService
+from packages.agent.task_map import AccessibleTaskMap, TaskMapCompiler
 from packages.agent.verifier import PredicateVerifier
 
 __all__ = [
     "AXNode",
     "AccessibilityObserver",
+    "AccessibleTaskMap",
     "AgentAction",
     "AgentState",
     "ApprovalRegistry",
@@ -52,6 +54,7 @@ __all__ = [
     "StructuredPlanner",
     "SemanticTargetResolver",
     "TargetQuery",
+    "TaskMapCompiler",
     "TerminalReason",
     "VerificationResult",
     "VerificationPlan",

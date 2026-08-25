@@ -47,6 +47,7 @@ jobs:
       - run: python scripts/validate_stage9.py
       - run: python scripts/validate_stage10.py
       - run: python scripts/validate_stage11.py
+      - run: python scripts/validate_stage12.py
       - run: python scripts/check_dependencies.py
       - run: npm run test:frontend
       - run: npm run test:e2e

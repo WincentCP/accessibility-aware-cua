@@ -1,5 +1,13 @@
 # Changelog
 
+## Stage 12
+
+- Added a versioned verified-only accessible task-map compiler with evidence provenance and stale-reference invalidation.
+- Rebuilt the MV3 side panel and in-page landmark bridge for task progress, uncertainty, planning, and shared control.
+- Added a bounded push-to-talk Whisper adapter with transcript review, cancellation, text fallback, and zero raw-audio persistence.
+- Added semantic focus bridge, keyboard shortcuts, axe/reflow tests, microphone-denial tests, schema, and auditable automated gates.
+- Kept the real Windows + NVDA walkthrough explicitly pending; automated tests do not substitute for it.
+
 ## Stage 11
 
 - Added versioned deterministic risk taxonomy and policy gate before execution.

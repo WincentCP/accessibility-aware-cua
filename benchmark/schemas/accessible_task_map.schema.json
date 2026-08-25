@@ -1,0 +1,243 @@
+{
+  "$defs": {
+    "DisplayStatus": {
+      "enum": [
+        "VERIFIED_COMPLETED",
+        "PLANNED",
+        "UNCERTAIN",
+        "RELEVANT"
+      ],
+      "title": "DisplayStatus",
+      "type": "string"
+    },
+    "HandoffStatus": {
+      "enum": [
+        "NONE",
+        "REQUESTED",
+        "ACTIVE",
+        "RESUMING",
+        "COMPLETED"
+      ],
+      "title": "HandoffStatus",
+      "type": "string"
+    },
+    "MapControlState": {
+      "additionalProperties": false,
+      "properties": {
+        "paused": {
+          "default": false,
+          "title": "Paused",
+          "type": "boolean"
+        },
+        "takeover_active": {
+          "default": false,
+          "title": "Takeover Active",
+          "type": "boolean"
+        },
+        "approval_pending": {
+          "default": false,
+          "title": "Approval Pending",
+          "type": "boolean"
+        },
+        "handoff_status": {
+          "$ref": "#/$defs/HandoffStatus",
+          "default": "NONE"
+        }
+      },
+      "title": "MapControlState",
+      "type": "object"
+    },
+    "TaskMapItem": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/DisplayStatus"
+        },
+        "semantic_ref": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Semantic Ref"
+        },
+        "observation_version": {
+          "minimum": 1,
+          "title": "Observation Version",
+          "type": "integer"
+        },
+        "verification_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verification Id"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "label",
+        "status",
+        "observation_version"
+      ],
+      "title": "TaskMapItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "map_id": {
+      "format": "uuid",
+      "title": "Map Id",
+      "type": "string"
+    },
+    "session_id": {
+      "format": "uuid",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "observation_version": {
+      "minimum": 1,
+      "title": "Observation Version",
+      "type": "integer"
+    },
+    "goal": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Goal",
+      "type": "string"
+    },
+    "progress_label": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Progress Label",
+      "type": "string"
+    },
+    "verified_completed": {
+      "items": {
+        "$ref": "#/$defs/TaskMapItem"
+      },
+      "title": "Verified Completed",
+      "type": "array"
+    },
+    "relevant_options": {
+      "items": {
+        "$ref": "#/$defs/TaskMapItem"
+      },
+      "title": "Relevant Options",
+      "type": "array"
+    },
+    "next_action": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TaskMapItem"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "uncertain_items": {
+      "items": {
+        "$ref": "#/$defs/TaskMapItem"
+      },
+      "title": "Uncertain Items",
+      "type": "array"
+    },
+    "control_state": {
+      "$ref": "#/$defs/MapControlState"
+    },
+    "final_summary": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Final Summary"
+    },
+    "stale_invalidated_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Stale Invalidated Count",
+      "type": "integer"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "run_id",
+    "version",
+    "observation_version",
+    "goal",
+    "progress_label"
+  ],
+  "title": "AccessibleTaskMap",
+  "type": "object"
+}

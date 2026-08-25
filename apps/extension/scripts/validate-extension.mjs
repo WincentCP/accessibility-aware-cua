@@ -4,15 +4,23 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(await readFile(resolve(root, "dist/manifest.json"), "utf8"));
 const html = await readFile(resolve(root, "dist/sidepanel.html"), "utf8");
+const contentScript = await readFile(resolve(root, "dist/content-script.js"), "utf8");
+const assets = (await import("node:fs/promises")).readdir(resolve(root, "dist/assets"));
 
 const failures = [];
 if (manifest.manifest_version !== 3) failures.push("manifest_version must be 3");
 if (!manifest.side_panel?.default_path) failures.push("side_panel.default_path is missing");
 if (manifest.permissions?.includes("tabs")) failures.push("broad tabs permission is not allowed");
+if (!manifest.content_scripts?.[0]?.js?.includes("content-script.js")) failures.push("content script is missing");
 if (!html.includes('lang="id"')) failures.push("side panel language is missing");
 if (!html.includes("main-content")) failures.push("skip target is missing");
 if (!html.includes("task-map")) failures.push("task-map landmark is missing");
+for (const control of ["APPROVE", "EDIT", "REJECT", "PAUSE", "TAKE_OVER", "RESUME", "CANCEL"]) {
+  if (!html.includes(`data-command="${control}"`)) failures.push(`${control} control is missing`);
+}
+if (!contentScript.includes("a11y-cua-in-page-panel")) failures.push("in-page landmark bridge is missing");
+if (!(await assets).some((name) => name.endsWith(".js"))) failures.push("side-panel bundle is missing");
 if (failures.length) {
   throw new Error(failures.join("; "));
 }
-console.log("Extension artifact PASS: MV3, side panel, least privilege, and accessible shell present.");
+console.log("Extension artifact PASS: MV3, task map, focus bridge, shared controls, and least privilege.");

@@ -8,10 +8,15 @@ export default defineConfig({
     rollupOptions: {
       input: {
         sidepanel: resolve(__dirname, "sidepanel.html"),
-        "service-worker": resolve(__dirname, "src/service-worker.ts")
+        "focus-fixture": resolve(__dirname, "focus-fixture.html"),
+        "service-worker": resolve(__dirname, "src/service-worker.ts"),
+        "content-script": resolve(__dirname, "src/content-script.ts")
       },
       output: {
-        entryFileNames: (chunk) => chunk.name === "service-worker" ? "service-worker.js" : "assets/[name]-[hash].js",
+        entryFileNames: (chunk) =>
+          ["service-worker", "content-script"].includes(chunk.name)
+            ? `${chunk.name}.js`
+            : "assets/[name]-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: "assets/[name]-[hash][extname]"
       }
