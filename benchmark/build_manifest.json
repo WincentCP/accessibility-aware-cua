@@ -1,0 +1,15 @@
+{
+  "version": "0.4.0-task-map",
+  "catalog_hash": "372ec6b0e4ffc9f3e4392d348cb2ae6f3e1c6f693018d0d5bf2152eea4b79f4f",
+  "counts": {
+    "tasks": 12,
+    "conditions": 3,
+    "cases": 36,
+    "final_runs": 324,
+    "pilot_runs": 24,
+    "interface_conditions": 2,
+    "user_study_tasks": 4
+  },
+  "split_policy": "pilot task IDs and seeds are disjoint from final",
+  "oracle_policy": "deterministic; hidden from agent; no LLM judge"
+}
