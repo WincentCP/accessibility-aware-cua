@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "stage11-synthetic-web-v1",
+  "scope": "controlled local benchmark with dummy endpoints only",
+  "risk_classes": ["LOW_RISK", "CONFIRM_REQUIRED", "FORBIDDEN"],
+  "forbidden_patterns": [
+    "\\b(?:pay|payment|bayar|checkout|purchase)\\b",
+    "\\b(?:otp|one[ -]?time password|verification code|kode verifikasi)\\b",
+    "\\b(?:send|kirim)\\s+(?:an?\\s+)?(?:message|email|pesan)\\b",
+    "\\b(?:delete account|hapus akun)\\b"
+  ],
+  "confirm_patterns": [
+    "\\b(?:submit|kirim formulir|konfirmasi)\\b",
+    "\\b(?:cancel|batalkan|batal)\\b",
+    "\\b(?:delete|hapus)\\b",
+    "\\b(?:save|simpan|commit)\\b",
+    "\\b(?:book|booking|pesan sekarang)\\b"
+  ],
+  "voice_approval_phrases": ["setujui", "saya setuju"],
+  "keyboard_shortcuts": {
+    "REJECT": "Escape",
+    "CANCEL": "Alt+C",
+    "EDIT": "Alt+E",
+    "TAKE_OVER": "Alt+T",
+    "APPROVE": "Alt+A"
+  }
+}

@@ -40,6 +40,12 @@ class AgentGraphState(TypedDict, total=False):
     token_usage: int
     started_at_ms: int
     route: str
+    safety_decision: dict[str, Any] | None
+    approval_card: dict[str, Any] | None
+    constraint_version: int
+    conversation_log: list[dict[str, Any]]
+    state_delta: dict[str, Any] | None
+    invalidated_semantic_refs: list[str]
 
 
 def to_graph_state(state: AgentState) -> AgentGraphState:

@@ -204,6 +204,24 @@ def test_audit_can_reconstruct_run_query_metrics_and_survive_restart(
     assert reconstructed["task_maps"][0]["observation_version"] == 2
     assert reconstructed["focus_handoffs"][0]["status"] == "REQUESTED"
     assert restarted_repository.pending_interventions(run_id)[0]["intervention_id"] == intervention_id
+    restarted_repository.resolve_intervention(
+        intervention_id=intervention_id,
+        status=InterventionStatus.APPROVED,
+        actor="USER",
+        outcome="APPROVE",
+    )
+    resolved = restarted_repository.reconstruct_run(run_id)["interventions"][0]
+    assert resolved["status"] == "APPROVED"
+    assert resolved["resolved_at"] is not None
+    assert resolved["payload"]["actor"] == "USER"
+    assert resolved["payload"]["outcome"] == "APPROVE"
+    with pytest.raises(RuntimeError, match="sudah memiliki outcome"):
+        restarted_repository.resolve_intervention(
+            intervention_id=intervention_id,
+            status=InterventionStatus.APPROVED,
+            actor="USER",
+            outcome="APPROVE",
+        )
 
     serialized = json.dumps(reconstructed, default=str)
     assert "NeverPersistThis" not in serialized

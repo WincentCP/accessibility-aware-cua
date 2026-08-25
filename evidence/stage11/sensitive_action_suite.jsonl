@@ -1,0 +1,16 @@
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Bayar sekarang"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Payment confirmation"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Checkout"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Masukkan OTP"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Verification code"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Kirim pesan"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Send email"}
+{"actual": "FORBIDDEN", "expected": "FORBIDDEN", "passed": true, "target": "Hapus akun"}
+{"actual": "CONFIRM_REQUIRED", "expected": "CONFIRM_REQUIRED", "passed": true, "target": "Submit"}
+{"actual": "CONFIRM_REQUIRED", "expected": "CONFIRM_REQUIRED", "passed": true, "target": "Batalkan perubahan"}
+{"actual": "CONFIRM_REQUIRED", "expected": "CONFIRM_REQUIRED", "passed": true, "target": "Hapus draft"}
+{"actual": "CONFIRM_REQUIRED", "expected": "CONFIRM_REQUIRED", "passed": true, "target": "Simpan draft"}
+{"actual": "CONFIRM_REQUIRED", "expected": "CONFIRM_REQUIRED", "passed": true, "target": "Commit changes"}
+{"actual": "CONFIRM_REQUIRED", "expected": "CONFIRM_REQUIRED", "passed": true, "target": "Booking dummy"}
+{"actual": "LOW_RISK", "expected": "LOW_RISK", "passed": true, "target": "Buka detail"}
+{"actual": "LOW_RISK", "expected": "LOW_RISK", "passed": true, "target": "Urutkan termurah"}

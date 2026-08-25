@@ -10,7 +10,7 @@ from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from packages.agent.contracts import ErrorCode, RiskLevel, VerificationStatus
+from packages.agent.contracts import ErrorCode, VerificationStatus
 from packages.agent.executor import DeterministicExecutor
 from packages.agent.observer import AccessibilityObserver
 from packages.agent.planner import (
@@ -24,7 +24,9 @@ from packages.agent.planner import (
 )
 from packages.agent.predicates import VerificationPlan
 from packages.agent.recovery import RecoveryContext, RecoveryController, RecoveryDecision
+from packages.agent.safety import ApprovalRegistry, RiskClass, SafetyPolicy
 from packages.agent.semantic_snapshot import render_compact
+from packages.agent.shared_control import AtomicControlGate, ConstraintUpdate, ResumeResult
 from packages.agent.state import AgentGraphState
 from packages.agent.verifier import PredicateVerifier
 
@@ -39,12 +41,14 @@ class GraphRoute(StrEnum):
     RECONCILE = "RECONCILE"
     FINISH = "FINISH"
     ABORT = "ABORT"
+    SAFETY_STOP = "SAFETY_STOP"
 
 
 STATE_DIAGRAM = """flowchart TD
   START-->observe-->update_task_map-->plan-->policy_check
   policy_check-->|EXECUTE|execute-->verify
   policy_check-->|INTERRUPT|interrupt-->focus_handoff-->END
+  policy_check-->|SAFETY_STOP|safety_stop-->END
   verify-->|VERIFIED|reconcile_task_map
   verify-->|FAILED/UNCERTAIN|recover
   recover-->|OBSERVE|observe
@@ -64,6 +68,14 @@ class OrchestrationServices:
     verifier: PredicateVerifier
     planner: StructuredPlanner
     recovery: RecoveryController
+    safety: SafetyPolicy | None = None
+    approvals: ApprovalRegistry | None = None
+    control: AtomicControlGate | None = None
+
+    def __post_init__(self) -> None:
+        self.safety = self.safety or SafetyPolicy.load()
+        self.approvals = self.approvals or ApprovalRegistry(self.safety)
+        self.control = self.control or AtomicControlGate()
 
 
 def apply_correction_to_state(state: AgentGraphState, correction: str) -> AgentGraphState:
@@ -74,11 +86,40 @@ def apply_correction_to_state(state: AgentGraphState, correction: str) -> AgentG
         else NormalizedGoal.model_validate(state["normalized_goal"]),
         correction,
     )
+    version = state.get("constraint_version", 0) + 1
+    entry = ConstraintUpdate(
+        version=version,
+        user_text=correction,
+        goal_before=(state.get("normalized_goal") or {}).get("objective", state["raw_input"]),
+        goal_after=goal.objective,
+        constraints_after=goal.constraints,
+    )
     return AgentGraphState(
         normalized_goal=goal.model_dump(mode="json"),
         raw_input=goal.objective,
         active_semantic_ref=None,
         task_map_version=state.get("task_map_version", 0) + 1,
+        constraint_version=version,
+        conversation_log=[
+            *state.get("conversation_log", []),
+            entry.model_dump(mode="json"),
+        ],
+    )
+
+
+def apply_resume_to_state(state: AgentGraphState, resume: ResumeResult) -> AgentGraphState:
+    """Invalidate stale refs and require replan from the resume observation."""
+
+    return AgentGraphState(
+        observation_version=resume.fresh_observation_version,
+        task_map_version=resume.task_map_version,
+        active_semantic_ref=None,
+        planner_decision=None,
+        state_delta=resume.state_delta.model_dump(mode="json"),
+        invalidated_semantic_refs=resume.invalidated_semantic_refs,
+        handoff_status=resume.handoff_status.value,
+        pending_interrupt=None,
+        route=GraphRoute.OBSERVE.value,
     )
 
 
@@ -146,21 +187,59 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
     def policy_check(state: AgentGraphState) -> AgentGraphState:
         decision = PlannerDecision.model_validate(state["planner_decision"])
         action = decision.action
-        if action.risk_level is RiskLevel.HIGH or action.requires_approval:
+        target_name = None
+        if action.target_ref:
+            try:
+                target_name = services.observer.node_for_ref(action.target_ref).name
+            except Exception:
+                target_name = None
+        safety_decision = services.safety.classify(action, target_name=target_name)
+        if safety_decision.risk_class is RiskClass.FORBIDDEN:
             return AgentGraphState(
+                safety_decision=safety_decision.model_dump(mode="json"),
+                pending_interrupt={
+                    "kind": "SAFETY_BLOCK",
+                    "action": action.model_dump(mode="json"),
+                    "announcement": "Aksi dilarang oleh kebijakan eksperimen dan tidak dijalankan.",
+                },
+                intervention_count=state.get("intervention_count", 0) + 1,
+                error_code=ErrorCode.POLICY_BLOCKED.value,
+                route=GraphRoute.SAFETY_STOP.value,
+            )
+        if safety_decision.risk_class is RiskClass.CONFIRM_REQUIRED:
+            card = services.safety.approval_card(action, safety_decision)
+            services.approvals.register(card)
+            return AgentGraphState(
+                safety_decision=safety_decision.model_dump(mode="json"),
+                approval_card=card.model_dump(mode="json"),
                 pending_interrupt={
                     "kind": "APPROVAL",
                     "action": action.model_dump(mode="json"),
-                    "announcement": "Aksi berisiko memerlukan persetujuan pengguna.",
+                    "approval_id": str(card.approval_id),
+                    "announcement": card.announcement,
                 },
                 intervention_count=state.get("intervention_count", 0) + 1,
                 route=GraphRoute.INTERRUPT.value,
             )
-        return AgentGraphState(route=GraphRoute.EXECUTE.value)
+        return AgentGraphState(
+            safety_decision=safety_decision.model_dump(mode="json"),
+            route=GraphRoute.EXECUTE.value,
+        )
 
     def execute(state: AgentGraphState) -> AgentGraphState:
         decision = PlannerDecision.model_validate(state["planner_decision"])
-        result = services.executor.execute(services.page, decision.action)
+        try:
+            lease = services.control.begin_action()
+        except PermissionError as exc:
+            return AgentGraphState(
+                pending_interrupt={"kind": str(exc), "announcement": "Agen berhenti di checkpoint aman."},
+                intervention_count=state.get("intervention_count", 0) + 1,
+                route=GraphRoute.INTERRUPT.value,
+            )
+        try:
+            result = services.executor.execute(services.page, decision.action)
+        finally:
+            services.control.finish_action(lease)
         return AgentGraphState(
             execution=result.model_dump(mode="json"),
             step_count=state.get("step_count", 0) + 1,
@@ -249,6 +328,12 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
     def abort(state: AgentGraphState) -> AgentGraphState:
         return AgentGraphState(terminal_reason="ERROR")
 
+    def safety_stop(state: AgentGraphState) -> AgentGraphState:
+        return AgentGraphState(
+            terminal_reason="SAFETY_STOP",
+            error_code=ErrorCode.POLICY_BLOCKED.value,
+        )
+
     nodes = {
         "normalize_input": normalize,
         "observe": observe,
@@ -264,6 +349,7 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
         "reconcile_task_map": reconcile_task_map,
         "finish": finish,
         "abort": abort,
+        "safety_stop": safety_stop,
     }
     for name, function in nodes.items():
         builder.add_node(name, function)
@@ -279,10 +365,22 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
         "plan", _route, {GraphRoute.ABORT.value: "abort", GraphRoute.EXECUTE.value: "policy_check"}
     )
     builder.add_conditional_edges(
-        "policy_check", _route, {GraphRoute.EXECUTE.value: "execute", GraphRoute.INTERRUPT.value: "interrupt"}
+        "policy_check",
+        _route,
+        {
+            GraphRoute.EXECUTE.value: "execute",
+            GraphRoute.INTERRUPT.value: "interrupt",
+            GraphRoute.SAFETY_STOP.value: "safety_stop",
+        },
     )
     builder.add_conditional_edges(
-        "execute", _route, {GraphRoute.VERIFY.value: "verify", GraphRoute.RECOVER.value: "recover"}
+        "execute",
+        _route,
+        {
+            GraphRoute.VERIFY.value: "verify",
+            GraphRoute.RECOVER.value: "recover",
+            GraphRoute.INTERRUPT.value: "interrupt",
+        },
     )
     builder.add_conditional_edges(
         "verify",
@@ -307,4 +405,5 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
     builder.add_edge("resync", "observe")
     builder.add_edge("finish", END)
     builder.add_edge("abort", END)
+    builder.add_edge("safety_stop", END)
     return builder.compile(checkpointer=checkpointer)

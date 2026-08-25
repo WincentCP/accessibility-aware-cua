@@ -1,5 +1,13 @@
 # Changelog
 
+## Stage 11
+
+- Added versioned deterministic risk taxonomy and policy gate before execution.
+- Added explicit accessible approval contract, voice phrase validation, and one-shot consumption.
+- Added atomic pause/takeover gate, verified semantic focus handoff, fresh-observation resume, and state delta.
+- Added versioned conversation corrections and idempotent intervention outcome persistence.
+- Added automated safety recall, race, double-execution, and four-task focus/resume gates.
+
 ## 0.6.0-stage6 — 2026-08-25
 
 - Added closed, versioned Pydantic contracts and strict TypeScript mirrors for

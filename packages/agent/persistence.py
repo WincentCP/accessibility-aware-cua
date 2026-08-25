@@ -296,6 +296,36 @@ class AuditRepository:
                 ),
             )
 
+    def resolve_intervention(
+        self,
+        *,
+        intervention_id: UUID,
+        status: InterventionStatus,
+        actor: str,
+        outcome: str,
+        resolved_at: datetime | None = None,
+    ) -> None:
+        if status is InterventionStatus.PENDING:
+            raise ValueError("Outcome final tidak boleh memakai status PENDING.")
+        with self.connection() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE interventions
+                SET status = %s,
+                    payload = payload || %s,
+                    resolved_at = coalesce(%s, now())
+                WHERE intervention_id = %s AND status = 'PENDING'
+                """,
+                (
+                    status.value,
+                    Jsonb(redact_payload({"actor": actor, "outcome": outcome})),
+                    resolved_at,
+                    intervention_id,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise RuntimeError("Intervention tidak pending atau sudah memiliki outcome.")
+
     def finish_run(self, result: RunResult) -> None:
         with self.connection() as connection:
             connection.execute(
