@@ -14,7 +14,7 @@ import httpx
 TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
 AUTH_GEMINI_STATUS_CODES = {401, 403}
 
-INDONESIAN_TTS_DIRECTION = """Bacakan teks berikut sepenuhnya dalam Bahasa Indonesia Indonesia.
+INDONESIAN_TTS_DIRECTION = """Bacakan teks berikut sepenuhnya dalam Bahasa Indonesia.
 
 Gunakan pelafalan dan intonasi penutur asli Indonesia (id-ID).
 Jangan menggunakan aksen Inggris, Amerika, atau aksen asing.
