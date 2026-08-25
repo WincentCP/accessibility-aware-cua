@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility-Aware CUA</title>
+    <script type="module" src="/src/sidepanel.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Lewati ke kontrol utama</a>
+    <main id="main-content" tabindex="-1">
+      <header>
+        <p class="eyebrow">Research prototype</p>
+        <h1>Accessibility-Aware CUA</h1>
+        <p id="shell-description">Berikan tujuan lewat teks atau suara, lalu pantau dan kendalikan prosesnya.</p>
+      </header>
+
+      <section aria-labelledby="goal-heading">
+        <h2 id="goal-heading">Tujuan pengguna</h2>
+        <label for="goal">Apa yang ingin dilakukan di halaman web?</label>
+        <textarea id="goal" rows="4" aria-describedby="shell-description voice-help"></textarea>
+        <div class="button-row">
+          <button id="voice" type="button" aria-pressed="false">Mulai input suara</button>
+          <button id="submit-goal" type="button">Jalankan tujuan</button>
+        </div>
+        <p id="voice-help">Input suara memakai fitur pengenal suara browser jika tersedia. Teks tetap dapat diedit sebelum dijalankan.</p>
+      </section>
+
+      <section aria-labelledby="status-heading">
+        <h2 id="status-heading">Status</h2>
+        <p id="status" role="status" aria-live="polite" aria-atomic="true">Shell siap. Agent belum dijalankan pada Tahap 4.</p>
+      </section>
+
+      <section aria-labelledby="map-heading">
+        <h2 id="map-heading">Peta tugas aksesibel</h2>
+        <ol id="task-map">
+          <li>Belum ada tujuan aktif.</li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="control-heading">
+        <h2 id="control-heading">Shared control</h2>
+        <div class="control-grid">
+          <button type="button" disabled>Jeda</button>
+          <button type="button" disabled>Ambil alih</button>
+          <button type="button" disabled>Lanjutkan</button>
+          <button type="button" disabled>Batalkan</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
