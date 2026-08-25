@@ -19,13 +19,28 @@ const transcript = byId<HTMLTextAreaElement>("transcript");
 const confirmTranscript = byId<HTMLButtonElement>("confirm-transcript");
 const editTranscript = byId<HTMLButtonElement>("edit-transcript");
 const submitGoal = byId<HTMLButtonElement>("submit-goal");
+const repeatGuide = byId<HTMLButtonElement>("repeat-guide");
+const toggleGuide = byId<HTMLButtonElement>("toggle-guide");
 const status = byId<HTMLElement>("status");
 const approvalAlert = byId<HTMLElement>("approval-alert");
 let activeRunId: string | null = null;
 let pollTimer: number | null = null;
 let activeBenchmarkTask: ActiveBenchmarkTask | null = null;
+let voiceGuideEnabled = true;
+let lastSpokenRunStatus: LiveRunResponse["status"] | null = null;
 
 const announce = (message: string): void => { status.textContent = message; };
+
+const speak = (message: string): void => {
+  if (!voiceGuideEnabled || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.lang = "id-ID";
+  utterance.rate = 0.95;
+  const indonesianVoice = window.speechSynthesis.getVoices().find((item) => item.lang.toLowerCase().startsWith("id"));
+  if (indonesianVoice) utterance.voice = indonesianVoice;
+  window.speechSynthesis.speak(utterance);
+};
 
 const renderItems = (targetId: string, items: TaskMapItem[], empty: string): void => {
   const target = byId<HTMLElement>(targetId);
@@ -101,7 +116,10 @@ const loadActiveTask = async (): Promise<void> => {
     goal.value = activeBenchmarkTask.goal;
     byId("active-goal").textContent = activeBenchmarkTask.goal;
     submitGoal.disabled = false;
+    repeatGuide.disabled = false;
+    const instruction = `Tugas ${activeBenchmarkTask.task_id} siap. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`;
     announce(`Tugas ${activeBenchmarkTask.task_id} dimuat otomatis. Tekan Mulai tugas.`);
+    speak(instruction);
     submitGoal.focus();
   } catch (error) {
     activeBenchmarkTask = null;
@@ -115,6 +133,19 @@ const applyLiveRun = (run: LiveRunResponse): void => {
   activeRunId = run.run_id;
   announce(run.error ? `${run.announcement} ${run.error}` : run.announcement);
   if (run.task_map) renderTaskMap(run.task_map);
+  if (run.status !== lastSpokenRunStatus) {
+    lastSpokenRunStatus = run.status;
+    const spokenStatus: Partial<Record<LiveRunResponse["status"], string>> = {
+      QUEUED: "Tugas diterima. Agen sedang bersiap.",
+      RUNNING: "Agen mulai mengerjakan tugas.",
+      WAITING_USER: `Agen berhenti dan membutuhkan bantuan Anda. ${run.announcement}`,
+      COMPLETED: "Tugas selesai dan hasil tindakan telah diverifikasi.",
+      FAILED: `Tugas belum berhasil. ${run.announcement}`,
+      CANCELLED: "Tugas dibatalkan."
+    };
+    const message = spokenStatus[run.status];
+    if (message) speak(message);
+  }
   const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
   if (terminal && pollTimer !== null) {
     window.clearInterval(pollTimer);
@@ -155,6 +186,26 @@ submitGoal.addEventListener("click", async () => {
   } catch (error) {
     submitGoal.disabled = false;
     announce(`Live agent belum berjalan. ${error instanceof Error ? error.message : String(error)}`);
+  }
+});
+
+repeatGuide.addEventListener("click", () => {
+  if (!activeBenchmarkTask) {
+    announce("Instruksi task belum tersedia.");
+    return;
+  }
+  speak(`Tugas ${activeBenchmarkTask.task_id}. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`);
+});
+
+toggleGuide.addEventListener("click", () => {
+  voiceGuideEnabled = !voiceGuideEnabled;
+  toggleGuide.setAttribute("aria-pressed", String(voiceGuideEnabled));
+  toggleGuide.textContent = `Panduan suara: ${voiceGuideEnabled ? "aktif" : "mati"}`;
+  if (voiceGuideEnabled) {
+    speak("Panduan suara aktif.");
+  } else if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    announce("Panduan suara dimatikan. Semua informasi tetap tersedia sebagai teks.");
   }
 });
 

@@ -54,6 +54,9 @@ tidak pernah dikirim ke extension atau browser bridge.
    Chromium, pilih **Mulai dan buka asisten**. Tujuan T01 dimuat otomatis dari
    spesifikasi benchmark publik. Peserta cukup memilih **Mulai tugas**; mengetik
    atau menyalin tujuan hanya menjadi fallback jika konteks task gagal dimuat.
+   Panduan suara browser membacakan task secara otomatis. Tombol **Ulangi
+   instruksi** dan **Panduan suara: aktif/mati** selalu dapat digunakan dengan
+   keyboard. `aria-live` tetap dipertahankan untuk screen reader.
 
 ## Definition of Done smoke test
 

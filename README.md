@@ -126,6 +126,8 @@ Perintah `browser:open` juga menyalakan semantic browser bridge pada
 publik dimuat otomatis dan peserta cukup memilih **Mulai tugas**. Status, rencana, dan hanya progres
 yang lolos verifikasi pasca-aksi akan muncul di peta tugas. Lihat
 `docs/live_agent_quickstart.md` untuk urutan Windows dan batas implementasi.
+Panduan TTS Bahasa Indonesia membacakan task dan perubahan status penting tanpa
+menghapus jalur `aria-live`; suara dapat diulang atau dimatikan dari keyboard.
 
 ## Semua quality gate
 
