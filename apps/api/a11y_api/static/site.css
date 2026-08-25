@@ -1,0 +1,70 @@
+:root {
+  color-scheme: light;
+  --ink: #17202a;
+  --muted: #53606d;
+  --surface: #ffffff;
+  --surface-alt: #f3f6f9;
+  --border: #9aa7b4;
+  --accent: #075db7;
+  --accent-dark: #003f80;
+  --focus: #ffbf47;
+  --success: #116329;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.55;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: var(--surface-alt); }
+a { color: var(--accent-dark); text-underline-offset: 0.16em; }
+a:hover { text-decoration-thickness: 0.18em; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+.skip-link { position: absolute; left: 1rem; top: -5rem; z-index: 10; padding: .7rem 1rem; background: #111; color: #fff; }
+.skip-link:focus { top: 1rem; }
+.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem max(1rem, calc((100vw - 76rem) / 2)); background: #102a43; color: #fff; }
+.site-header a { color: #fff; }
+.brand { font-weight: 800; font-size: 1.1rem; }
+nav ul { display: flex; flex-wrap: wrap; gap: 1.1rem; list-style: none; margin: 0; padding: 0; }
+.page-shell { width: min(76rem, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 3rem; }
+.hero { max-width: 56rem; }
+.eyebrow { color: var(--muted); font-weight: 750; letter-spacing: .035em; text-transform: uppercase; }
+h1 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.15; margin: .3rem 0 1rem; }
+h2 { line-height: 1.25; }
+.domain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 2rem; }
+.panel, .goal-box, .condition-note, .status-box, .workspace, .replay-info, .task-cards article { background: var(--surface); border: 1px solid var(--border); border-radius: .55rem; padding: 1.25rem; }
+.task-links { padding-left: 1.25rem; }
+.task-links li + li { margin-top: .75rem; }
+.task-cards { display: grid; gap: 1rem; padding-left: 1.5rem; }
+.task-layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+.breadcrumb { margin-bottom: .3rem; }
+.goal-box { border-left: .45rem solid var(--accent); }
+.goal-box h2, .condition-note h2, .status-box h2, .replay-info h2 { font-size: 1.15rem; margin-top: 0; }
+.status-box { border-left: .45rem solid var(--success); }
+.status-box p { font-weight: 700; }
+.status-box.status-error { border-left-color: #b42318; background: #fff4f2; }
+.dynamic-notice { padding: .8rem 1rem; background: #fff4ce; border-left: .35rem solid #8a5b00; }
+form { display: grid; gap: 1.25rem; }
+fieldset { min-width: 0; border: 1px solid var(--border); border-radius: .4rem; padding: 1rem; }
+legend { font-weight: 800; padding: 0 .35rem; }
+label { font-weight: 700; }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { display: block; width: 100%; min-height: 2.8rem; margin-top: .35rem; padding: .55rem .65rem; font: inherit; color: inherit; border: 2px solid #687684; border-radius: .3rem; background: #fff; }
+input[type="checkbox"], input[type="radio"] { width: 1.3rem; height: 1.3rem; margin-right: .45rem; vertical-align: -.2rem; }
+.stacked-option { display: block; padding: .45rem 0; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.form-grid .wide { grid-column: 1 / -1; }
+button { justify-self: start; min-height: 3rem; padding: .7rem 1.1rem; border: 2px solid var(--accent-dark); border-radius: .35rem; background: var(--accent); color: white; font: inherit; font-weight: 800; cursor: pointer; }
+button:hover { background: var(--accent-dark); }
+button[aria-disabled="true"] { opacity: .68; cursor: wait; }
+.record-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem; margin-top: .5rem; }
+.record-card { padding: 1rem; border: 1px solid var(--border); border-radius: .4rem; background: #fff; }
+.record-card h3 { margin-top: 0; }
+.reflowed .condition-note { order: 4; }
+.reflowed .status-box { order: 3; }
+.reflowed .workspace { order: 2; }
+.reflowed .replay-info { order: 5; }
+.condition-c2 .workspace { border-color: #8a5b00; }
+footer { padding: 1.2rem max(1rem, calc((100vw - 76rem) / 2)); background: #e5ebf1; color: var(--muted); }
+@media (forced-colors: active) { .goal-box, .status-box, .dynamic-notice { border-left-width: .45rem; } }
+@media (prefers-reduced-motion: no-preference) { button { transition: background-color .15s ease; } }
