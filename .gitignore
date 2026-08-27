@@ -13,4 +13,5 @@ playwright-report/
 test-results/
 coverage/
 reports/
+.impeccable/review/
 .DS_Store

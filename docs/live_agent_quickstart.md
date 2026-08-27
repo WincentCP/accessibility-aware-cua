@@ -18,10 +18,21 @@ side panel -> FastAPI lokal -> LangGraph + structured planner
 
 Browser bridge hanya bind ke `127.0.0.1`, memerlukan bearer token yang sama
 dengan `CUA_APP_SECRET`, membatasi payload, menggunakan role/name aksesibel, dan
-memblokir navigasi non-lokal. `OPENAI_API_KEY` dibaca backend dari `.env`; key
+memblokir navigasi non-lokal. `GEMINI_API_KEY` dibaca backend dari `.env`; key
 tidak pernah dikirim ke extension atau browser bridge.
 
-## Menjalankan di Windows PowerShell
+## Menjalankan paling mudah di Windows
+
+Setelah setup satu kali dan `.env` terisi, klik dua kali `Mulai Pengujian.vbs`.
+Pilih **Mulai sesi penelitian**. Launcher membangun extension, menyalakan API,
+bridge browser, Chromium terisolasi, dan Researcher Console secara otomatis.
+Tutup jendela Chromium setelah sesi untuk menghentikan service.
+
+Untuk pemeriksaan otomatis tanpa biaya model, pilih **Periksa sistem otomatis**
+atau jalankan `npm run agent:test`. Mode ini memakai planner deterministik yang
+hanya diizinkan ketika `CUA_ENV=test`.
+
+## Konfigurasi `.env`
 
 1. Buka `.env` dengan `notepad .env`. Pastikan nilai berikut terisi:
 
@@ -30,33 +41,13 @@ tidak pernah dikirim ke extension atau browser bridge.
    CUA_BROWSER_BRIDGE_PORT=8765
    CUA_BROWSER_BRIDGE_URL=http://127.0.0.1:8765
    CUA_LIVE_AGENT_ENABLED=true
-   OPENAI_API_KEY=<key-milik-Anda>
-   CUA_PLANNER_MODEL=gpt-4.1-mini-2025-04-14
+   GEMINI_API_KEY=<key-milik-Anda>
+   CUA_PLANNER_MODEL=gemini-3.7-flash
+   CUA_PLANNER_FALLBACK_MODEL=gemini-3.6-flash
    ```
 
-2. Jalankan API di terminal pertama:
-
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   python -m uvicorn apps.api.a11y_api.app:app --host 127.0.0.1 --port 8000
-   ```
-
-3. Build extension dan buka browser di terminal kedua:
-
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   npm run test:frontend
-   $env:CUA_BROWSER_PROFILE_DIR=".runtime/playwright-profile-live"
-   node .\scripts\open-benchmark.mjs --task T01 --condition C0 --with-extension
-   ```
-
-4. Jangan tekan Enter pada terminal kedua selama browser masih dipakai. Di
-   Chromium, pilih **Mulai dan buka asisten**. Tujuan T01 dimuat otomatis dari
-   spesifikasi benchmark publik. Peserta cukup memilih **Mulai tugas**; mengetik
-   atau menyalin tujuan hanya menjadi fallback jika konteks task gagal dimuat.
-   Panduan suara browser membacakan task secara otomatis. Tombol **Ulangi
-   instruksi** dan **Panduan suara: aktif/mati** selalu dapat digunakan dengan
-   keyboard. `aria-live` tetap dipertahankan untuk screen reader.
+Tidak ada OpenAI API key atau provider OpenAI dalam runtime. Kunci Gemini tetap
+hanya dibaca backend lokal dan tidak dikirim ke extension.
 
 ## Definition of Done smoke test
 
@@ -81,3 +72,5 @@ tidak pernah dikirim ke extension atau browser bridge.
   evaluator terpisah.
 - Ini belum membuktikan usability bagi pengguna tunanetra; walkthrough NVDA dan
   user testing tetap diperlukan.
+- Perekaman webcam, audio, dan layar belum diimplementasikan. Researcher Console
+  sudah mencatat consent granular, tetapi tidak mengklaim atau memulai perekaman.

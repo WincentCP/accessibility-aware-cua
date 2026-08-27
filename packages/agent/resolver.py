@@ -106,7 +106,7 @@ class SemanticTargetResolver:
         except Exception as exc:
             raise ResolverError(
                 ErrorCode.NAVIGATION_INTERRUPTED,
-                "Browser berubah ketika locator semantik di-resolve.",
+                f"Browser berubah ketika locator semantik di-resolve: {exc}",
             ) from exc
         if count == 0:
             raise ResolverError(

@@ -29,10 +29,11 @@ const localUrl = (value) => {
   return parsed.href;
 };
 
-export const startBrowserBridge = async ({ page, token, port = 8765 }) => {
+export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) => {
   if (!token || token.length < 24) throw new Error("CUA_APP_SECRET tidak valid untuk browser bridge.");
 
-  const locate = (payload) => page.getByRole(payload.role, {
+  const currentPage = () => getPage?.() ?? page;
+  const locate = (payload) => currentPage().getByRole(payload.role, {
     ...(payload.name ? { name: payload.name } : {}),
     exact: payload.exact !== false
   });
@@ -45,11 +46,11 @@ export const startBrowserBridge = async ({ page, token, port = 8765 }) => {
       }
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
       if (request.method === "GET" && url.pathname === "/health") {
-        sendJson(response, 200, { status: "ready", page_url: page.url() });
+        sendJson(response, 200, { status: "ready", page_url: currentPage().url() });
         return;
       }
       if (request.method === "GET" && url.pathname === "/page/meta") {
-        sendJson(response, 200, { url: page.url(), title: await page.title() });
+        sendJson(response, 200, { url: currentPage().url(), title: await currentPage().title() });
         return;
       }
       if (request.method !== "POST") {
@@ -59,7 +60,7 @@ export const startBrowserBridge = async ({ page, token, port = 8765 }) => {
       const payload = await readJson(request);
       if (url.pathname === "/page/aria") {
         const selector = payload.selector === ":focus" ? ":focus" : "body";
-        const locator = page.locator(selector);
+        const locator = currentPage().locator(selector);
         const count = await locator.count();
         const snapshot = count === 1 ? await locator.ariaSnapshot({ timeout: 5_000 }) : null;
         sendJson(response, 200, { count, snapshot });
@@ -72,7 +73,9 @@ export const startBrowserBridge = async ({ page, token, port = 8765 }) => {
           count,
           visible: count === 1 ? await locator.isVisible() : false,
           enabled: count === 1 ? await locator.isEnabled() : false,
-          editable: count === 1 ? await locator.isEditable() : false
+          editable: count === 1 && ["textbox", "combobox"].includes(payload.role)
+            ? await locator.isEditable()
+            : false
         });
         return;
       }
@@ -89,19 +92,19 @@ export const startBrowserBridge = async ({ page, token, port = 8765 }) => {
           if (op === "set_checked") await locator.setChecked(Boolean(payload.checked), { timeout: 3_000 });
           if (op === "scroll") await locator.scrollIntoViewIfNeeded({ timeout: 3_000 });
         } else if (op === "keyboard_press") {
-          await page.keyboard.press(String(payload.key ?? ""));
+          await currentPage().keyboard.press(String(payload.key ?? ""));
         } else if (op === "goto") {
-          await page.goto(localUrl(String(payload.value ?? "")), { waitUntil: "domcontentloaded", timeout: 5_000 });
+          await currentPage().goto(localUrl(String(payload.value ?? "")), { waitUntil: "domcontentloaded", timeout: 5_000 });
         } else if (op === "go_back") {
-          const before = page.url();
-          await page.goBack({ waitUntil: "domcontentloaded", timeout: 5_000 });
-          result.moved = page.url() !== before;
+          const before = currentPage().url();
+          await currentPage().goBack({ waitUntil: "domcontentloaded", timeout: 5_000 });
+          result.moved = currentPage().url() !== before;
         } else if (op === "wait") {
-          await page.waitForTimeout(Number(payload.duration_ms ?? 0));
+          await currentPage().waitForTimeout(Number(payload.duration_ms ?? 0));
         } else {
           throw new Error("UNSUPPORTED_BRIDGE_ACTION");
         }
-        sendJson(response, 200, { success: true, url: page.url(), ...result });
+        sendJson(response, 200, { success: true, url: currentPage().url(), ...result });
         return;
       }
       sendJson(response, 404, { error: "NOT_FOUND" });

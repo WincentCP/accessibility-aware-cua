@@ -242,5 +242,6 @@ export interface LiveRunResponse {
 export interface ActiveBenchmarkTask {
   session_id: string;
   task_id: string;
-  goal: string;
+  goal?: string;
+  study_session_id?: string;
 }

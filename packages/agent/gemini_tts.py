@@ -10,7 +10,6 @@ from typing import Any
 
 import httpx
 
-
 TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
 AUTH_GEMINI_STATUS_CODES = {401, 403}
 

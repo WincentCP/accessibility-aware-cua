@@ -10,7 +10,6 @@ import httpx
 
 from packages.agent.planner import ModelResponse
 
-
 TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
 
 

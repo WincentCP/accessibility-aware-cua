@@ -33,7 +33,6 @@ class Settings:
     browser_profile_dir: Path
     browser_headless: bool
     browser_bridge_url: str = "http://127.0.0.1:8765"
-    openai_api_key: str | None = None
     gemini_api_key: str | None = None
     planner_provider: str = "gemini"
     planner_model: str = "gemini-3.7-flash"
@@ -102,7 +101,6 @@ class Settings:
             browser_bridge_url=os.getenv(
                 "CUA_BROWSER_BRIDGE_URL", "http://127.0.0.1:8765"
             ).rstrip("/"),
-            openai_api_key=os.getenv("OPENAI_API_KEY") or None,
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
             planner_provider=os.getenv("CUA_PLANNER_PROVIDER", "gemini").strip().lower(),
             planner_model=os.getenv("CUA_PLANNER_MODEL", "gemini-3.7-flash"),

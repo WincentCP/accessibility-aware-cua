@@ -102,8 +102,8 @@ class Stage4RepositoryContractTests(unittest.TestCase):
         self.assertEqual(manifest["side_panel"]["default_path"], "sidepanel.html")
         self.assertNotIn("tabs", manifest["permissions"])
         self.assertIn('lang="id"', html)
-        self.assertIn("Mulai input suara", html)
-        self.assertIn("Peta tugas aksesibel", html)
+        self.assertIn("Dengarkan saya", html)
+        self.assertIn("Hasil yang sudah diperiksa", html)
         self.assertIn("Shared control", html)
 
     def test_runtime_and_secret_artifacts_are_ignored(self):

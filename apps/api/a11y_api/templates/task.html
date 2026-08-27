@@ -1,16 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{{ task_id }} — {{ task.name }}{% endblock %}
-{% block body_class %}condition-{{ condition_id|lower }}{% if is_c1 %} reflowed{% endif %}{% endblock %}
+{% block title %}{% if study_mode %}Kegiatan peserta{% else %}{{ task_id }} - {{ task.name }}{% endif %}{% endblock %}
+{% block body_class %}{% if study_mode %}study-mode{% else %}condition-{{ condition_id|lower }}{% if is_c1 %} reflowed{% endif %}{% endif %}{% endblock %}
 {% block content %}
 <main id="main-content" tabindex="-1" class="page-shell task-layout">
+  {% if not study_mode %}
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/">Beranda</a> <span aria-hidden="true">/</span>
     <a href="/{{ domain }}">{{ domain_label }}</a>
   </nav>
 
   <header class="task-header">
-    <p class="eyebrow">{{ task_id }} · {{ condition_id }} · seed {{ seed }}</p>
-    <h1>{{ task.name }}</h1>
+    <div class="task-title-row">
+      <h1>{{ task.name }}</h1>
+      <p class="task-meta">{{ task_id }} / {{ condition_id }} / seed {{ seed }}</p>
+    </div>
     <div class="goal-box" aria-labelledby="goal-heading">
       <h2 id="goal-heading">Tujuan tugas</h2>
       <p>{{ task.goal }}</p>
@@ -30,6 +33,7 @@
     <p>Tampilan normal dengan target yang unik dan respons langsung.</p>
     {% endif %}
   </aside>
+  {% endif %}
 
   <section class="status-box status-{{ status.kind }}" aria-labelledby="status-heading">
     <h2 id="status-heading">Status task</h2>
@@ -38,21 +42,21 @@
 
   <section class="workspace" aria-labelledby="workspace-heading">
     <h2 id="workspace-heading">Area kerja</h2>
-    {% if is_c2 %}
+    {% if is_c2 and not study_mode %}
     <p class="dynamic-notice" role="note">
       Mode dinamis aktif. Setelah formulir dikirim, tunggu pengumuman selesai sebelum melanjutkan.
     </p>
     {% endif %}
 
-    <form method="post" action="/api/benchmark/sessions/{{ session_id }}/actions" data-benchmark-form data-delay-ms="{{ presentation.delay_ms }}">
+    <form method="post" action="/api/benchmark/sessions/{{ session_id }}/actions{% if study_session_id %}?study_session_id={{ study_session_id }}{% endif %}" data-benchmark-form data-delay-ms="{{ presentation.delay_ms }}">
       {% if task_id == "T01" %}
       <fieldset>
-        <legend>Pilih satu rute Medan–Bali</legend>
+        <legend>Pilih satu rute Medan ke Bali</legend>
         <div class="record-list">
           {% for record in records %}
           <article class="record-card">
-            <h3>{{ record['from'] }} ke {{ record.to }} · {{ record.depart }}</h3>
-            <p>Tiba {{ record.arrive }} · Rp{{ "{:,}".format(record.price).replace(",", ".") }} · {{ record.stops }} transit</p>
+            <h3>{{ record['from'] }} ke {{ record.to }}, {{ record.depart }}</h3>
+            <p>Tiba {{ record.arrive }}, Rp{{ "{:,}".format(record.price).replace(",", ".") }}, {{ record.stops }} transit</p>
             <label>
               <input type="radio" name="route_id" value="{{ record.id }}" required {% if form.route_id == record.id %}checked{% endif %}>
               {% if is_c1 %}Gunakan opsi {{ record.depart }}{% else %}Pilih rute {{ record.depart }}{% endif %}
@@ -73,8 +77,8 @@
         <div class="record-list">
           {% for record in records %}
           <article class="record-card">
-            <h3>{{ record['from'] }} ke {{ record.to }} · {{ record.depart }}–{{ record.arrive }}</h3>
-            <p>Rp{{ "{:,}".format(record.price).replace(",", ".") }} · {{ record.stops }} transit</p>
+            <h3>{{ record['from'] }} ke {{ record.to }}, {{ record.depart }}-{{ record.arrive }}</h3>
+            <p>Rp{{ "{:,}".format(record.price).replace(",", ".") }}, {{ record.stops }} transit</p>
             <label><input type="radio" name="route_id" value="{{ record.id }}" required {% if form.route_id == record.id %}checked{% endif %}> {% if is_c1 %}Gunakan opsi ini{% else %}Pilih rute ini{% endif %}: tiba {{ record.arrive }}</label>
           </article>
           {% endfor %}
@@ -90,7 +94,7 @@
       <fieldset>
         <legend>Jadwal yang diterima</legend>
         {% for record in records %}
-        <label class="stacked-option"><input type="radio" name="accepted_schedule" value="{{ record.depart }}" required {% if form.accepted_schedule == record.depart %}checked{% endif %}> {{ record.depart }} — {{ record.status }}</label>
+        <label class="stacked-option"><input type="radio" name="accepted_schedule" value="{{ record.depart }}" required {% if form.accepted_schedule == record.depart %}checked{% endif %}> {{ record.depart }} - {{ record.status }}</label>
         {% endfor %}
       </fieldset>
       <button type="submit">Simpan data dummy dan lanjut ke review</button>
@@ -102,7 +106,7 @@
           {% for record in records %}
           <article class="record-card">
             <h3>{{ record.name }}</h3>
-            <p>Rp{{ "{:,}".format(record.price).replace(",", ".") }} · rating {{ record.rating }}</p>
+            <p>Rp{{ "{:,}".format(record.price).replace(",", ".") }}, rating {{ record.rating }}</p>
             <label><input type="radio" name="product_id" value="{{ record.id }}" required {% if form.product_id == record.id %}checked{% endif %}> {% if is_c1 %}Simpan {{ record.name }} untuk dibandingkan{% else %}Bandingkan {{ record.name }}{% endif %}</label>
           </article>
           {% endfor %}
@@ -136,7 +140,7 @@
           {% for record in records %}
           <article class="record-card">
             <h3>{{ record.day }}, {{ record.time }}</h3>
-            <p>Pendamping {{ record.advisor }} · {% if record.available %}tersedia{% else %}tidak tersedia{% endif %}</p>
+            <p>Pendamping {{ record.advisor }}, {% if record.available %}tersedia{% else %}tidak tersedia{% endif %}</p>
             <label><input type="radio" name="slot_id" value="{{ record.id }}" required {% if form.slot_id == record.id %}checked{% endif %}> Pilih {{ record.day }} {{ record.time }} dengan {{ record.advisor }}</label>
           </article>
           {% endfor %}
@@ -189,10 +193,12 @@
     </form>
   </section>
 
+  {% if not study_mode %}
   <section class="replay-info" aria-labelledby="replay-heading">
     <h2 id="replay-heading">Kontrol eksperimen</h2>
     <p>Task {{ task_id }}, kondisi {{ condition_id }}, seed {{ seed }}. Reset mengembalikan state awal yang sama.</p>
   </section>
+  {% endif %}
 </main>
 {% endblock %}
 {% block scripts %}<script src="/static/benchmark.js" defer></script>{% endblock %}

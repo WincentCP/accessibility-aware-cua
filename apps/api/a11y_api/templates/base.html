@@ -3,25 +3,23 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7fb">
     <title>{% block title %}Accessibility-Aware CUA Benchmark{% endblock %}</title>
     <link rel="stylesheet" href="/static/site.css">
   </head>
   <body class="{% block body_class %}{% endblock %}">
+    <!--
+      THESIS: A research benchmark should make task boundaries and state easier to inspect than a generic demo site.
+      OWN-WORLD: Soft lavender-slate canvas, white surfaces, muted teal controls, restrained amber focus, Plus Jakarta Sans, and one soft geometric system.
+      STORY: Choose a domain, understand the task and safety boundary, complete the workspace flow, and retain reproducible experiment context.
+      FIRST VIEWPORT: A concise task brief places condition and status before the work area without a decorative global header.
+      FORM: Brief-pinned Operate shell; seed key brief-pinned-cua-20260826.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
     <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
-    <header class="site-header">
-      <a class="brand" href="/">CUA Benchmark Lokal</a>
-      <nav aria-label="Mini-site benchmark">
-        <ul>
-          <li><a href="/travel">Travel</a></li>
-          <li><a href="/marketplace">Marketplace</a></li>
-          <li><a href="/appointment">Appointment</a></li>
-          <li><a href="/account">Account</a></li>
-        </ul>
-      </nav>
-    </header>
     {% block content %}{% endblock %}
-    <footer>
-      <p>Lingkungan riset lokal. Semua data sintetis; tidak ada transaksi nyata.</p>
+    <footer{% if study_mode|default(false) %} hidden{% endif %}>
+      <p><strong>Benchmark lokal.</strong> Semua data sintetis; tidak ada transaksi nyata.</p>
     </footer>
     {% block scripts %}{% endblock %}
   </body>

@@ -19,9 +19,9 @@ from a11y_benchmark.manifests import final_seed
 from apps.api.a11y_api import APP_VERSION
 from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
-from packages.agent.live import LiveAgentManager
+from apps.api.a11y_api.study import StudySessionStore
 from packages.agent.gemini_tts import GeminiTTSClient
-from packages.agent.openai_tts import OpenAITTSClient
+from packages.agent.live import LiveAgentManager
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
@@ -47,11 +47,38 @@ class LiveRunRequest(BaseModel):
 
 
 class LiveCommandRequest(BaseModel):
-    command: str = Field(pattern=r"^(?:PAUSE|TAKE_OVER|RESUME|CANCEL|REJECT)$")
+    command: str = Field(pattern=r"^(?:APPROVE|PAUSE|TAKE_OVER|RESUME|CANCEL|REJECT)$")
+    transcript: str | None = Field(default=None, max_length=500)
 
 
 class SpeechRequest(BaseModel):
     text: str = Field(min_length=1, max_length=2_000)
+
+
+class StudySessionRequest(BaseModel):
+    participant_code: str = Field(min_length=1, max_length=80)
+    condition_id: str = Field(default="C0", pattern=r"^C[0-2]$")
+    is_minor: bool = False
+    guardian_consent_confirmed: bool = False
+
+
+class StudyConsentRequest(BaseModel):
+    key: str
+    granted: bool
+
+
+class StudyReadinessRequest(BaseModel):
+    key: str
+    passed: bool
+
+
+class StudyCompletionRequest(BaseModel):
+    outcome: str = Field(min_length=1, max_length=80)
+
+
+class StudyEventRequest(BaseModel):
+    kind: str = Field(min_length=1, max_length=80)
+    detail: str = Field(default="", max_length=500)
 
 
 def _postgres_health(settings: Settings) -> tuple[dict[str, str], bool]:
@@ -81,6 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = active_settings
     app.state.case_store = CaseStore(active_settings.app_secret)
+    app.state.study_store = StudySessionStore(app.state.case_store)
     app.state.live_agent = LiveAgentManager(
         settings=active_settings,
         case_store=app.state.case_store,
@@ -94,6 +122,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         *,
         status_code: int = 200,
         status_override: dict[str, str] | None = None,
+        study_session_id: str | None = None,
     ):
         domain = view["task"]["domain"]
         presentation = view["presentation"]
@@ -111,6 +140,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "domain_label": DOMAIN_LABELS[domain],
                 "is_c1": view["condition_id"] == "C1",
                 "is_c2": view["condition_id"] == "C2",
+                "study_session_id": study_session_id,
+                "study_mode": study_session_id is not None,
             },
         )
 
@@ -121,6 +152,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "service": "accessibility-aware-cua-api",
             "version": APP_VERSION,
             "environment": active_settings.environment,
+            "planner_provider": active_settings.planner_provider,
         }
 
     @app.get("/health/ready", tags=["health"])
@@ -143,6 +175,75 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def reset_case_endpoint(payload: ResetRequest) -> dict:
         try:
             return app.state.case_store.reset(payload.task_id, payload.condition_id, payload.seed)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/researcher", response_class=HTMLResponse, include_in_schema=False)
+    def researcher_console(request: Request):
+        return templates.TemplateResponse(request=request, name="researcher.html", context={})
+
+    @app.post("/api/study/sessions", tags=["study"], status_code=201)
+    def create_study_session(payload: StudySessionRequest) -> dict:
+        try:
+            return app.state.study_store.create(**payload.model_dump())
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/api/study/sessions/{study_session_id}", tags=["study"])
+    def get_study_session(study_session_id: str) -> dict:
+        try:
+            return app.state.study_store.snapshot(study_session_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/consent", tags=["study"])
+    def record_study_consent(study_session_id: str, payload: StudyConsentRequest) -> dict:
+        try:
+            return app.state.study_store.set_consent(study_session_id, payload.key, payload.granted)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/tasks/start", tags=["study"])
+    def start_study_task(study_session_id: str) -> dict:
+        try:
+            return app.state.study_store.start_task(study_session_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/checks", tags=["study"])
+    def record_study_readiness(
+        study_session_id: str, payload: StudyReadinessRequest
+    ) -> dict:
+        try:
+            return app.state.study_store.set_readiness_check(
+                study_session_id, payload.key, payload.passed
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/tasks/complete", tags=["study"])
+    def complete_study_task(study_session_id: str, payload: StudyCompletionRequest) -> dict:
+        try:
+            return app.state.study_store.complete_task(study_session_id, payload.outcome)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/events", tags=["study"])
+    def log_study_event(study_session_id: str, payload: StudyEventRequest) -> dict:
+        try:
+            return app.state.study_store.log_event(study_session_id, payload.kind, payload.detail)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -169,7 +270,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/agent/runs/{run_id}/commands", tags=["agent"])
     def command_live_run(run_id: UUID, payload: LiveCommandRequest) -> dict:
         try:
-            return app.state.live_agent.command(run_id, payload.command)
+            return app.state.live_agent.command(
+                run_id, payload.command, transcript=payload.transcript
+            )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except (ValueError, RuntimeError) as exc:
@@ -187,16 +290,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 model=active_settings.tts_model,
                 voice=active_settings.tts_voice,
             )
-        elif active_settings.tts_provider == "openai":
-            if not active_settings.openai_api_key:
-                raise HTTPException(status_code=503, detail="OPENAI_API_KEY belum diisi di .env lokal.")
-            client = OpenAITTSClient(
-                active_settings.openai_api_key,
-                model=active_settings.tts_model,
-                voice=active_settings.tts_voice,
-            )
         else:
-            raise HTTPException(status_code=503, detail="TTS provider tidak didukung.")
+            raise HTTPException(status_code=503, detail="TTS hanya mendukung provider Gemini.")
         try:
             audio = client.generate(payload.text)
         except RuntimeError as exc:
@@ -205,7 +300,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             client.close()
         return Response(
             content=audio,
-            media_type="audio/wav" if active_settings.tts_provider == "gemini" else "audio/mpeg",
+            media_type="audio/wav",
             headers={"Cache-Control": "private, max-age=300"},
         )
 
@@ -218,6 +313,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/benchmark/sessions/{session_id}/actions", include_in_schema=False)
     async def apply_action(request: Request, session_id: str):
+        study_session_id = request.query_params.get("study_session_id")
         try:
             current = app.state.case_store.view(session_id)
         except SessionNotFound as exc:
@@ -244,9 +340,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "kind": "error",
                     "message": f"Input belum disimpan: {exc}",
                 },
+                study_session_id=study_session_id,
             )
+        study_query = f"&study_session_id={study_session_id}" if study_session_id else ""
         return RedirectResponse(
-            f"{current['route']}?session_id={session_id}", status_code=303
+            f"{current['route']}?session_id={session_id}{study_query}", status_code=303
         )
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -293,6 +391,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         task_id: str | None = Query(default=None),
         condition_id: str = Query(default="C0", pattern=r"^C[0-2]$"),
         seed: int | None = Query(default=None, ge=0, le=2_147_483_647),
+        study_session_id: str | None = Query(default=None),
     ):
         route = f"/{domain}/{page_path}"
         expected_task_id = TASK_BY_ROUTE.get(route)
@@ -316,7 +415,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if view["route"] != route:
             raise HTTPException(status_code=400, detail="Sesi tidak cocok dengan route ini.")
 
-        return render_task(request, view)
+        if study_session_id is not None:
+            try:
+                study = app.state.study_store.snapshot(study_session_id)
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail="Sesi penelitian tidak ditemukan.") from exc
+            if study["active_benchmark_session_id"] != session_id:
+                raise HTTPException(status_code=400, detail="Halaman tidak cocok dengan sesi penelitian aktif.")
+
+        return render_task(
+            request,
+            view,
+            study_session_id=study_session_id,
+            status_override=(
+                {"kind": "ready", "message": "Halaman kegiatan siap."}
+                if study_session_id is not None
+                and view.get("status", {}).get("message", "").startswith("Fixture siap")
+                else None
+            ),
+        )
 
     return app
 

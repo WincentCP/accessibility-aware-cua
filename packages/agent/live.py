@@ -9,16 +9,23 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID, uuid4
 
-from packages.agent.contracts import AgentAction, RelevantItem, VerificationResult
+from packages.agent.contracts import (
+    AgentAction,
+    RelevantItem,
+    VerificationResult,
+    VerificationStatus,
+)
+from packages.agent.deterministic_test_client import DeterministicT01Client
 from packages.agent.executor import DeterministicExecutor
 from packages.agent.gemini_client import GeminiStructuredClient
 from packages.agent.graph import OrchestrationServices, build_agent_graph
 from packages.agent.observer import AccessibilityObserver
-from packages.agent.openai_client import OpenAIResponsesClient
 from packages.agent.planner import PlannerConfig, PlannerDecision, StructuredPlanner
+from packages.agent.predicates import VerificationPlan
 from packages.agent.recovery import RecoveryController
 from packages.agent.remote_page import RemotePage
 from packages.agent.resolver import SemanticTargetResolver
+from packages.agent.safety import ApprovalChoice, InputChannel, execute_with_consumed_approval
 from packages.agent.task_map import MapControlState, TaskMapCompileInput, TaskMapCompiler
 from packages.agent.verifier import PredicateVerifier
 
@@ -36,6 +43,8 @@ class LiveRun:
     state: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
     services: OrchestrationServices | None = None
+    verifications: list[VerificationResult] = field(default_factory=list)
+    effects: dict[str, str] = field(default_factory=dict)
     cancelled: bool = False
 
 
@@ -54,9 +63,9 @@ class LiveAgentManager:
         provider = self.settings.planner_provider
         if provider == "gemini" and not self.settings.gemini_api_key:
             raise RuntimeError("GEMINI_API_KEY belum diisi di .env lokal.")
-        if provider == "openai" and not self.settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY belum diisi di .env lokal.")
-        if provider not in {"gemini", "openai"}:
+        if provider == "deterministic" and self.settings.environment != "test":
+            raise RuntimeError("Planner deterministik hanya diizinkan pada CUA_ENV=test.")
+        if provider not in {"gemini", "deterministic"}:
             raise RuntimeError(f"Planner provider tidak didukung: {provider}.")
         view = self.case_store.view(benchmark_session_id)
         page = RemotePage(self.settings.browser_bridge_url, self.settings.app_secret)
@@ -99,7 +108,9 @@ class LiveAgentManager:
                 "error": run.error,
             }
 
-    def command(self, run_id: UUID, command: str) -> dict[str, Any]:
+    def command(
+        self, run_id: UUID, command: str, *, transcript: str | None = None
+    ) -> dict[str, Any]:
         run = self.get(run_id)
         normalized = command.upper()
         if normalized in {"CANCEL", "REJECT"}:
@@ -112,7 +123,9 @@ class LiveAgentManager:
         services = run.services
         if services is None:
             raise RuntimeError("Agent belum siap menerima kontrol.")
-        if normalized == "PAUSE":
+        if normalized == "APPROVE":
+            self._approve_pending_action(run, transcript=transcript)
+        elif normalized == "PAUSE":
             services.control.request_pause()
             run.announcement = "Permintaan jeda diterima. Agen berhenti pada checkpoint aman."
         elif normalized == "TAKE_OVER":
@@ -128,6 +141,86 @@ class LiveAgentManager:
         else:
             raise ValueError("Command belum didukung pada live bridge.")
         return self.snapshot(run_id)
+
+    def _approve_pending_action(self, run: LiveRun, *, transcript: str | None) -> None:
+        if run.status != "WAITING_USER":
+            raise RuntimeError("Tidak ada persetujuan aktif.")
+        pending = run.state.get("pending_interrupt") or {}
+        if pending.get("kind") != "APPROVAL":
+            raise RuntimeError("Checkpoint aktif bukan permintaan persetujuan.")
+        services = run.services
+        if services is None:
+            raise RuntimeError("Agent belum siap menerima persetujuan.")
+        decision = PlannerDecision.model_validate(run.state["planner_decision"])
+        approval_id = UUID(str(pending["approval_id"]))
+        channel = InputChannel.VOICE if transcript else InputChannel.KEYBOARD
+        services.approvals.resolve(
+            approval_id,
+            choice=ApprovalChoice.APPROVE,
+            channel=channel,
+            voice_transcript=transcript,
+        )
+        page = RemotePage(self.settings.browser_bridge_url, self.settings.app_secret)
+        try:
+            execution = execute_with_consumed_approval(
+                registry=services.approvals,
+                approval_id=approval_id,
+                action=decision.action,
+                executor=services.executor,
+                page=page,
+                control_gate=services.control,
+            )
+            if not execution.success:
+                raise RuntimeError(
+                    "Aksi yang disetujui gagal dijalankan dengan aman: "
+                    f"{execution.error_code.value}, {execution.result_summary}"
+                )
+            plan = VerificationPlan(
+                step_id=decision.action.step_id,
+                before_observation_ref=run.state["observation_ref"],
+                predicates=decision.postconditions,
+                planned_at=run.state["planner_telemetry"][-1]["recorded_at"],
+            )
+            verification, _ = services.verifier.verify(
+                page,
+                plan,
+                execution_started_at=execution.started_at,
+            )
+            if verification.status is not VerificationStatus.VERIFIED:
+                raise RuntimeError("Hasil aksi yang disetujui belum dapat diverifikasi.")
+            run.verifications.append(verification)
+            run.effects[str(decision.action.step_id)] = decision.action.expected_effect
+            progress = [
+                *run.state.get("verified_progress", []),
+                decision.action.expected_effect,
+            ]
+            run.state = {
+                **run.state,
+                "verified_progress": progress,
+                "task_map_version": int(run.state.get("task_map_version", 0)) + 1,
+                "pending_interrupt": None,
+                "approval_card": None,
+                "handoff_status": "NONE",
+                "terminal_reason": (
+                    "COMPLETED" if decision.goal_complete_after_verification else None
+                ),
+            }
+            if decision.goal_complete_after_verification:
+                run.status = "COMPLETED"
+                run.announcement = "Kegiatan selesai dan hasilnya sudah saya periksa."
+                self._compile_map(run, run.state, run.verifications, run.effects)
+            else:
+                run.status = "QUEUED"
+                run.announcement = "Persetujuan diterima. Saya melanjutkan kegiatan."
+                self._executor.submit(self._execute, run.run_id)
+        except Exception:
+            run.status = "FAILED"
+            run.announcement = (
+                "Persetujuan diterima, tetapi aksi tidak dapat diselesaikan dengan aman."
+            )
+            raise
+        finally:
+            page.close()
 
     def _compile_map(
         self,
@@ -188,7 +281,7 @@ class LiveAgentManager:
         if run.cancelled:
             return
         page = RemotePage(self.settings.browser_bridge_url, self.settings.app_secret)
-        model_client: GeminiStructuredClient | OpenAIResponsesClient | None = None
+        model_client: GeminiStructuredClient | DeterministicT01Client | None = None
         try:
             observer = AccessibilityObserver(allow_cdp_fallback=False)
             resolver = SemanticTargetResolver(observer.registry)
@@ -201,11 +294,8 @@ class LiveAgentManager:
                 )
                 planner_provider = "google-gemini"
             else:
-                model_client = OpenAIResponsesClient(
-                    self.settings.openai_api_key,
-                    model=self.settings.planner_model,
-                )
-                planner_provider = "openai-responses"
+                model_client = DeterministicT01Client()
+                planner_provider = model_client.provider
             services = OrchestrationServices(
                 page=page,
                 observer=observer,
@@ -243,9 +333,11 @@ class LiveAgentManager:
                 "error_code": "NONE",
             }
             graph = build_agent_graph(services)
-            verifications: list[VerificationResult] = []
-            seen_verifications: set[UUID] = set()
-            effects: dict[str, str] = {}
+            verifications = list(run.verifications)
+            seen_verifications = {
+                verification.verification_id for verification in verifications
+            }
+            effects = dict(run.effects)
             final_state = initial
             for state in graph.stream(initial, stream_mode="values"):
                 final_state = dict(state)
@@ -261,7 +353,9 @@ class LiveAgentManager:
                     if verification.verification_id not in seen_verifications:
                         seen_verifications.add(verification.verification_id)
                         verifications.append(verification)
+                        run.verifications = list(verifications)
                 self._compile_map(run, final_state, verifications, effects)
+                run.effects = dict(effects)
                 run.state = final_state
                 run.announcement = self._announcement(final_state)
             if not run.cancelled:

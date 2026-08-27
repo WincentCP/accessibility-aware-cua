@@ -56,6 +56,7 @@ test("microphone denial preserves complete text fallback", async ({ page }) => {
     Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeRecorder });
   });
   await page.reload();
+  await page.locator("#fallback-tools").getByText("Kontrol cadangan").click();
   await page.locator("#voice").click();
   await expect(page.locator("#status")).toContainText("Mikrofon tidak diizinkan");
   await page.locator("#goal").fill("gunakan teks");

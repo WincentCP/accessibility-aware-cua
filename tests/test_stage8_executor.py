@@ -53,7 +53,7 @@ def test_server() -> Iterator[None]:
         text=True,
     )
     try:
-        deadline = time.monotonic() + 15
+        deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             try:
                 with urllib.request.urlopen(f"{BASE_URL}/health", timeout=0.5) as response:

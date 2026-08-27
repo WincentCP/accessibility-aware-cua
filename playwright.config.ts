@@ -12,7 +12,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "python scripts/run_test_server.py",
+      command: "node scripts/run-test-server.mjs",
       url: "http://127.0.0.1:8015/health",
       reuseExistingServer: false,
       timeout: 30_000

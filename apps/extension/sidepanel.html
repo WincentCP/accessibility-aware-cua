@@ -1,87 +1,138 @@
 <!doctype html>
-<html lang="id">
+<html lang="id" data-agent-state="idle">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f6fb">
     <title>Accessibility-Aware CUA</title>
     <script type="module" src="/src/sidepanel.ts"></script>
   </head>
   <body>
+    <!--
+      THESIS: Agent assistance should feel legible and controllable, never like an opaque automation dashboard.
+      OWN-WORLD: Soft lavender-slate canvas, white surfaces, muted teal controls, restrained amber signals, Plus Jakarta Sans, and one consistent soft geometry.
+      STORY: Review the task, start the agent, understand every phase, inspect verified evidence, and intervene at any time.
+      FIRST VIEWPORT: Live status leads directly into one clear task card, followed by activity, verified evidence, and shared controls.
+      FORM: Brief-pinned Operate shell; seed key brief-pinned-cua-20260826.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
     <a class="skip-link" href="#main-content">Lewati ke kontrol utama</a>
-    <main id="main-content" tabindex="-1">
-      <header>
-        <p class="eyebrow">Prototipe penelitian</p>
-        <h1>Accessibility-Aware CUA</h1>
-        <p id="shell-description">Sampaikan tujuan, pantau bukti, dan ambil kendali kapan saja.</p>
-      </header>
-      <section aria-labelledby="goal-heading">
-        <h2 id="goal-heading">Tujuan pengguna</h2>
-        <label for="goal">Tujuan otomatis dari task yang sedang dibuka</label>
-        <textarea id="goal" rows="3" aria-describedby="shell-description voice-help"></textarea>
-        <div class="button-row">
-          <button id="voice" type="button" aria-pressed="false">Mulai input suara</button>
-          <button id="cancel-voice" type="button" disabled>Batalkan suara</button>
+    <main id="main-content" class="panel-shell" tabindex="-1">
+      <h1 class="sr-only">Accessibility-Aware CUA</h1>
+      <p id="shell-description" class="sr-only">Tinjau tujuan, aktivitas agen, bukti, dan kendali tugas.</p>
+      <div class="panel-status status-strip">
+        <span class="status-indicator" aria-hidden="true"></span>
+        <p id="status" role="status" aria-live="polite" aria-atomic="true">Panel siap.</p>
+      </div>
+
+      <p id="approval-alert" class="approval" role="alert" aria-live="assertive" hidden></p>
+
+      <section class="surface task-surface" aria-labelledby="goal-heading">
+        <div class="section-heading">
+          <h2 id="goal-heading">Asisten</h2>
         </div>
-        <div id="transcript-review" hidden>
+        <p id="assistant-prompt" class="assistant-prompt">Saya sedang menyiapkan kegiatan.</p>
+        <p id="heard-text" class="heard-text" hidden><strong>Saya mendengar:</strong> <span></span></p>
+
+        <div id="transcript-review" class="inline-review" hidden>
           <label for="transcript">Periksa hasil suara</label>
-          <textarea id="transcript" rows="2"></textarea>
+          <textarea id="transcript" rows="3"></textarea>
           <div class="button-row">
-            <button id="confirm-transcript" type="button">Benar, gunakan</button>
-            <button id="edit-transcript" type="button">Ubah transkrip</button>
+            <button id="confirm-transcript" class="button-secondary" type="button">Gunakan transkrip</button>
+            <button id="edit-transcript" class="button-quiet" type="button">Ubah transkrip</button>
           </div>
         </div>
-        <button id="submit-goal" type="button" disabled>Mulai tugas</button>
-        <div class="button-row" aria-label="Kontrol panduan suara">
-          <button id="repeat-guide" type="button" disabled>Ulangi instruksi</button>
-          <button id="toggle-guide" type="button" aria-pressed="true">Panduan suara: aktif</button>
+
+        <p id="voice-state" class="voice-state" role="status" aria-live="polite">Panduan suara siap.</p>
+
+        <details id="fallback-tools" class="fallback-tools">
+          <summary>Kontrol cadangan</summary>
+          <div class="fallback-content">
+            <label for="goal">Apa yang ingin saya bantu?</label>
+            <textarea id="goal" rows="3" aria-describedby="shell-description voice-help"></textarea>
+            <button id="submit-goal" class="button-primary button-wide" type="button" disabled>Minta bantuan</button>
+            <div class="button-row secondary-actions" aria-label="Input tujuan cadangan">
+              <button id="voice" class="button-secondary" type="button" aria-pressed="false">Dengarkan saya</button>
+              <button id="cancel-voice" class="button-quiet" type="button" disabled>Batalkan</button>
+            </div>
+            <div class="button-row compact-actions" aria-label="Kontrol panduan suara">
+              <button id="repeat-guide" class="button-quiet" type="button" disabled>Ulangi panduan</button>
+              <button id="toggle-guide" class="button-quiet" type="button" aria-pressed="true">Suara: aktif</button>
+            </div>
+            <p id="voice-help" class="supporting-copy">Kontrol ini hanya digunakan jika percakapan suara otomatis tidak tersedia.</p>
+          </div>
+        </details>
+        <p id="voice-disclosure" class="sr-only">Panduan suara dibuat oleh AI.</p>
+      </section>
+
+      <section class="surface activity-surface" aria-labelledby="activity-heading">
+        <div class="section-heading activity-heading-row">
+          <h2 id="activity-heading">Sedang saya lakukan</h2>
+          <span id="activity-phase" class="phase-chip">Menunggu</span>
         </div>
-        <p id="voice-disclosure">Panduan suara ini dibuat oleh AI, bukan suara manusia.</p>
-        <p id="voice-state" role="status" aria-live="polite">Panduan suara Indonesia siap.</p>
-        <p id="voice-help">Mikrofon hanya aktif saat tombol suara digunakan, maksimum 20 detik. Hasil suara wajib diperiksa. Teks selalu tersedia.</p>
-      </section>
-      <section aria-labelledby="status-heading">
-        <h2 id="status-heading">Status</h2>
-        <p id="status" role="status" aria-live="polite" aria-atomic="true">Panel siap.</p>
-        <p id="approval-alert" class="approval" role="alert" aria-live="assertive" hidden></p>
-      </section>
-      <section aria-labelledby="activity-heading">
-        <h2 id="activity-heading">Agen sedang melakukan apa?</h2>
-        <dl class="summary-list">
-          <dt>Tahap</dt><dd id="activity-phase">Menunggu tugas dimulai.</dd>
-          <dt>Aktivitas</dt><dd id="activity-detail" aria-live="polite">Belum ada aktivitas.</dd>
-          <dt>Progres</dt><dd id="activity-progress">0 langkah terverifikasi selesai.</dd>
+        <div class="activity-signal" aria-hidden="true"><span></span></div>
+        <p id="activity-detail" class="activity-detail" aria-live="polite">Belum ada aktivitas.</p>
+        <dl class="summary-list compact-summary sr-only">
+          <div>
+            <dt>Progres terverifikasi</dt>
+            <dd id="activity-progress">0 langkah terverifikasi selesai.</dd>
+          </div>
         </dl>
       </section>
-      <section id="task-map" aria-labelledby="map-heading">
-        <h2 id="map-heading">Peta tugas aksesibel</h2>
-        <dl class="summary-list">
-          <dt>Tujuan aktif</dt><dd id="active-goal">Belum ada tujuan aktif.</dd>
-          <dt>Progres</dt><dd id="progress">0 langkah terverifikasi selesai.</dd>
+
+      <section id="task-map" class="surface evidence-surface" aria-labelledby="map-heading">
+        <div class="section-heading">
+          <h2 id="map-heading">Hasil yang sudah diperiksa</h2>
+        </div>
+        <dl class="summary-list evidence-summary">
+          <div class="sr-only">
+            <dt>Tujuan aktif</dt>
+            <dd id="active-goal">Belum ada tujuan aktif.</dd>
+          </div>
+          <div>
+            <dt>Perkembangan</dt>
+            <dd id="progress">0 langkah terverifikasi selesai.</dd>
+          </div>
         </dl>
-        <h3>Sudah selesai dan terverifikasi</h3>
-        <ol id="verified-list"><li>Belum ada.</li></ol>
-        <h3>Pilihan yang relevan</h3>
-        <ul id="relevant-list"><li>Belum ada.</li></ul>
-        <h3>Tindakan berikutnya — direncanakan, belum selesai</h3>
-        <p id="next-action">Belum ada.</p>
-        <h3>Belum pasti</h3>
-        <ul id="uncertain-list"><li>Belum ada.</li></ul>
-        <h3>Ringkasan akhir</h3>
-        <p id="final-summary">Tugas belum selesai.</p>
+
+        <div class="evidence-block verified-block">
+          <h3>Sudah selesai</h3>
+          <ol id="verified-list"><li>Belum ada.</li></ol>
+        </div>
+        <div class="evidence-block">
+          <h3>Pilihan yang ditemukan</h3>
+          <ul id="relevant-list"><li>Belum ada.</li></ul>
+        </div>
+        <div class="evidence-block next-block">
+          <h3>Berikutnya</h3>
+          <p id="next-action">Belum ada.</p>
+        </div>
+        <div class="evidence-block">
+          <h3>Perlu diperiksa lagi</h3>
+          <ul id="uncertain-list"><li>Belum ada.</li></ul>
+        </div>
+        <div class="evidence-block final-block">
+          <h3>Ringkasan</h3>
+          <p id="final-summary">Tugas belum selesai.</p>
+        </div>
       </section>
-      <section aria-labelledby="control-heading">
-        <h2 id="control-heading">Shared control (kontrol bersama)</h2>
+
+      <details class="surface control-surface fallback-tools">
+        <summary id="control-heading">Kontrol darurat</summary>
+        <div class="section-heading">
+          <h2 class="sr-only">Kendali Anda <span lang="en">Shared control</span></h2>
+        </div>
+        <p id="control-help" class="section-intro">Kontrol aktif setelah tujuan dikonfirmasi atau tugas dimulai.</p>
         <div class="control-grid">
-          <button type="button" data-command="APPROVE">Setujui <kbd>Alt+A</kbd></button>
-          <button type="button" data-command="EDIT">Ubah <kbd>Alt+E</kbd></button>
-          <button type="button" data-command="REJECT">Tolak <kbd>Esc</kbd></button>
-          <button type="button" data-command="PAUSE">Jeda <kbd>Alt+P</kbd></button>
-          <button type="button" data-command="TAKE_OVER">Ambil alih <kbd>Alt+T</kbd></button>
-          <button type="button" data-command="RESUME">Lanjutkan <kbd>Alt+R</kbd></button>
-          <button type="button" data-command="CANCEL">Batalkan tugas <kbd>Alt+C</kbd></button>
+          <button class="button-primary" type="button" data-command="APPROVE" disabled><span>Setujui</span><kbd>Alt+A</kbd></button>
+          <button class="button-secondary" type="button" data-command="EDIT" disabled><span>Ubah tujuan</span><kbd>Alt+E</kbd></button>
+          <button class="button-secondary" type="button" data-command="PAUSE" disabled><span>Jeda agen</span><kbd>Alt+P</kbd></button>
+          <button class="button-secondary" type="button" data-command="TAKE_OVER" disabled><span>Ambil alih</span><kbd>Alt+T</kbd></button>
+          <button class="button-secondary" type="button" data-command="RESUME" disabled><span>Lanjutkan</span><kbd>Alt+R</kbd></button>
+          <button class="button-danger" type="button" data-command="REJECT" disabled><span>Tolak aksi</span><kbd>Esc</kbd></button>
+          <button class="button-danger button-wide" type="button" data-command="CANCEL" disabled><span>Batalkan tugas</span><kbd>Alt+C</kbd></button>
         </div>
-        <p>Semua kontrol dapat digunakan tanpa mouse. Pintasan hanya bekerja saat panel ini aktif.</p>
-      </section>
+      </details>
     </main>
   </body>
 </html>

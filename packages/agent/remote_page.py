@@ -113,13 +113,19 @@ class RemotePage:
         self.keyboard = RemoteKeyboard(self)
 
     def _get(self, path: str) -> dict[str, Any]:
-        response = self.client.get(path)
+        try:
+            response = self.client.get(path)
+        except httpx.HTTPError as exc:
+            raise RemoteBridgeError(f"Browser bridge tidak dapat dihubungi: {exc}") from exc
         if not response.is_success:
             raise RemoteBridgeError(f"Browser bridge {response.status_code}: {response.text}")
         return response.json()
 
     def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
-        response = self.client.post(path, json=payload)
+        try:
+            response = self.client.post(path, json=payload)
+        except httpx.HTTPError as exc:
+            raise RemoteBridgeError(f"Browser bridge tidak dapat dihubungi: {exc}") from exc
         if not response.is_success:
             raise RemoteBridgeError(f"Browser bridge {response.status_code}: {response.text}")
         return response.json()

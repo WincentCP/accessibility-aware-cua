@@ -23,7 +23,7 @@ extension MV3 dengan in-page landmark dan side panel, push-to-talk dengan review
 transkrip, serta shared-control keyboard. Gate otomatis PASS; gate NVDA Windows
 masih `PENDING_NVDA` dan sengaja tidak digantikan oleh axe/Playwright.
 Integrasi live berikutnya menghubungkan side panel, FastAPI, structured planner
-OpenAI, LangGraph, dan Chromium yang terlihat melalui loopback semantic bridge.
+Gemini, LangGraph, dan Chromium yang terlihat melalui loopback semantic bridge.
 API key tetap hanya di backend lokal; extension tidak menerima atau menyimpannya.
 
 ## Yang sudah bisa dibuka
@@ -57,6 +57,18 @@ evidence/          ringkasan gate yang dapat diaudit
 
 ## Quick start
 
+### Cara termudah di Windows
+
+Setelah setup dependency satu kali dan file `.env` terisi, klik dua kali
+`Mulai Pengujian.vbs`. Aplikasi kecil peneliti menyediakan dua pilihan:
+`Mulai sesi penelitian` untuk membuka seluruh layanan dan Researcher Console,
+atau `Periksa sistem otomatis` untuk menjalankan alur agent di Chromium tanpa
+memakai kuota Gemini. Peserta tidak perlu membuka terminal atau menekan tombol
+selama kegiatan.
+
+Runtime penelitian hanya memakai Gemini. Planner deterministik tersedia khusus
+mode tes lokal; tidak ada dukungan atau kebutuhan OpenAI API key.
+
 Prasyarat: Python 3.12, Node.js 22+, dan Docker Desktop jika ingin menjalankan
 gate PostgreSQL.
 
@@ -85,7 +97,7 @@ python -m playwright install chromium
 ```
 
 Salin `.env.example` menjadi `.env`, lalu ganti `CUA_APP_SECRET` dengan string
-lokal acak minimal 24 karakter. Untuk live agent, isi juga `OPENAI_API_KEY` di
+lokal acak minimal 24 karakter. Untuk live agent, isi juga `GEMINI_API_KEY` di
 file `.env` lokal. Jangan menaruh key di source code, extension, screenshot, atau
 chat. Nilai contoh sengaja ditolak.
 
@@ -121,10 +133,10 @@ profil Chrome pribadi. Input tujuan tersedia melalui teks atau push-to-talk
 menuju adaptor Whisper lokal. Transkrip wajib ditinjau sebelum digunakan dan
 penolakan izin mikrofon tidak mengurangi fungsi input teks.
 
-Perintah `browser:open` juga menyalakan semantic browser bridge pada
-`127.0.0.1:8765`. Di halaman task, pilih **Mulai dan buka asisten**; tujuan task
-publik dimuat otomatis dan peserta cukup memilih **Mulai tugas**. Status, rencana, dan hanya progres
-yang lolos verifikasi pasca-aksi akan muncul di peta tugas. Lihat
+Untuk workflow studi, launcher menyalakan bridge browser lokal dan membuka
+Researcher Console. Peneliti menyiapkan sesi dan mencatat jawaban lisan; halaman
+kegiatan serta asisten dibuka otomatis. Status dan hanya progres yang lolos
+verifikasi pasca-aksi muncul di peta tugas. Lihat
 `docs/live_agent_quickstart.md` untuk urutan Windows dan batas implementasi.
 Panduan TTS Bahasa Indonesia membacakan task dan perubahan status penting tanpa
 menghapus jalur `aria-live`; suara dapat diulang atau dimatikan dari keyboard.

@@ -29,11 +29,16 @@ const submitGoal = byId<HTMLButtonElement>("submit-goal");
 const repeatGuide = byId<HTMLButtonElement>("repeat-guide");
 const toggleGuide = byId<HTMLButtonElement>("toggle-guide");
 const status = byId<HTMLElement>("status");
+const assistantPrompt = byId<HTMLElement>("assistant-prompt");
+const heardText = byId<HTMLElement>("heard-text");
 const voiceState = byId<HTMLElement>("voice-state");
 const activityPhase = byId<HTMLElement>("activity-phase");
 const activityDetail = byId<HTMLElement>("activity-detail");
 const activityProgress = byId<HTMLElement>("activity-progress");
 const approvalAlert = byId<HTMLElement>("approval-alert");
+const controlHelp = byId<HTMLElement>("control-help");
+const root = document.documentElement;
+const commandButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-command]"));
 let activeRunId: string | null = null;
 let pollTimer: number | null = null;
 let activeBenchmarkTask: ActiveBenchmarkTask | null = null;
@@ -42,8 +47,39 @@ let activeGuideAudio: HTMLAudioElement | null = null;
 let activeGuideAudioUrl: string | null = null;
 let speechRequestSequence = 0;
 let lastSpokenActivityKey: string | null = null;
+let commandContextReady = false;
+let handsFreeRecognition: HandsFreeRecognition | null = null;
+
+interface HandsFreeRecognitionResultEvent {
+  results: ArrayLike<{ 0: { transcript: string } }>;
+}
+
+interface HandsFreeRecognitionErrorEvent { error: string }
+
+interface HandsFreeRecognition {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: HandsFreeRecognitionResultEvent) => void) | null;
+  onerror: ((event: HandsFreeRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
+
+type HandsFreeRecognitionConstructor = new () => HandsFreeRecognition;
 
 const announce = (message: string): void => { status.textContent = message; };
+const promptParticipant = (message: string): void => { assistantPrompt.textContent = message; };
+const setAgentState = (state: string): void => { root.dataset.agentState = state.toLowerCase(); };
+const setCommandContextReady = (ready: boolean): void => {
+  commandContextReady = ready;
+  commandButtons.forEach((button) => { button.disabled = !ready; });
+  controlHelp.textContent = ready
+    ? "Jeda, koreksi, atau ambil alih kapan saja. Pintasan bekerja saat panel aktif."
+    : "Kontrol aktif setelah tujuan dikonfirmasi atau tugas dimulai.";
+};
 
 const stopSpeech = (): void => {
   speechRequestSequence += 1;
@@ -161,6 +197,7 @@ const renderTaskMap = (source: AccessibleTaskMap): void => {
       ? "Tindakan sensitif dihentikan dengan aman. Live MVP belum melanjutkan approval; pilih Tolak atau Batalkan."
       : "Persetujuan diperlukan. Pilih Setujui, Ubah, atau Tolak."
     : "";
+  setCommandContextReady(true);
 };
 
 const activityForRun = (run: LiveRunResponse): AgentActivity => {
@@ -204,12 +241,105 @@ const activityForRun = (run: LiveRunResponse): AgentActivity => {
 
 const renderActivity = (run: LiveRunResponse): void => {
   const activity = activityForRun(run);
+  root.dataset.agentPhase = activity.key.split(":")[0];
   activityPhase.textContent = activity.phase;
   activityDetail.textContent = activity.detail;
   activityProgress.textContent = activity.progress;
   if (activity.key !== lastSpokenActivityKey) {
     lastSpokenActivityKey = activity.key;
     void speak(activity.spoken);
+  }
+};
+
+const startLiveGoal = async (value: string): Promise<void> => {
+  const normalized = value.trim();
+  if (!normalized) {
+    promptParticipant("Saya belum mendengar permintaanmu. Silakan coba sekali lagi.");
+    return;
+  }
+  goal.value = normalized;
+  heardText.hidden = false;
+  const heardValue = heardText.querySelector("span");
+  if (heardValue) heardValue.textContent = normalized;
+  byId("active-goal").textContent = normalized;
+  setCommandContextReady(true);
+  activityPhase.textContent = "Memahami permintaan";
+  activityDetail.textContent = "Saya sedang menyiapkan bantuan. Tidak perlu menjawab dulu.";
+  activityProgress.textContent = "Belum ada hasil yang diperiksa.";
+  promptParticipant("Baik, saya akan mulai membantu. Tidak perlu menjawab dulu.");
+  lastSpokenActivityKey = null;
+  setAgentState("starting");
+  announce("Permintaan diterima. Saya sedang menyiapkan bantuan.");
+  window.dispatchEvent(new CustomEvent("a11y-cua:goal", { detail: { goal: normalized } }));
+  if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
+  submitGoal.disabled = true;
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "START_LIVE_AGENT", goal: normalized });
+    if (!result?.success || !result.run) throw new Error(result?.error ?? "Asisten tidak dapat dimulai.");
+    applyLiveRun(result.run as LiveRunResponse);
+    if (pollTimer !== null) window.clearInterval(pollTimer);
+    pollTimer = window.setInterval(pollLiveRun, 750);
+  } catch (error) {
+    submitGoal.disabled = false;
+    setAgentState("error");
+    const message = `Saya belum dapat memulai bantuan. ${error instanceof Error ? error.message : String(error)}`;
+    promptParticipant(`${message} Minta peneliti membantu.`);
+    announce(message);
+  }
+};
+
+const beginHandsFreeListening = (): void => {
+  const speechWindow = window as typeof window & {
+    SpeechRecognition?: HandsFreeRecognitionConstructor;
+    webkitSpeechRecognition?: HandsFreeRecognitionConstructor;
+  };
+  const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+  if (!Recognition) {
+    setAgentState("error");
+    promptParticipant("Saya belum dapat mendengar otomatis di perangkat ini. Minta peneliti membantu.");
+    announce("Input suara otomatis tidak tersedia. Kontrol cadangan tetap tersedia untuk peneliti.");
+    return;
+  }
+  handsFreeRecognition?.stop();
+  const recognition = new Recognition();
+  handsFreeRecognition = recognition;
+  recognition.lang = "id-ID";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  let received = false;
+  recognition.onstart = () => {
+    setAgentState("listening");
+    activityPhase.textContent = "Saya mendengarkan";
+    activityDetail.textContent = "Ceritakan bantuan yang kamu inginkan dengan kata-katamu sendiri.";
+    promptParticipant("Saya siap membantu. Ceritakan apa yang ingin kamu lakukan.");
+    announce("Saya mendengarkan.");
+  };
+  recognition.onresult = (event) => {
+    received = true;
+    recognition.stop();
+    const transcriptValue = event.results[0]?.[0]?.transcript ?? "";
+    void startLiveGoal(transcriptValue);
+  };
+  recognition.onerror = (event) => {
+    received = true;
+    setAgentState("error");
+    const denied = event.error === "not-allowed" || event.error === "service-not-allowed";
+    promptParticipant(denied
+      ? "Mikrofon belum diizinkan. Minta peneliti membantu."
+      : "Saya belum mendengar dengan jelas. Minta peneliti membantu atau gunakan kontrol cadangan.");
+  };
+  recognition.onend = () => {
+    handsFreeRecognition = null;
+    if (!received) {
+      setAgentState("waiting_user");
+      promptParticipant("Saya belum mendengar jawaban. Silakan bicara lagi saat kamu siap.");
+      window.setTimeout(beginHandsFreeListening, 800);
+    }
+  };
+  try {
+    recognition.start();
+  } catch {
+    promptParticipant("Input suara belum siap. Minta peneliti membantu.");
   }
 };
 
@@ -236,43 +366,56 @@ cancelVoice.addEventListener("click", () => voice.cancel());
 confirmTranscript.addEventListener("click", () => {
   goal.value = transcript.value.trim();
   transcriptReview.hidden = true;
+  setCommandContextReady(Boolean(goal.value));
   announce("Transkrip dikonfirmasi. Periksa tujuan lalu jalankan.");
   submitGoal.focus();
 });
 editTranscript.addEventListener("click", () => transcript.focus());
 
 const loadActiveTask = async (): Promise<void> => {
+  setAgentState("loading");
   if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
     submitGoal.disabled = false;
+    setAgentState("ready");
     return;
   }
-  announce("Mengambil tujuan task yang sedang dibuka.");
+  announce("Menyiapkan kegiatan yang sedang dibuka.");
   try {
     const result = await chrome.runtime.sendMessage({ type: "GET_ACTIVE_TASK" });
     if (!result?.success || !result.task) throw new Error(result?.error ?? "Task tidak ditemukan.");
     activeBenchmarkTask = result.task as ActiveBenchmarkTask;
-    goal.value = activeBenchmarkTask.goal;
-    byId("active-goal").textContent = activeBenchmarkTask.goal;
+    goal.value = activeBenchmarkTask.goal ?? "";
+    setCommandContextReady(Boolean(activeBenchmarkTask.goal));
+    byId("active-goal").textContent = activeBenchmarkTask.goal ?? "Menunggu permintaan peserta.";
     submitGoal.disabled = false;
     repeatGuide.disabled = false;
-    const instruction = `Halo! Saya panduan suara AI. Tugas ${activeBenchmarkTask.task_id} sudah siap. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`;
-    announce(`Tugas ${activeBenchmarkTask.task_id} dimuat otomatis. Tekan Mulai tugas.`);
+    const handsFree = Boolean(activeBenchmarkTask.study_session_id);
+    const instruction = handsFree
+      ? "Saya siap membantu. Ceritakan apa yang ingin kamu lakukan."
+      : `Tugas ${activeBenchmarkTask.task_id} siap. Gunakan kontrol cadangan untuk memulai.`;
+    promptParticipant(instruction);
+    announce(handsFree ? "Kegiatan siap. Saya akan mulai mendengarkan." : `Tugas ${activeBenchmarkTask.task_id} siap.`);
+    setAgentState("ready");
     void speak(instruction);
-    submitGoal.focus();
+    if (handsFree) window.setTimeout(beginHandsFreeListening, 2_800);
   } catch (error) {
     activeBenchmarkTask = null;
     submitGoal.disabled = false;
-    announce(`Tujuan otomatis belum tersedia. Gunakan input teks atau suara. ${error instanceof Error ? error.message : String(error)}`);
+    setAgentState("error");
+    promptParticipant("Kegiatan belum siap. Minta peneliti membantu.");
+    announce(`Kegiatan belum tersedia. ${error instanceof Error ? error.message : String(error)}`);
     goal.focus();
   }
 };
 
 const applyLiveRun = (run: LiveRunResponse): void => {
   activeRunId = run.run_id;
+  setAgentState(run.status);
   announce(run.error ? `${run.announcement} ${run.error}` : run.announcement);
   if (run.task_map) renderTaskMap(run.task_map);
   renderActivity(run);
   const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
+  setCommandContextReady(!terminal);
   if (terminal && pollTimer !== null) {
     window.clearInterval(pollTimer);
     pollTimer = null;
@@ -284,7 +427,9 @@ const stopMissingRunPolling = (message: string): void => {
   if (pollTimer !== null) window.clearInterval(pollTimer);
   pollTimer = null;
   activeRunId = null;
+  setCommandContextReady(false);
   submitGoal.disabled = false;
+  setAgentState("error");
   activityPhase.textContent = "Run tidak tersedia";
   activityDetail.textContent = message;
   announce(message);
@@ -312,29 +457,7 @@ submitGoal.addEventListener("click", async () => {
     goal.focus();
     return;
   }
-  byId("active-goal").textContent = value;
-  activityPhase.textContent = "Mengirim tujuan";
-  activityDetail.textContent = "Tujuan sedang dikirim ke live agent.";
-  activityProgress.textContent = "0 langkah terverifikasi selesai.";
-  lastSpokenActivityKey = null;
-  announce("Tujuan diterima. Agen akan menampilkan tindakan sebagai direncanakan sebelum menjalankannya.");
-  window.dispatchEvent(new CustomEvent("a11y-cua:goal", { detail: { goal: value } }));
-  if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
-  submitGoal.disabled = true;
-  try {
-    const unchangedBenchmarkGoal = activeBenchmarkTask?.goal === value;
-    const result = await chrome.runtime.sendMessage({
-      type: "START_LIVE_AGENT",
-      ...(unchangedBenchmarkGoal ? {} : { goal: value })
-    });
-    if (!result?.success || !result.run) throw new Error(result?.error ?? "Live agent tidak dapat dimulai.");
-    applyLiveRun(result.run as LiveRunResponse);
-    if (pollTimer !== null) window.clearInterval(pollTimer);
-    pollTimer = window.setInterval(pollLiveRun, 750);
-  } catch (error) {
-    submitGoal.disabled = false;
-    announce(`Live agent belum berjalan. ${error instanceof Error ? error.message : String(error)}`);
-  }
+  await startLiveGoal(value);
 });
 
 repeatGuide.addEventListener("click", () => {
@@ -342,13 +465,15 @@ repeatGuide.addEventListener("click", () => {
     announce("Instruksi task belum tersedia.");
     return;
   }
-  void speak(`Tugas ${activeBenchmarkTask.task_id}. ${activeBenchmarkTask.goal} Tekan tombol Mulai tugas untuk memulai.`);
+  void speak(activeBenchmarkTask.study_session_id
+    ? "Saya siap membantu. Ceritakan apa yang ingin kamu lakukan."
+    : `Tugas ${activeBenchmarkTask.task_id} siap. Gunakan kontrol cadangan untuk memulai.`);
 });
 
 toggleGuide.addEventListener("click", () => {
   voiceGuideEnabled = !voiceGuideEnabled;
   toggleGuide.setAttribute("aria-pressed", String(voiceGuideEnabled));
-  toggleGuide.textContent = `Panduan suara: ${voiceGuideEnabled ? "aktif" : "mati"}`;
+  toggleGuide.textContent = `Suara: ${voiceGuideEnabled ? "aktif" : "mati"}`;
   if (voiceGuideEnabled) {
     void speak("Panduan suara Bahasa Indonesia aktif.");
   } else {
@@ -359,6 +484,7 @@ toggleGuide.addEventListener("click", () => {
 });
 
 const runCommand = (command: Command): void => {
+  if (!commandContextReady) return;
   const labels: Record<Command, string> = {
     APPROVE: "Persetujuan dikirim.", EDIT: "Ubah dipilih. Fokus kembali ke tujuan.",
     REJECT: "Tindakan ditolak.", PAUSE: "Agen dijeda.",
@@ -380,9 +506,10 @@ const runCommand = (command: Command): void => {
     if (supported) void chrome.runtime.sendMessage({ type: "LIVE_COMMAND", runId: activeRunId, command });
   }
   if (command === "EDIT") goal.focus();
+  if (command === "CANCEL" || command === "REJECT") setCommandContextReady(false);
 };
 
-document.querySelectorAll<HTMLButtonElement>("[data-command]").forEach((button) => {
+commandButtons.forEach((button) => {
   button.addEventListener("click", () => runCommand(button.dataset.command as Command));
 });
 
@@ -392,6 +519,8 @@ document.addEventListener("keydown", (event) => {
     : event.altKey ? ({ a: "APPROVE", e: "EDIT", p: "PAUSE", t: "TAKE_OVER", r: "RESUME", c: "CANCEL" } as Record<string, Command>)[key]
       : undefined;
   if (!shortcut) return;
+  const shortcutButton = commandButtons.find((button) => button.dataset.command === shortcut);
+  if (!shortcutButton || shortcutButton.disabled) return;
   event.preventDefault();
   runCommand(shortcut);
 });

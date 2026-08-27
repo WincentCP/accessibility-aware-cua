@@ -22,14 +22,18 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") void ensureInPageLauncher(tabId, tab.url);
 });
 
-const activeBenchmarkTab = async (): Promise<{ tabId: number; sessionId: string }> => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+const activeBenchmarkTab = async (): Promise<{ tabId: number; sessionId: string; studySessionId?: string }> => {
+  const tabs = await chrome.tabs.query({});
+  const tab = tabs.find((item) => item.active && item.url && LOCAL_PAGE.test(item.url))
+    ?? tabs.find((item) => item.url && LOCAL_PAGE.test(item.url) && new URL(item.url).searchParams.has("session_id"));
   if (typeof tab?.id !== "number" || !tab.url || !LOCAL_PAGE.test(tab.url)) {
     throw new Error("Buka halaman task benchmark terlebih dahulu.");
   }
-  const sessionId = new URL(tab.url).searchParams.get("session_id");
+  const taskUrl = new URL(tab.url);
+  const sessionId = taskUrl.searchParams.get("session_id");
   if (!sessionId) throw new Error("Halaman belum memiliki session_id benchmark.");
-  return { tabId: tab.id, sessionId };
+  const studySessionId = taskUrl.searchParams.get("study_session_id") ?? undefined;
+  return { tabId: tab.id, sessionId, studySessionId };
 };
 
 const apiJson = async (path: string, init?: RequestInit): Promise<Record<string, unknown>> => {
@@ -46,13 +50,17 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   if (!message || typeof message !== "object") return false;
   const payload = message as { type?: string; goal?: string; runId?: string; command?: string };
   if (payload.type === "GET_ACTIVE_TASK") {
-    void activeBenchmarkTab().then(async ({ sessionId }) => {
+    void activeBenchmarkTab().then(async ({ sessionId, studySessionId }) => {
       const session = await apiJson(`/api/benchmark/sessions/${sessionId}`);
       const task = session.task as { id?: string; goal?: string } | undefined;
       if (!task?.id || !task.goal) throw new Error("Tujuan task publik tidak tersedia.");
       sendResponse({
         success: true,
-        task: { session_id: sessionId, task_id: task.id, goal: task.goal }
+        task: {
+          session_id: sessionId,
+          task_id: task.id,
+          ...(studySessionId ? { study_session_id: studySessionId } : { goal: task.goal })
+        }
       });
     }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;

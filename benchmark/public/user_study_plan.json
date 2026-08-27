@@ -1,42 +1,61 @@
 {
-  "version": "0.4.0-task-map",
-  "design": "within_subject_counterbalanced",
-  "target_participants": {
-    "minimum": 6,
-    "maximum": 8
-  },
-  "inclusion": "Adult blind users who regularly use a desktop screen reader.",
-  "conditions": [
-    "U0",
-    "U1"
-  ],
-  "task_ids": [
-    "T01",
-    "T04",
-    "T08",
-    "T11"
-  ],
+  "version": "0.7.0-handsfree-prototype",
+  "design": "within_subject_fixed_core_tasks",
+  "target_participants": { "minimum": 3, "maximum": 5 },
+  "inclusion": "Pelajar tunanetra yang menggunakan screen reader desktop. Peserta di bawah umur memerlukan persetujuan orang tua atau wali dan assent peserta.",
+  "task_ids": ["T01", "T05", "T07", "T12"],
   "tasks_per_participant": 4,
-  "session_minutes": {
-    "minimum": 45,
-    "maximum": 60
+  "session_minutes": { "target": 15, "buffer": 1 },
+  "sequence": [
+    "welcome_and_consent",
+    "audio_and_screen_reader_check",
+    "T01_cold_start",
+    "T05",
+    "T07",
+    "T12",
+    "brief_feedback",
+    "recording_stop_and_close"
+  ],
+  "participant_interaction": {
+    "primary": "hands_free_voice",
+    "required_button_presses": 0,
+    "natural_responses": ["iya", "udah", "lanjut", "yang tadi", "ulangi instruksinya", "saya bingung", "jeda", "batalkan"],
+    "assistant_turn_rule": "Setiap giliran berakhir dengan satu pertanyaan jelas atau pemberitahuan bahwa peserta tidak perlu menjawab dulu."
+  },
+  "consent": {
+    "required_before_recording": true,
+    "permissions": ["store_name", "photo", "webcam_audio", "screen"],
+    "granular": true,
+    "withdraw_any_time": true,
+    "minor_guardian_consent_required": true,
+    "participant_assent_required": true
   },
   "burden_controls": [
-    "One short practice task before measurement.",
-    "Break offered between task pairs.",
-    "Pause or withdraw at any time without penalty.",
-    "Synthetic data only; no credential, payment, or real transaction.",
-    "The system is being tested, not the participant."
+    "Tidak ada kegiatan latihan; T01 adalah cold-start.",
+    "Instruksi dapat diulang tanpa dianggap gagal.",
+    "Peserta dapat jeda atau berhenti kapan saja tanpa konsekuensi.",
+    "Semua data sintetis; tidak ada kredensial, pembayaran, atau transaksi nyata.",
+    "Sistem yang diuji, bukan kemampuan peserta."
+  ],
+  "guidance_ladder": [
+    "repeat_task_objective",
+    "explain_natural_voice_interaction",
+    "summarize_relevant_page_information",
+    "ask_which_part_is_confusing",
+    "request_researcher_help"
   ],
   "measures": [
-    "handoff_to_relevant_focus_time",
-    "navigation_keystrokes_after_takeover",
-    "continuation_success_without_reset",
-    "facilitator_help_requests",
-    "task_completion",
-    "short_ease_and_control_ratings",
-    "brief_semistructured_feedback"
+    "task_success_or_failure",
+    "completion_time",
+    "agent_errors",
+    "verification_failures",
+    "recovery_attempts",
+    "user_intervention_or_override",
+    "guidance_events",
+    "researcher_intervention_count",
+    "task_instruction_repeat",
+    "T01_independent_first_request",
+    "T01_time_to_first_understood_request"
   ],
-  "input_policy": "Participant may choose text or push-to-talk; keep the choice constant across U0/U1.",
-  "substitution_policy": "Do not substitute sighted blindfolded participants for blind screen-reader users."
+  "substitution_policy": "Jangan mengganti peserta tunanetra dengan peserta awas yang ditutup matanya."
 }

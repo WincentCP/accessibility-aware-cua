@@ -23,8 +23,8 @@ pengguna tunanetra menguji build yang belum lolos checklist ini.
 
 ## Extension shell
 
-- [ ] Halaman menampilkan satu tombol “Mulai dan buka asisten”; peserta tidak
-      perlu mencari ikon extension, dan tombol dapat dipakai lagi jika panel ditutup.
+- [ ] Mode studi membuka asisten otomatis; peserta tidak perlu mencari ikon
+      extension atau menekan tombol untuk memulai.
 - [ ] Judul, goal, status, peta tugas, dan shared-control section terbaca sebagai
       struktur yang masuk akal.
 - [ ] Semua control dicapai dengan Tab/Shift+Tab dan mempunyai nama jelas.

@@ -1,15 +1,17 @@
 {% extends "base.html" %}
-{% block title %}{{ domain_label }} — CUA Benchmark{% endblock %}
+{% block title %}{{ domain_label }} - CUA Benchmark{% endblock %}
 {% block content %}
-<main id="main-content" tabindex="-1" class="page-shell">
-  <nav aria-label="Breadcrumb"><a href="/">Beranda benchmark</a></nav>
-  <h1>{{ domain_label }}</h1>
-  <p>Tiga task lokal dengan data sintetis. Membuka task tanpa parameter akan memakai kondisi C0.</p>
+<main id="main-content" tabindex="-1" class="page-shell domain-page">
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Beranda benchmark</a></nav>
+  <header class="domain-header">
+    <h1>{{ domain_label }}</h1>
+    <p>Tiga task lokal dengan data sintetis. Kondisi awal menggunakan C0.</p>
+  </header>
   <ol class="task-cards">
     {% for task in tasks %}
     <li>
-      <article>
-        <h2><a href="{{ task.start_route }}">{{ task.id }} — {{ task.name }}</a></h2>
+      <article class="task-card">
+        <h2><a href="{{ task.start_route }}">{{ task.id }} - {{ task.name }}</a></h2>
         <p>{{ task.goal }}</p>
         <p><strong>Batas selesai:</strong> {{ task.completion_boundary }}</p>
       </article>
