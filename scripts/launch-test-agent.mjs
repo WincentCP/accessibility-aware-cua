@@ -73,6 +73,21 @@ try {
   if (!checkMode && !env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY belum diisi di .env. Runtime penelitian hanya memakai Gemini.");
   }
+  if (!checkMode && String(env.CUA_REQUIRE_POSTGRES).toLowerCase() === "true") {
+    console.log("Menyiapkan database penelitian...");
+    await run("docker", ["compose", "up", "-d", "postgres"]);
+    let databaseReady = false;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      try {
+        await run("docker", ["compose", "exec", "-T", "postgres", "pg_isready", "-U", "cua", "-d", "cua"]);
+        databaseReady = true;
+        break;
+      } catch {
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, 500));
+      }
+    }
+    if (!databaseReady) throw new Error("PostgreSQL belum siap. Pastikan Docker Desktop sedang berjalan.");
+  }
   console.log("Menyiapkan tampilan asisten...");
   await run(npmCommand, ["run", "extension:build"]);
   let ownsServer = false;

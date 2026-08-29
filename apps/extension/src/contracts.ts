@@ -244,4 +244,7 @@ export interface ActiveBenchmarkTask {
   task_id: string;
   goal?: string;
   study_session_id?: string;
+  instruction?: string;
+  task_index?: number;
+  task_count?: number;
 }

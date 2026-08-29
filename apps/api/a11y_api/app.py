@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 from urllib.parse import parse_qs
 from uuid import UUID
 
+import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
+from websockets.asyncio.client import connect as websocket_connect
 
 from a11y_benchmark.catalog import CONDITIONS, FINAL_TASKS
 from a11y_benchmark.manifests import final_seed
@@ -24,6 +27,8 @@ from packages.agent.gemini_tts import GeminiTTSClient
 from packages.agent.live import LiveAgentManager
 
 PACKAGE_DIR = Path(__file__).resolve().parent
+RECORDINGS_DIR = ROOT / ".runtime" / "recordings"
+STUDY_RESULTS_DIR = ROOT / ".runtime" / "study-results"
 load_dotenv(ROOT / ".env")
 
 TASK_BY_ROUTE = {task["start_route"]: task["id"] for task in FINAL_TASKS}
@@ -79,6 +84,22 @@ class StudyCompletionRequest(BaseModel):
 class StudyEventRequest(BaseModel):
     kind: str = Field(min_length=1, max_length=80)
     detail: str = Field(default="", max_length=500)
+
+
+class AutomaticStudyStartRequest(BaseModel):
+    condition_id: str = Field(default="C0", pattern=r"^C[0-2]$")
+
+
+class AutomaticReadinessRequest(BaseModel):
+    checks: dict[str, bool]
+
+
+class StudyStateRequest(BaseModel):
+    state: str = Field(min_length=2, max_length=40)
+
+
+class StudyUtteranceRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2_000)
 
 
 def _postgres_health(settings: Settings) -> tuple[dict[str, str], bool]:
@@ -182,6 +203,250 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def researcher_console(request: Request):
         return templates.TemplateResponse(request=request, name="researcher.html", context={})
 
+    @app.get("/api/study/readiness", tags=["study"])
+    def automatic_study_readiness() -> dict:
+        database, database_ok = _postgres_health(active_settings)
+        bridge_ok = False
+        try:
+            response = httpx.get(
+                f"{active_settings.browser_bridge_url}/health",
+                headers={"Authorization": f"Bearer {active_settings.app_secret}"},
+                timeout=2.0,
+                trust_env=False,
+            )
+            bridge_ok = response.status_code == 200
+        except httpx.HTTPError:
+            bridge_ok = False
+        planner_ok = active_settings.live_agent_enabled and (
+            active_settings.planner_provider == "deterministic"
+            or bool(active_settings.gemini_api_key)
+        )
+        return {
+            "ready": database_ok and bridge_ok and planner_ok,
+            "backend": True,
+            "database": database,
+            "browser_bridge": {"status": "ready" if bridge_ok else "unavailable"},
+            "agent": {"status": "ready" if planner_ok else "unavailable"},
+            "tts": {
+                "status": "configured"
+                if active_settings.tts_enabled and active_settings.gemini_api_key
+                else "unavailable"
+            },
+            "transcription": {
+                "status": "configured" if active_settings.gemini_api_key else "unavailable",
+                "model": active_settings.stt_model,
+            },
+        }
+
+    @app.post("/api/study/automatic", tags=["study"], status_code=201)
+    def create_automatic_study_session(payload: AutomaticStudyStartRequest) -> dict:
+        return app.state.study_store.create_automatic(condition_id=payload.condition_id)
+
+    @app.post("/api/study/sessions/{study_session_id}/automatic-readiness", tags=["study"])
+    def record_automatic_readiness(
+        study_session_id: str, payload: AutomaticReadinessRequest
+    ) -> dict:
+        try:
+            return app.state.study_store.set_automatic_readiness(
+                study_session_id, payload.checks
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/recording-state", tags=["study"])
+    def update_recording_state(study_session_id: str, payload: StudyStateRequest) -> dict:
+        try:
+            return app.state.study_store.set_recording_state(
+                study_session_id, payload.state
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/voice-state", tags=["study"])
+    def update_voice_state(study_session_id: str, payload: StudyStateRequest) -> dict:
+        try:
+            return app.state.study_store.set_voice_state(study_session_id, payload.state)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/utterances", tags=["study"])
+    def add_study_utterance(
+        study_session_id: str, payload: StudyUtteranceRequest
+    ) -> dict:
+        try:
+            return app.state.study_store.add_utterance(study_session_id, payload.text)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/feedback", tags=["study"])
+    def submit_study_feedback(
+        study_session_id: str, payload: StudyUtteranceRequest
+    ) -> dict:
+        try:
+            return app.state.study_store.submit_feedback(study_session_id, payload.text)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/complete", tags=["study"])
+    def complete_study_session(study_session_id: str) -> dict:
+        try:
+            completed = app.state.study_store.complete_session(study_session_id)
+            export = app.state.study_store.export_result(study_session_id)
+            STUDY_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+            target = STUDY_RESULTS_DIR / f"{study_session_id}.json"
+            temporary = target.with_suffix(".tmp")
+            temporary.write_text(
+                json.dumps(export, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            temporary.replace(target)
+            return completed
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post(
+        "/api/study/sessions/{study_session_id}/recordings/{kind}",
+        tags=["study"],
+        include_in_schema=False,
+    )
+    async def append_recording_chunk(
+        request: Request,
+        study_session_id: str,
+        kind: str,
+        sequence: int = Query(ge=0),
+    ) -> dict:
+        if kind not in {"user", "screen"}:
+            raise HTTPException(status_code=400, detail="Jenis rekaman tidak dikenal.")
+        try:
+            app.state.study_store.get(study_session_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        chunk = await request.body()
+        if not chunk:
+            raise HTTPException(status_code=400, detail="Potongan rekaman kosong.")
+        if len(chunk) > 32 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="Potongan rekaman terlalu besar.")
+        session_dir = RECORDINGS_DIR / study_session_id
+        session_dir.mkdir(parents=True, exist_ok=True)
+        target = session_dir / f"{kind}.webm"
+        mode = "wb" if sequence == 0 else "ab"
+        with target.open(mode) as output:
+            output.write(chunk)
+        return {"saved": True, "kind": kind, "sequence": sequence, "bytes": len(chunk)}
+
+    @app.websocket("/api/voice/live-transcription")
+    async def live_transcription_proxy(websocket: WebSocket) -> None:
+        study_session_id = websocket.query_params.get("study_session_id", "")
+        try:
+            app.state.study_store.get(study_session_id)
+        except KeyError:
+            await websocket.close(code=4404, reason="Sesi penelitian tidak ditemukan.")
+            return
+        if not active_settings.gemini_api_key:
+            await websocket.close(code=4503, reason="Gemini belum dikonfigurasi.")
+            return
+
+        await websocket.accept()
+        upstream_url = (
+            "wss://generativelanguage.googleapis.com/ws/"
+            "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
+            f"?key={active_settings.gemini_api_key}"
+        )
+        setup = {
+            "setup": {
+                "model": f"models/{active_settings.stt_model}",
+                "generationConfig": {"responseModalities": ["TEXT"]},
+                "inputAudioTranscription": {
+                    "languageCodes": ["id-ID"],
+                    "mode": "SMART",
+                    "customVocabulary": [
+                        "iya",
+                        "sudah",
+                        "udah",
+                        "lanjut",
+                        "ulang",
+                        "bacakan pilihan",
+                        "Medan",
+                        "Bali",
+                        "Jaket Demo",
+                        "Budi Demo",
+                    ],
+                },
+            }
+        }
+        try:
+            async with websocket_connect(upstream_url, max_size=8 * 1024 * 1024) as upstream:
+                await upstream.send(json.dumps(setup))
+
+                async def browser_to_gemini() -> None:
+                    while True:
+                        message = await websocket.receive_json()
+                        audio = message.get("audio")
+                        if not isinstance(audio, str) or not audio:
+                            continue
+                        await upstream.send(
+                            json.dumps(
+                                {
+                                    "realtimeInput": {
+                                        "audio": {
+                                            "data": audio,
+                                            "mimeType": "audio/pcm;rate=16000",
+                                        }
+                                    }
+                                }
+                            )
+                        )
+
+                async def gemini_to_browser() -> None:
+                    async for raw in upstream:
+                        payload = json.loads(raw)
+                        if payload.get("setupComplete") is not None:
+                            await websocket.send_json({"type": "ready"})
+                        content = payload.get("serverContent") or {}
+                        interim = content.get("interimInputTranscription") or {}
+                        final = content.get("inputTranscription") or {}
+                        if interim.get("text"):
+                            await websocket.send_json(
+                                {"type": "interim", "text": interim["text"]}
+                            )
+                        if final.get("text"):
+                            await websocket.send_json(
+                                {"type": "final", "text": final["text"]}
+                            )
+
+                browser_task = asyncio.create_task(browser_to_gemini())
+                gemini_task = asyncio.create_task(gemini_to_browser())
+                done, pending = await asyncio.wait(
+                    {browser_task, gemini_task}, return_when=asyncio.FIRST_COMPLETED
+                )
+                for task in pending:
+                    task.cancel()
+                for task in done:
+                    task.result()
+        except WebSocketDisconnect:
+            return
+        except Exception:
+            if websocket.client_state.name == "CONNECTED":
+                await websocket.send_json(
+                    {"type": "error", "message": "Transkripsi langsung terputus."}
+                )
+                await websocket.close(code=1011)
+
     @app.post("/api/study/sessions", tags=["study"], status_code=201)
     def create_study_session(payload: StudySessionRequest) -> dict:
         try:
@@ -193,6 +458,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def get_study_session(study_session_id: str) -> dict:
         try:
             return app.state.study_store.snapshot(study_session_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get("/api/study/sessions/{study_session_id}/result", tags=["study"])
+    def get_study_result(study_session_id: str) -> dict:
+        try:
+            return app.state.study_store.export_result(study_session_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 

@@ -1,78 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Mulai Pengujian CUA{% endblock %}
+{% block title %}Mulai Penelitian{% endblock %}
 {% block body_class %}researcher-console{% endblock %}
 {% block content %}
-<main id="main-content" class="research-shell" tabindex="-1">
+<main id="main-content" class="research-shell automatic-research" tabindex="-1">
   <section class="research-intro" aria-labelledby="research-title">
-    <p class="research-kicker">Khusus peneliti</p>
-    <h1 id="research-title">Siapkan satu sesi</h1>
-    <p>Semua instruksi tersedia di sini. Peserta dapat mengikuti sesi hanya dengan suara.</p>
+    <p class="research-kicker">Pengujian dengan bantuan suara</p>
+    <h1 id="research-title">Satu klik, lalu ikuti panduan suara</h1>
+    <p>Kamera, mikrofon, layar, dan kesiapan agent diperiksa setelah penelitian dimulai.</p>
+    <button id="start-research" class="start-research-button" type="button">Mulai Penelitian</button>
+    <p class="permission-note">Browser akan meminta izin kamera, mikrofon, dan layar. Setelah izin diberikan, peserta tidak perlu menekan tombol lagi.</p>
   </section>
 
-  <div class="research-layout">
-    <section class="research-panel setup-panel" aria-labelledby="setup-title">
-      <h2 id="setup-title">Identitas penelitian</h2>
-      <form id="study-setup">
-        <label for="participant-code">Kode peserta</label>
-        <input id="participant-code" name="participant_code" autocomplete="off" required>
-
-        <label for="condition-id">Kondisi halaman</label>
-        <select id="condition-id" name="condition_id">
-          <option value="C0">Normal</option>
-          <option value="C1">Susunan berubah</option>
-          <option value="C2">Pembaruan dinamis</option>
-        </select>
-
-        <label class="check-row"><input id="is-minor" name="is_minor" type="checkbox"> Peserta masih di bawah umur</label>
-        <label class="check-row"><input id="guardian-consent" name="guardian_consent" type="checkbox" disabled> Persetujuan orang tua atau wali sudah diverifikasi</label>
-        <p id="setup-error" class="inline-error" role="alert" hidden></p>
-        <button id="create-session" type="submit">Siapkan sesi</button>
-      </form>
-    </section>
-
-    <section class="research-panel session-panel" aria-labelledby="session-title">
-      <div class="session-heading">
-        <div>
-          <h2 id="session-title">Alur sesi</h2>
-          <p id="session-summary">Belum ada sesi aktif.</p>
-        </div>
-        <span id="session-state" class="state-label">Belum siap</span>
+  <section id="live-session" class="research-panel live-session" aria-labelledby="session-title" hidden>
+    <div class="session-heading">
+      <div>
+        <p class="research-kicker">Sesi berlangsung</p>
+        <h2 id="session-title">Ikuti suara AI Guide</h2>
       </div>
+      <span id="session-state" class="state-label">Menyiapkan</span>
+    </div>
 
-      <div id="consent-flow" hidden>
-        <h3>Catat jawaban persetujuan</h3>
-        <p class="plain-note">Sistem membacakan satu pertanyaan. Peneliti hanya mencatat jawaban suara peserta.</p>
-        <div id="consent-list" class="consent-list"></div>
-      </div>
+    <div class="session-signal" aria-hidden="true"><span></span></div>
+    <p id="session-message" class="session-message" role="status" aria-live="assertive" aria-atomic="true">Memeriksa perangkat.</p>
+    <p id="transcript-preview" class="plain-note" aria-live="polite">Belum ada ucapan yang diterima.</p>
 
-      <div id="check-flow" hidden>
-        <h3>Cek singkat sebelum mulai</h3>
-        <p class="plain-note">Tidak ada latihan. Setelah dua hal ini siap, sistem langsung membacakan Task 1.</p>
-        <div id="check-list" class="consent-list"></div>
-      </div>
+    <dl class="readiness-summary" aria-label="Status sesi">
+      <div><dt>Perekaman</dt><dd id="recording-state">Belum dimulai</dd></div>
+      <div><dt>Kegiatan</dt><dd id="task-state">Menunggu</dd></div>
+      <div><dt>Panduan suara</dt><dd id="voice-state">Menyiapkan</dd></div>
+    </dl>
 
-      <div id="task-flow" hidden>
-        <div class="task-position"><span id="task-position">Kegiatan 1 dari 4</span></div>
-        <h3 id="task-label">Kegiatan</h3>
-        <p id="task-instruction" class="instruction-copy"></p>
-        <div class="research-actions">
-          <button id="read-instruction" type="button" class="button-secondary">Bacakan instruksi</button>
-          <button id="open-task" type="button">Buka kegiatan</button>
-          <button id="complete-task" type="button" class="button-secondary" hidden>Tandai selesai</button>
-        </div>
-        <p id="task-note" class="plain-note" role="status" aria-live="polite"></p>
-      </div>
-
-      <div id="feedback-flow" hidden>
-        <h3>Empat kegiatan selesai</h3>
-        <p>Berikan pertanyaan feedback singkat. Prototipe ini belum memulai atau menyimpan perekaman media.</p>
-      </div>
-    </section>
-  </div>
-
-  <section class="research-panel event-panel" aria-labelledby="event-title">
-    <h2 id="event-title">Catatan sesi</h2>
-    <ol id="event-list"><li>Event akan muncul setelah sesi disiapkan.</li></ol>
+    <video id="camera-preview" class="camera-preview" autoplay muted playsinline aria-label="Pratinjau kamera peserta"></video>
+    <p id="session-error" class="inline-error" role="alert" hidden></p>
   </section>
 </main>
 {% endblock %}

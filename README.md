@@ -60,11 +60,15 @@ evidence/          ringkasan gate yang dapat diaudit
 ### Cara termudah di Windows
 
 Setelah setup dependency satu kali dan file `.env` terisi, klik dua kali
-`Mulai Pengujian.vbs`. Aplikasi kecil peneliti menyediakan dua pilihan:
-`Mulai sesi penelitian` untuk membuka seluruh layanan dan Researcher Console,
-atau `Periksa sistem otomatis` untuk menjalankan alur agent di Chromium tanpa
-memakai kuota Gemini. Peserta tidak perlu membuka terminal atau menekan tombol
-selama kegiatan.
+`Mulai Pengujian.vbs`, lalu pilih `Mulai Penelitian`. Launcher memastikan
+PostgreSQL aktif dan membuka seluruh layanan, browser penelitian, serta
+Researcher Console. Setelah tombol `Mulai Penelitian` di console ditekan dan
+izin perangkat diberikan, peserta tidak perlu menekan tombol lain sampai sesi
+dan feedback selesai.
+
+Developer dapat menjalankan pengujian empat task, accessibility tree, tindakan
+agent, verifikasi, transisi task, feedback, dan error handling dengan satu
+perintah `npm run agent:test`.
 
 Runtime penelitian hanya memakai Gemini. Planner deterministik tersedia khusus
 mode tes lokal; tidak ada dukungan atau kebutuhan OpenAI API key.
@@ -129,17 +133,16 @@ npm run browser:open -- --task T01 --condition C0 --with-extension
 ```
 
 Runner memakai persistent profile khusus `.runtime/playwright-profile`, bukan
-profil Chrome pribadi. Input tujuan tersedia melalui teks atau push-to-talk
-menuju adaptor Whisper lokal. Transkrip wajib ditinjau sebelum digunakan dan
-penolakan izin mikrofon tidak mengurangi fungsi input teks.
+profil Chrome pribadi. Mode penelitian memakai transkripsi Gemini live Bahasa
+Indonesia dan turn-taking otomatis tanpa push-to-talk.
 
 Untuk workflow studi, launcher menyalakan bridge browser lokal dan membuka
-Researcher Console. Peneliti menyiapkan sesi dan mencatat jawaban lisan; halaman
-kegiatan serta asisten dibuka otomatis. Status dan hanya progres yang lolos
-verifikasi pasca-aksi muncul di peta tugas. Lihat
+Researcher Console. Satu tombol memulai permission, perekaman layar dengan frame
+wajah, rekaman kamera cadangan, empat kegiatan, serta feedback suara. Status dan
+hanya progres yang lolos verifikasi pasca-aksi muncul di peta tugas. Lihat
 `docs/live_agent_quickstart.md` untuk urutan Windows dan batas implementasi.
-Panduan TTS Bahasa Indonesia membacakan task dan perubahan status penting tanpa
-menghapus jalur `aria-live`; suara dapat diulang atau dimatikan dari keyboard.
+Panduan TTS Bahasa Indonesia membacakan task dan perubahan status penting;
+listening aktif otomatis setelah ucapan AI selesai.
 
 ## Semua quality gate
 

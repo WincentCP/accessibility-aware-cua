@@ -1,53 +1,69 @@
 # Workflow Studi Pengguna Hands-Free
 
-Status: kontrak prototype. Naskah etik final dan mekanisme recording harus disetujui prosedur penelitian sebelum studi utama.
+Status: prototype terintegrasi. Persetujuan etik dan persetujuan penelitian tetap
+ditangani melalui prosedur penelitian di luar aplikasi. Izin kamera, mikrofon,
+dan berbagi layar dari browser bukan pengganti informed consent.
 
-## Tujuan
+## Alur peserta
 
-Peserta tunanetra menyelesaikan empat kegiatan melalui percakapan suara tanpa tombol wajib. Instruksi penelitian dan konteks planner dipisahkan: pembaca instruksi mengetahui skenario standar, sedangkan agent hanya menerima permintaan yang peserta sampaikan.
+1. Peneliti membuka launcher dan memilih **Mulai Penelitian**.
+2. Browser meminta izin kamera dan mikrofon, lalu meminta layar yang akan direkam.
+3. Setelah izin diberikan, rekaman dimulai. Layar direkam dengan frame wajah di
+   kanan bawah dan rekaman kamera terpisah disimpan sebagai cadangan.
+4. AI Guide menyapa dalam Bahasa Indonesia, membacakan Task 1, lalu otomatis
+   mendengarkan. Peserta cukup berbicara seperti meminta bantuan kepada seseorang.
+5. AI mengatur giliran bicara, menjalankan agent, memeriksa hasil, dan berpindah
+   ke Task 2, Task 3, serta Task 4 tanpa tombol lanjutan.
+6. Setelah Task 4, AI menanyakan satu feedback terbuka singkat. Jawaban disimpan,
+   AI mengucapkan penutup, lalu rekaman dihentikan otomatis.
 
-## Alur 15 menit
+## Pembagian waktu sekitar 15 menit
 
 | Waktu | Kegiatan |
 | --- | --- |
-| 00:00-02:30 | Sambutan, tujuan sederhana, dan consent granular |
-| 02:30-03:15 | Cek audio serta screen reader |
-| 03:15-05:30 | T01 cold-start |
-| 05:30-07:30 | T05 |
-| 07:30-09:30 | T07 |
-| 09:30-11:30 | T12 |
-| 11:30-13:30 | Feedback singkat |
-| 13:30-14:00 | Recording dihentikan dan sesi ditutup |
-| 14:00-15:00 | Buffer |
+| 00:00-01:00 | Izin perangkat, perekaman mulai, orientasi sangat singkat |
+| 01:00-04:00 | Task 1 cold-start |
+| 04:00-07:00 | Task 2 |
+| 07:00-10:00 | Task 3 |
+| 10:00-13:00 | Task 4 |
+| 13:00-14:30 | Feedback suara singkat dan penutupan |
+| 14:30-15:00 | Buffer pemulihan jika diperlukan |
+
+Tidak ada practice task. Empat core task memakai objective dan tingkat kesulitan
+yang sama untuk seluruh peserta.
 
 ## Kontrak percakapan
 
 - Satu pertanyaan per giliran.
-- Jika agent membutuhkan jawaban, agent menyebutkan pertanyaan yang jelas.
-- Jika agent sedang bekerja, agent mengatakan bahwa peserta tidak perlu menjawab dulu.
+- AI selalu memberi tahu kapan peserta boleh berbicara.
+- Setelah AI selesai berbicara, listening aktif otomatis tanpa push-to-talk.
+- Jika AI sedang bekerja, AI mengatakan bahwa peserta tidak perlu menjawab dulu.
 - Pernyataan seperti "Saya menemukan tiga pilihan" tidak boleh berdiri sendiri.
-- "Udah" memicu verifikasi, bukan langsung dianggap berhasil.
-- "Lanjut" hanya berpindah setelah hasil task sebelumnya terverifikasi.
-- "Yang tadi" diselesaikan terhadap pilihan terakhir yang masih jelas.
-- Persetujuan tindakan sensitif harus eksplisit dalam konteks pertanyaan aktif.
+  AI melanjutkan dengan pertanyaan seperti "Mau saya bacakan pilihannya?"
+- "Ulang" dan "yang tadi" memakai konteks percakapan terakhir.
+- "Iya", "udah", dan "lanjut" dipahami sesuai pertanyaan atau task aktif.
+- "Lanjut" tidak berpindah task sebelum hasil task sebelumnya terverifikasi.
+- Jika peserta bingung, bantuan diberikan bertahap tanpa langsung membocorkan
+  jawaban task.
 
-## Instruksi dan agent
+## Hasil sesi
 
-Researcher Console menampilkan serta membacakan instruksi standar. Pengulangan dicatat sebagai `TASK_INSTRUCTION_REPEAT`, bukan bantuan. Halaman peserta dalam mode studi tidak menampilkan tujuan, condition ID, seed, atau istilah teknis. Planner tidak menerima instruksi penelitian melalui API live-run.
+Setiap sesi memakai ID anonim. Setelah sesi selesai, hasil lokal tersedia di:
 
-## State peserta
+- `.runtime/recordings/<session-id>/screen.webm`: layar dan frame wajah peserta,
+  termasuk audio mikrofon.
+- `.runtime/recordings/<session-id>/user.webm`: kamera dan audio peserta sebagai
+  rekaman cadangan.
+- `.runtime/study-results/<session-id>.json`: transkrip, feedback, status sesi,
+  urutan task, state percakapan, dan event bertimestamp.
 
-1. Saya mendengarkan.
-2. Saya memahami permintaan.
-3. Saya membaca halaman.
-4. Menunggu jawaban kamu.
-5. Saya sedang mengerjakan.
-6. Saya memeriksa hasil.
-7. Kegiatan selesai.
-8. Membutuhkan bantuan.
+Audit agent dan verifikasi pasca-aksi tetap disimpan melalui penyimpanan aplikasi.
+File hasil tidak boleh dimasukkan ke Git. Terapkan retensi, akses terbatas,
+penghapusan, dan perlindungan data sesuai prosedur penelitian sebelum studi utama.
 
-Perubahan state memperbarui teks tanpa full-page refresh atau perpindahan fokus. Pada mode suara, live region tidak menduplikasi ucapan TTS. Teks tetap dapat ditinjau melalui screen reader.
+## Batas validasi
 
-## Batas prototype ini
-
-Researcher Console, consent state, empat core task, pemisahan instruksi, halaman peserta bersih, dan event dasar sudah menjadi target milestone ini. Perekaman webcam, suara, dan layar yang benar-benar tersimpan belum boleh diklaim sampai pipeline media terenkripsi, retensi, penghapusan, dan uji izin perangkat selesai.
+Tes otomatis membuktikan orkestrasi browser, state suara, empat task, tindakan
+semantik, verifikasi pasca-aksi, feedback, dan error handling. Kualitas pengalaman
+NVDA, kenyamanan suara, posisi kamera, dan durasi aktual tetap harus diperiksa pada
+pilot manusia sebelum pengambilan data utama.

@@ -24,7 +24,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 const activeBenchmarkTab = async (): Promise<{ tabId: number; sessionId: string; studySessionId?: string }> => {
   const tabs = await chrome.tabs.query({});
-  const tab = tabs.find((item) => item.active && item.url && LOCAL_PAGE.test(item.url))
+  const hasBenchmarkSession = (item: chrome.tabs.Tab): boolean => Boolean(
+    item.url && LOCAL_PAGE.test(item.url) && new URL(item.url).searchParams.has("session_id")
+  );
+  const tab = tabs.find((item) => item.active && hasBenchmarkSession(item))
     ?? tabs.find((item) => item.url && LOCAL_PAGE.test(item.url) && new URL(item.url).searchParams.has("session_id"));
   if (typeof tab?.id !== "number" || !tab.url || !LOCAL_PAGE.test(tab.url)) {
     throw new Error("Buka halaman task benchmark terlebih dahulu.");
@@ -48,20 +51,53 @@ const apiJson = async (path: string, init?: RequestInit): Promise<Record<string,
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (!message || typeof message !== "object") return false;
-  const payload = message as { type?: string; goal?: string; runId?: string; command?: string };
+  const payload = message as { type?: string; goal?: string; runId?: string; command?: string; transcript?: string };
   if (payload.type === "GET_ACTIVE_TASK") {
     void activeBenchmarkTab().then(async ({ sessionId, studySessionId }) => {
       const session = await apiJson(`/api/benchmark/sessions/${sessionId}`);
       const task = session.task as { id?: string; goal?: string } | undefined;
       if (!task?.id || !task.goal) throw new Error("Tujuan task publik tidak tersedia.");
+      const study = studySessionId
+        ? await apiJson(`/api/study/sessions/${studySessionId}`)
+        : null;
+      const currentTask = study?.current_task as { instruction?: string } | undefined;
       sendResponse({
         success: true,
         task: {
           session_id: sessionId,
           task_id: task.id,
-          ...(studySessionId ? { study_session_id: studySessionId } : { goal: task.goal })
+          ...(studySessionId ? {
+            study_session_id: studySessionId,
+            instruction: currentTask?.instruction,
+            task_index: study?.task_index,
+            task_count: study?.task_count
+          } : { goal: task.goal })
         }
       });
+    }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  }
+  if (payload.type === "COMPLETE_AND_START_NEXT_STUDY_TASK") {
+    void activeBenchmarkTab().then(async ({ tabId, studySessionId }) => {
+      if (!studySessionId) throw new Error("Sesi penelitian tidak ditemukan.");
+      const completed = await apiJson(`/api/study/sessions/${studySessionId}/tasks/complete`, {
+        method: "POST",
+        body: JSON.stringify({ outcome: "AGENT_VERIFIED" })
+      });
+      if (completed.status === "COMPLETED") {
+        sendResponse({ success: true, completed: true, session: completed });
+        return;
+      }
+      if (completed.status === "FEEDBACK") {
+        sendResponse({ success: true, completed: false, feedback: true, session: completed });
+        return;
+      }
+      const next = await apiJson(`/api/study/sessions/${studySessionId}/tasks/start`, {
+        method: "POST",
+        body: "{}"
+      });
+      await chrome.tabs.update(tabId, { url: String(next.start_url), active: true });
+      sendResponse({ success: true, completed: false, session: next });
     }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;
   }
@@ -87,7 +123,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   if (payload.type === "LIVE_COMMAND" && payload.runId && payload.command) {
     void apiJson(`/api/agent/runs/${payload.runId}/commands`, {
       method: "POST",
-      body: JSON.stringify({ command: payload.command })
+      body: JSON.stringify({ command: payload.command, ...(payload.transcript ? { transcript: payload.transcript } : {}) })
     }).then((result) => sendResponse({ success: true, run: result }))
       .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;

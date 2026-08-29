@@ -16,15 +16,14 @@ class Launcher(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("Mulai Pengujian CUA")
-        self.geometry("520x330")
-        self.minsize(460, 300)
+        self.geometry("520x260")
+        self.minsize(460, 240)
         self.configure(bg="#f5f6fb")
         self.process: subprocess.Popen[str] | None = None
 
         tk.Label(self, text="Mulai Pengujian CUA", font=("Segoe UI", 20, "bold"), bg="#f5f6fb", fg="#243141").pack(anchor="w", padx=28, pady=(26, 4))
-        tk.Label(self, text="Pilih satu mode. Semua service dan browser disiapkan otomatis.", font=("Segoe UI", 10), bg="#f5f6fb", fg="#526172").pack(anchor="w", padx=28, pady=(0, 20))
-        self.research_button = self._button("Mulai sesi penelitian", self.start_research)
-        self.check_button = self._button("Periksa sistem otomatis", self.start_check, secondary=True)
+        tk.Label(self, text="Database, backend, browser, dan agent disiapkan otomatis.", font=("Segoe UI", 10), bg="#f5f6fb", fg="#526172").pack(anchor="w", padx=28, pady=(0, 20))
+        self.research_button = self._button("Mulai Penelitian", self.start_research)
         self.status = tk.StringVar(value="Siap.")
         tk.Label(self, textvariable=self.status, wraplength=450, justify="left", font=("Segoe UI", 10), bg="#e3f0f3", fg="#254b5b", padx=14, pady=12).pack(fill="x", padx=28, pady=(18, 0))
         self.protocol("WM_DELETE_WINDOW", self.close_launcher)
@@ -39,7 +38,6 @@ class Launcher(tk.Tk):
             messagebox.showinfo("Sesi aktif", "Satu sesi masih berjalan. Tutup browser sebelum memulai lagi.")
             return
         self.research_button.configure(state="disabled")
-        self.check_button.configure(state="disabled")
         self.status.set("Menyiapkan sistem. Browser akan terbuka otomatis.")
 
         def worker() -> None:
@@ -62,15 +60,11 @@ class Launcher(tk.Tk):
                 self.after(0, lambda: self.status.set(message))
             finally:
                 self.after(0, lambda: self.research_button.configure(state="normal"))
-                self.after(0, lambda: self.check_button.configure(state="normal"))
 
         threading.Thread(target=worker, daemon=True).start()
 
     def start_research(self) -> None:
         self.run_mode(False)
-
-    def start_check(self) -> None:
-        self.run_mode(True)
 
     def close_launcher(self) -> None:
         if self.process and self.process.poll() is None:

@@ -1,48 +1,104 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("researcher can prepare a hands-free cold-start session", async ({ page }) => {
+test("research starts from one accessible action without identity or consent forms", async ({ page }) => {
   await page.goto("/researcher");
-  await expect(page.getByRole("heading", { name: "Siapkan satu sesi" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Satu klik, lalu ikuti panduan suara" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mulai Penelitian" })).toBeVisible();
+  await expect(page.getByLabel("Kode peserta")).toHaveCount(0);
+  await expect(page.getByText("Periksa sistem", { exact: false })).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-
-  await page.getByLabel("Kode peserta").fill("P01");
-  await page.getByRole("button", { name: "Siapkan sesi" }).click();
-  await expect(page.getByRole("heading", { name: "Catat jawaban persetujuan" })).toBeVisible();
-
-  for (const label of [
-    "Menyimpan nama peserta",
-    "Mengambil foto dokumentasi",
-    "Merekam webcam dan suara",
-    "Merekam layar"
-  ]) {
-    const row = page.locator(".consent-row").filter({ hasText: label });
-    await row.getByRole("button", { name: "Setuju" }).click();
-  }
-
-  await expect(page.getByRole("heading", { name: "Cek singkat sebelum mulai" })).toBeVisible();
-  for (const label of ["Suara terdengar jelas", "Pembaca layar siap"]) {
-    const row = page.locator(".consent-row").filter({ hasText: label });
-    await row.getByRole("button", { name: "Siap" }).click();
-  }
-
-  await expect(page.getByText("Kegiatan 1 dari 4")).toBeVisible();
-  await expect(page.locator("#task-instruction")).toContainText("Medan ke Bali");
-  const popupPromise = page.waitForEvent("popup");
-  await page.getByRole("button", { name: "Buka kegiatan" }).click();
-  const participant = await popupPromise;
-  await participant.waitForLoadState("domcontentloaded");
-
-  await expect(participant).toHaveURL(/study_session_id=/u);
-  await expect(participant.getByText("Cari rute Medan")).toHaveCount(0);
-  await expect(participant.getByText(/C0|seed/u)).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Tandai selesai" })).toBeVisible();
 });
 
-test("minor session cannot begin without guardian verification", async ({ page }) => {
+test("one click requests media, starts recording, and opens task one", async ({ page }) => {
+  await page.addInitScript(() => {
+    class FakeStream {
+      getAudioTracks() { return [{ stop() {} }]; }
+      getVideoTracks() { return [{ stop() {}, addEventListener() {} }]; }
+      getTracks() { return [...this.getAudioTracks(), ...this.getVideoTracks()]; }
+    }
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => new FakeStream(),
+        getDisplayMedia: async () => new FakeStream()
+      }
+    });
+    Object.defineProperty(HTMLMediaElement.prototype, "srcObject", {
+      configurable: true,
+      get() { return null; },
+      set() {}
+    });
+
+    class FakeMediaRecorder extends EventTarget {
+      static isTypeSupported() { return true; }
+      state = "inactive";
+      mimeType = "video/webm";
+      start() { this.state = "recording"; }
+      stop() {
+        this.state = "inactive";
+        this.dispatchEvent(new MessageEvent("dataavailable", { data: new Blob(["recording"], { type: "video/webm" }) }));
+        this.dispatchEvent(new Event("stop"));
+      }
+    }
+    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeMediaRecorder });
+
+    class FakeAudio {
+      listeners = new Map<string, EventListener>();
+      constructor(_source?: string) {}
+      addEventListener(type: string, listener: EventListener) { this.listeners.set(type, listener); }
+      play() {
+        setTimeout(() => this.listeners.get("ended")?.(new Event("ended")), 0);
+        return Promise.resolve();
+      }
+    }
+    Object.defineProperty(window, "Audio", { configurable: true, value: FakeAudio });
+
+    class FakeAudioNode {
+      gain = { value: 0 };
+      connect() { return this; }
+      addEventListener() {}
+    }
+    class FakeAudioContext {
+      sampleRate = 48_000;
+      destination = new FakeAudioNode();
+      createMediaStreamSource() { return new FakeAudioNode(); }
+      createScriptProcessor() { return new FakeAudioNode(); }
+      createGain() { return new FakeAudioNode(); }
+    }
+    Object.defineProperty(window, "AudioContext", { configurable: true, value: FakeAudioContext });
+
+    class FakeWebSocket extends EventTarget {
+      static OPEN = 1;
+      readyState = 1;
+      constructor(_url: string) {
+        super();
+        setTimeout(() => this.dispatchEvent(new MessageEvent("message", { data: JSON.stringify({ type: "ready" }) })), 0);
+      }
+      send() {}
+      close() { this.dispatchEvent(new Event("close")); }
+    }
+    Object.defineProperty(window, "WebSocket", { configurable: true, value: FakeWebSocket });
+  });
+
+  await page.route("**/api/study/readiness", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ ready: true, agent: { status: "ready" } })
+  }));
+  await page.route("**/api/voice/speech", (route) => route.fulfill({
+    status: 200,
+    contentType: "audio/wav",
+    body: "fake-audio"
+  }));
+
   await page.goto("/researcher");
-  await page.getByLabel("Kode peserta").fill("P02");
-  await page.getByLabel("Peserta masih di bawah umur").check();
-  await page.getByRole("button", { name: "Siapkan sesi" }).click();
-  await expect(page.getByRole("alert")).toContainText("orang tua atau wali");
+  const popupPromise = page.waitForEvent("popup");
+  await page.getByRole("button", { name: "Mulai Penelitian" }).click();
+  const participant = await popupPromise;
+  await expect(page.locator("#recording-state")).toHaveText("Aktif");
+  await expect(page.locator("#task-state")).toContainText("Kegiatan 1 dari 4");
+  await expect(participant).toHaveURL(/study_session_id=/u);
+  await expect(page.getByLabel("Pratinjau kamera peserta")).toBeVisible();
+  await expect(page.locator("canvas[hidden]")).toHaveCount(1);
 });

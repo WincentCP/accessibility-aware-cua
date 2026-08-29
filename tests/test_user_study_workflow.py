@@ -90,8 +90,74 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
     def test_researcher_console_is_available_without_participant_controls(self) -> None:
         response = self.client.get("/researcher")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Khusus peneliti", response.text)
-        self.assertIn("Tidak ada latihan", response.text)
+        self.assertIn("Mulai Penelitian", response.text)
+        self.assertIn("peserta tidak perlu menekan tombol lagi", response.text)
+        self.assertNotIn("Kode peserta", response.text)
+        self.assertNotIn("consent", response.text.lower())
+        self.assertNotIn("Periksa sistem", response.text)
+
+    def test_automatic_session_runs_four_tasks_without_identity_or_manual_progress(self) -> None:
+        created = self.client.post("/api/study/automatic", json={"condition_id": "C0"})
+        self.assertEqual(created.status_code, 201)
+        session = created.json()
+        study_id = session["study_session_id"]
+        self.assertTrue(session["automatic_mode"])
+        self.assertTrue(session["participant_code"].startswith("anon-"))
+        self.assertEqual(session["status"], "INITIALIZING")
+
+        readiness = self.client.post(
+            f"/api/study/sessions/{study_id}/automatic-readiness",
+            json={
+                "checks": {
+                    "backend": True,
+                    "agent": True,
+                    "microphone": True,
+                    "camera": True,
+                    "screen": True,
+                    "audio": True,
+                }
+            },
+        )
+        self.assertEqual(readiness.status_code, 200)
+        self.assertEqual(readiness.json()["status"], "READY")
+
+        for index, task_id in enumerate(("T01", "T05", "T07", "T12")):
+            started = self.client.post(f"/api/study/sessions/{study_id}/tasks/start")
+            self.assertEqual(started.status_code, 200)
+            self.assertEqual(started.json()["current_task"]["task_id"], task_id)
+            utterance = self.client.post(
+                f"/api/study/sessions/{study_id}/utterances",
+                json={"text": "iya" if index == 0 else "lanjut"},
+            )
+            self.assertEqual(utterance.status_code, 200)
+            self.assertEqual(utterance.json()["utterance_id"], index + 1)
+            completed = self.client.post(
+                f"/api/study/sessions/{study_id}/tasks/complete",
+                json={"outcome": "AGENT_VERIFIED"},
+            )
+            self.assertEqual(completed.status_code, 200)
+
+        final = completed.json()
+        self.assertEqual(final["status"], "FEEDBACK")
+        feedback = self.client.post(
+            f"/api/study/sessions/{study_id}/feedback",
+            json={"text": "Mudah digunakan, tetapi pilihan suara bisa dibuat lebih singkat."},
+        )
+        self.assertEqual(feedback.status_code, 200)
+        self.assertEqual(feedback.json()["status"], "CLOSING")
+        finished = self.client.post(f"/api/study/sessions/{study_id}/complete")
+        self.assertEqual(finished.status_code, 200)
+        final = finished.json()
+        self.assertEqual(final["status"], "COMPLETED")
+        self.assertEqual(final["voice_state"], "COMPLETE")
+        self.assertIn("Mudah digunakan", final["feedback"]["text"])
+        self.assertIsNone(final["current_task"])
+        exported = self.client.get(f"/api/study/sessions/{study_id}/result")
+        self.assertEqual(exported.status_code, 200)
+        self.assertEqual(exported.json()["format_version"], "1.0")
+        self.assertEqual(
+            exported.json()["recordings"]["screen_with_camera"], "screen.webm"
+        )
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ class Settings:
     tts_provider: str = "gemini"
     tts_model: str = "gemini-3.1-flash-tts-preview"
     tts_voice: str = "Sulafat"
+    stt_model: str = "gemini-3.5-transcribe-live"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -111,4 +112,5 @@ class Settings:
             tts_provider=os.getenv("CUA_TTS_PROVIDER", "gemini").strip().lower(),
             tts_model=os.getenv("CUA_TTS_MODEL", "gemini-3.1-flash-tts-preview"),
             tts_voice=os.getenv("CUA_TTS_VOICE", "Sulafat"),
+            stt_model=os.getenv("CUA_STT_MODEL", "gemini-3.5-transcribe-live"),
         )

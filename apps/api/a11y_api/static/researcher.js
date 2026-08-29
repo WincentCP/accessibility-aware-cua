@@ -2,31 +2,36 @@
   "use strict";
 
   const byId = (id) => document.getElementById(id);
-  const setup = byId("study-setup");
-  const isMinor = byId("is-minor");
-  const guardian = byId("guardian-consent");
-  const setupError = byId("setup-error");
-  const consentFlow = byId("consent-flow");
-  const consentList = byId("consent-list");
-  const checkFlow = byId("check-flow");
-  const checkList = byId("check-list");
-  const taskFlow = byId("task-flow");
-  const feedbackFlow = byId("feedback-flow");
-  const taskNote = byId("task-note");
+  const startButton = byId("start-research");
+  const liveSession = byId("live-session");
+  const stateLabel = byId("session-state");
+  const sessionMessage = byId("session-message");
+  const sessionError = byId("session-error");
+  const cameraPreview = byId("camera-preview");
+  const recordingState = byId("recording-state");
+  const taskState = byId("task-state");
+  const voiceState = byId("voice-state");
+  const transcriptPreview = byId("transcript-preview");
+
   let session = null;
+  let participantWindow = null;
+  let userStream = null;
+  let screenStream = null;
+  let compositeScreenStream = null;
+  let compositeCanvas = null;
+  let compositeFrame = null;
+  let screenPreview = null;
+  let recorders = [];
+  let uploadQueue = Promise.resolve();
+  let pollTimer = null;
+  let audioContext = null;
+  let transcriptionSocket = null;
+  let transcriptionReconnectTimer = null;
+  let shouldStreamSpeech = false;
+  let lastFinalTranscript = "";
+  let lastFinalAt = 0;
 
-  const consentQuestions = [
-    ["store_name", "Menyimpan nama peserta", "Apakah kamu bersedia jika nama kamu disimpan untuk keperluan penelitian ini?"],
-    ["photo", "Mengambil foto dokumentasi", "Apakah kamu bersedia jika peneliti mengambil foto untuk dokumentasi?"],
-    ["webcam_audio", "Merekam webcam dan suara", "Apakah kamu bersedia jika wajah dan suara kamu direkam selama kegiatan?"],
-    ["screen", "Merekam layar", "Apakah kamu bersedia jika layar kegiatan direkam selama sesi?"]
-  ];
-  const readinessQuestions = [
-    ["audio", "Suara terdengar jelas", "Apakah suara saya terdengar dengan jelas?"],
-    ["screen_reader", "Pembaca layar siap", "Apakah pembaca layar sudah aktif dan suaranya terdengar jelas?"]
-  ];
-
-  const api = async (path, body) => {
+  const api = async (path, body = {}) => {
     const response = await fetch(path, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -37,169 +42,339 @@
     return payload;
   };
 
-  const speak = (text) => {
-    if (!("speechSynthesis" in window)) {
-      taskNote.textContent = "Suara browser tidak tersedia. Bacakan naskah yang tampil.";
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "id-ID";
-    utterance.rate = 0.94;
-    window.speechSynthesis.speak(utterance);
+  const setState = (state, message) => {
+    document.documentElement.dataset.researchState = state.toLowerCase();
+    stateLabel.textContent = state.replaceAll("_", " ").toLowerCase();
+    sessionMessage.textContent = message;
   };
 
-  const renderEvents = () => {
-    const list = byId("event-list");
-    list.replaceChildren();
-    const events = session?.events?.length ? session.events : [{ kind: "SESSION_READY", at: new Date().toISOString() }];
-    for (const event of events.slice().reverse()) {
-      const item = document.createElement("li");
-      item.textContent = `${event.kind.replaceAll("_", " ").toLowerCase()} - ${new Date(event.at).toLocaleTimeString("id-ID")}`;
-      list.append(item);
-    }
-  };
-
-  const renderConsent = () => {
-    consentList.replaceChildren();
-    for (const [key, label, question] of consentQuestions) {
-      const row = document.createElement("div");
-      row.className = "consent-row";
-      const text = document.createElement("p");
-      text.textContent = label;
-      text.title = question;
-      const actions = document.createElement("div");
-      actions.className = "consent-actions";
-      for (const [granted, buttonLabel] of [[true, "Setuju"], [false, "Tidak"]]) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = granted ? "button-secondary" : "button-quiet";
-        button.textContent = buttonLabel;
-        button.setAttribute("aria-pressed", String(session.consent[key] === granted));
-        button.addEventListener("click", async () => {
-          session = await api(`/api/study/sessions/${session.study_session_id}/consent`, { key, granted });
-          render();
-          const next = consentQuestions.find(([nextKey]) => session.consent[nextKey] === null);
-          if (next) speak(next[2]);
-          else speak("Semua jawaban sudah dicatat. Prototipe ini belum memulai perekaman. Sekarang kita mengecek suara dan pembaca layar.");
-        });
-        actions.append(button);
-      }
-      row.append(text, actions);
-      consentList.append(row);
-    }
-  };
-
-  const renderChecks = () => {
-    checkList.replaceChildren();
-    for (const [key, label, question] of readinessQuestions) {
-      const row = document.createElement("div");
-      row.className = "consent-row";
-      const text = document.createElement("p");
-      text.textContent = label;
-      const actions = document.createElement("div");
-      actions.className = "consent-actions";
-      for (const [passed, buttonLabel] of [[true, "Siap"], [false, "Belum"]]) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = passed ? "button-secondary" : "button-quiet";
-        button.textContent = buttonLabel;
-        button.setAttribute("aria-pressed", String(session.readiness_checks[key] === passed));
-        button.addEventListener("click", async () => {
-          session = await api(`/api/study/sessions/${session.study_session_id}/checks`, { key, passed });
-          render();
-          if (!passed) {
-            speak("Baik, kita berhenti sebentar sampai perangkat siap.");
-            return;
-          }
-          const next = readinessQuestions.find(([nextKey]) => session.readiness_checks[nextKey] !== true);
-          if (next) speak(next[2]);
-          else if (session.current_task) speak(session.current_task.instruction);
-        });
-        actions.append(button);
-      }
-      const replay = document.createElement("button");
-      replay.type = "button";
-      replay.className = "button-quiet";
-      replay.textContent = "Bacakan lagi";
-      replay.addEventListener("click", () => speak(question));
-      actions.append(replay);
-      row.append(text, actions);
-      checkList.append(row);
-    }
-  };
-
-  const render = () => {
-    byId("session-summary").textContent = session
-      ? `${session.participant_code}, kondisi ${session.condition_id}`
-      : "Belum ada sesi aktif.";
-    byId("session-state").textContent = session?.status?.replaceAll("_", " ").toLowerCase() || "Belum siap";
-    consentFlow.hidden = !session || session.status !== "CONSENT";
-    checkFlow.hidden = !session || session.status !== "CHECKS";
-    taskFlow.hidden = !session || !["READY", "BETWEEN_TASKS", "TASK_ACTIVE"].includes(session.status);
-    feedbackFlow.hidden = session?.status !== "FEEDBACK";
-    if (session?.status === "CONSENT") renderConsent();
-    if (session?.status === "CHECKS") renderChecks();
-    if (session?.current_task) {
-      byId("task-position").textContent = `Kegiatan ${session.task_index + 1} dari ${session.task_count}`;
-      byId("task-label").textContent = session.current_task.label;
-      byId("task-instruction").textContent = session.current_task.instruction;
-      byId("open-task").hidden = session.status === "TASK_ACTIVE";
-      byId("complete-task").hidden = session.status !== "TASK_ACTIVE";
-    }
-    renderEvents();
-  };
-
-  isMinor.addEventListener("change", () => {
-    guardian.disabled = !isMinor.checked;
-    if (!isMinor.checked) guardian.checked = false;
-  });
-
-  setup.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    setupError.hidden = true;
-    try {
-      session = await api("/api/study/sessions", {
-        participant_code: byId("participant-code").value,
-        condition_id: byId("condition-id").value,
-        is_minor: isMinor.checked,
-        guardian_consent_confirmed: guardian.checked
-      });
-      setup.querySelectorAll("input, select, button").forEach((control) => { control.disabled = true; });
-      render();
-      speak(`Halo. Kegiatan ini bertujuan melihat apakah asisten dapat digunakan dengan mudah melalui suara. Tidak ada jawaban benar atau salah. Sebelum mulai, saya akan menanyakan beberapa persetujuan, satu per satu. ${consentQuestions[0][2]}`);
-    } catch (error) {
-      setupError.textContent = error.message;
-      setupError.hidden = false;
-    }
-  });
-
-  byId("read-instruction").addEventListener("click", async () => {
-    if (!session?.current_task) return;
-    speak(session.current_task.instruction);
-    session = await api(`/api/study/sessions/${session.study_session_id}/events`, {
-      kind: "TASK_INSTRUCTION_REPEAT",
-      detail: "Instruksi dibacakan dari Researcher Console."
+  const postRecordingChunk = (kind, sequence, chunk) => {
+    uploadQueue = uploadQueue.then(async () => {
+      const response = await fetch(
+        `/api/study/sessions/${session.study_session_id}/recordings/${kind}?sequence=${sequence}`,
+        { method: "POST", headers: { "content-type": chunk.type || "video/webm" }, body: chunk }
+      );
+      if (!response.ok) throw new Error(`Rekaman ${kind} tidak dapat disimpan.`);
     });
-    render();
-  });
+    return uploadQueue;
+  };
 
-  byId("open-task").addEventListener("click", async () => {
-    try {
-      const result = await api(`/api/study/sessions/${session.study_session_id}/tasks/start`, {});
-      session = result;
-      taskNote.textContent = "Kegiatan dibuka. Peserta dapat berbicara tanpa menekan tombol.";
-      window.open(result.start_url, "cua-participant");
-      render();
-    } catch (error) {
-      taskNote.textContent = error.message;
+  const createRecorder = (kind, stream) => {
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+      ? "video/webm;codecs=vp8,opus"
+      : "video/webm";
+    const recorder = new MediaRecorder(stream, { mimeType });
+    let sequence = 0;
+    recorder.addEventListener("dataavailable", (event) => {
+      if (event.data.size > 0) void postRecordingChunk(kind, sequence++, event.data);
+    });
+    recorder.start(5_000);
+    recorders.push(recorder);
+  };
+
+  const roundedRectangle = (context, x, y, width, height, radius) => {
+    const safeRadius = Math.min(radius, width / 2, height / 2);
+    context.beginPath();
+    context.moveTo(x + safeRadius, y);
+    context.arcTo(x + width, y, x + width, y + height, safeRadius);
+    context.arcTo(x + width, y + height, x, y + height, safeRadius);
+    context.arcTo(x, y + height, x, y, safeRadius);
+    context.arcTo(x, y, x + width, y, safeRadius);
+    context.closePath();
+  };
+
+  const createCompositeScreenStream = async () => {
+    if (typeof HTMLCanvasElement.prototype.captureStream !== "function") return screenStream;
+    const screenTrack = screenStream.getVideoTracks()[0];
+    const settings = screenTrack?.getSettings?.() || {};
+    compositeCanvas = document.createElement("canvas");
+    compositeCanvas.width = Number(settings.width) || 1280;
+    compositeCanvas.height = Number(settings.height) || 720;
+    compositeCanvas.hidden = true;
+    document.body.append(compositeCanvas);
+
+    screenPreview = document.createElement("video");
+    screenPreview.muted = true;
+    screenPreview.playsInline = true;
+    screenPreview.srcObject = screenStream;
+    void screenPreview.play().catch(() => undefined);
+    void cameraPreview.play().catch(() => undefined);
+    const context = compositeCanvas.getContext("2d", { alpha: false });
+    if (!context) return screenStream;
+
+    const draw = () => {
+      const width = compositeCanvas.width;
+      const height = compositeCanvas.height;
+      try {
+        context.drawImage(screenPreview, 0, 0, width, height);
+        if (cameraPreview.readyState >= 2) {
+          const margin = Math.max(18, Math.round(width * 0.018));
+          const frameWidth = Math.min(420, Math.max(220, Math.round(width * 0.23)));
+          const cameraRatio = cameraPreview.videoWidth && cameraPreview.videoHeight
+            ? cameraPreview.videoWidth / cameraPreview.videoHeight
+            : 16 / 9;
+          const frameHeight = Math.round(frameWidth / cameraRatio);
+          const x = width - frameWidth - margin;
+          const y = height - frameHeight - margin;
+          const radius = Math.max(14, Math.round(frameWidth * 0.055));
+          context.save();
+          context.shadowColor = "rgba(15, 23, 42, 0.28)";
+          context.shadowBlur = Math.round(frameWidth * 0.06);
+          roundedRectangle(context, x - 4, y - 4, frameWidth + 8, frameHeight + 8, radius + 4);
+          context.fillStyle = "#ffffff";
+          context.fill();
+          context.restore();
+          context.save();
+          roundedRectangle(context, x, y, frameWidth, frameHeight, radius);
+          context.clip();
+          context.drawImage(cameraPreview, x, y, frameWidth, frameHeight);
+          context.restore();
+        }
+      } catch {
+        // A new frame will be attempted as soon as both video sources are ready.
+      }
+      compositeFrame = window.requestAnimationFrame(draw);
+    };
+    draw();
+
+    compositeScreenStream = compositeCanvas.captureStream(25);
+    userStream.getAudioTracks().forEach((track) => {
+      if (typeof MediaStreamTrack !== "undefined" && track instanceof MediaStreamTrack) {
+        compositeScreenStream.addTrack(typeof track.clone === "function" ? track.clone() : track);
+      }
+    });
+    return compositeScreenStream;
+  };
+
+  const startRecording = async () => {
+    createRecorder("user", userStream);
+    createRecorder("screen", await createCompositeScreenStream());
+    session = await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "RECORDING" });
+    recordingState.textContent = "Aktif";
+  };
+
+  const verifyAndPlayIndonesianVoice = async () => {
+    const response = await fetch("/api/voice/speech", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "Halo. Suara sudah siap." })
+    });
+    if (!response.ok) throw new Error("Panduan suara Bahasa Indonesia belum siap.");
+    const url = URL.createObjectURL(await response.blob());
+    const audio = new Audio(url);
+    await new Promise((resolve, reject) => {
+      audio.addEventListener("ended", resolve, { once: true });
+      audio.addEventListener("error", () => reject(new Error("Panduan suara tidak dapat diputar.")), { once: true });
+      void audio.play().catch(reject);
+    });
+    URL.revokeObjectURL(url);
+  };
+
+  const stopRecording = async () => {
+    if (!recorders.length) return;
+    recordingState.textContent = "Menyimpan";
+    await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "STOPPING" });
+    const stopped = recorders.map((recorder) => new Promise((resolve) => {
+      if (recorder.state === "inactive") return resolve();
+      recorder.addEventListener("stop", resolve, { once: true });
+      recorder.stop();
+    }));
+    await Promise.all(stopped);
+    await uploadQueue;
+    recorders = [];
+    userStream?.getTracks().forEach((track) => track.stop());
+    screenStream?.getTracks().forEach((track) => track.stop());
+    compositeScreenStream?.getTracks().forEach((track) => track.stop());
+    if (compositeFrame !== null) window.cancelAnimationFrame(compositeFrame);
+    compositeCanvas?.remove();
+    compositeScreenStream = null;
+    compositeCanvas = null;
+    compositeFrame = null;
+    screenPreview = null;
+    transcriptionSocket?.close();
+    if (audioContext?.state !== "closed") await audioContext?.close?.();
+    session = await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "SAVED" });
+    recordingState.textContent = "Tersimpan";
+  };
+
+  const bytesToBase64 = (bytes) => {
+    let binary = "";
+    const size = 0x8000;
+    for (let offset = 0; offset < bytes.length; offset += size) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + size));
     }
+    return btoa(binary);
+  };
+
+  const downsampleTo16k = (input, inputRate) => {
+    const ratio = inputRate / 16_000;
+    const length = Math.max(1, Math.floor(input.length / ratio));
+    const output = new Int16Array(length);
+    for (let index = 0; index < length; index += 1) {
+      const start = Math.floor(index * ratio);
+      const end = Math.min(input.length, Math.floor((index + 1) * ratio));
+      let sum = 0;
+      for (let sample = start; sample < end; sample += 1) sum += input[sample];
+      const value = Math.max(-1, Math.min(1, sum / Math.max(1, end - start)));
+      output[index] = value < 0 ? value * 0x8000 : value * 0x7fff;
+    }
+    return new Uint8Array(output.buffer);
+  };
+
+  const openTranscriptionSocket = () => new Promise((resolve, reject) => {
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    transcriptionSocket = new WebSocket(
+      `${protocol}://${location.host}/api/voice/live-transcription?study_session_id=${encodeURIComponent(session.study_session_id)}`
+    );
+    const timeout = window.setTimeout(() => reject(new Error("Transkripsi belum siap.")), 10_000);
+    transcriptionSocket.addEventListener("message", async (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === "ready") {
+        window.clearTimeout(timeout);
+        voiceState.textContent = "Siap";
+        resolve();
+      }
+      if (message.type === "interim" && message.text) {
+        transcriptPreview.textContent = `Mendengar: ${message.text}`;
+      }
+      if (message.type === "final" && message.text) {
+        const normalized = String(message.text).trim();
+        const now = Date.now();
+        if (!normalized || (normalized === lastFinalTranscript && now - lastFinalAt < 3_000)) return;
+        lastFinalTranscript = normalized;
+        lastFinalAt = now;
+        shouldStreamSpeech = false;
+        transcriptPreview.textContent = `Peserta berkata: ${normalized}`;
+        await api(`/api/study/sessions/${session.study_session_id}/utterances`, { text: normalized });
+      }
+    });
+    transcriptionSocket.addEventListener("close", () => {
+      window.clearTimeout(timeout);
+      if (session?.status !== "COMPLETED") {
+        voiceState.textContent = "Menyambungkan ulang";
+        window.clearTimeout(transcriptionReconnectTimer);
+        transcriptionReconnectTimer = window.setTimeout(() => {
+          void openTranscriptionSocket().catch(() => undefined);
+        }, 1_000);
+      }
+    });
+    transcriptionSocket.addEventListener("error", () => reject(new Error("Transkripsi langsung tidak dapat tersambung.")), { once: true });
   });
 
-  byId("complete-task").addEventListener("click", async () => {
-    session = await api(`/api/study/sessions/${session.study_session_id}/tasks/complete`, { outcome: "RESEARCHER_CONFIRMED" });
-    taskNote.textContent = session.status === "FEEDBACK" ? "Lanjutkan ke feedback singkat." : "Kegiatan berikutnya siap.";
-    render();
-    if (session.current_task) speak(session.current_task.instruction);
+  const connectLiveTranscription = async () => {
+    await openTranscriptionSocket();
+
+    audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(userStream);
+    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    const silentGain = audioContext.createGain();
+    silentGain.gain.value = 0;
+    processor.addEventListener("audioprocess", (event) => {
+      if (!shouldStreamSpeech || transcriptionSocket?.readyState !== WebSocket.OPEN) return;
+      const pcm = downsampleTo16k(event.inputBuffer.getChannelData(0), audioContext.sampleRate);
+      transcriptionSocket.send(JSON.stringify({ audio: bytesToBase64(pcm) }));
+    });
+    source.connect(processor);
+    processor.connect(silentGain);
+    silentGain.connect(audioContext.destination);
+  };
+
+  const pollSession = async () => {
+    if (!session) return;
+    try {
+      const response = await fetch(`/api/study/sessions/${session.study_session_id}`);
+      session = await response.json();
+      const taskNumber = Math.min(session.task_index + 1, session.task_count);
+      taskState.textContent = session.status === "COMPLETED"
+        ? "Semua kegiatan selesai"
+        : `Kegiatan ${taskNumber} dari ${session.task_count}`;
+      voiceState.textContent = {
+        SPEAKING: "AI sedang berbicara",
+        LISTENING: "Silakan berbicara",
+        PROCESSING: "Memahami jawaban",
+        AGENT_WORKING: "Agent sedang bekerja",
+        COMPLETE: "Selesai",
+        ERROR: "Perlu bantuan"
+      }[session.voice_state] || "Menunggu";
+      shouldStreamSpeech = session.voice_state === "LISTENING";
+      if (shouldStreamSpeech) setState("LISTENING", "Silakan berbicara. Sistem sedang mendengarkan.");
+      else if (session.voice_state === "SPEAKING") setState("SPEAKING", "AI Guide sedang berbicara.");
+      else if (session.voice_state === "AGENT_WORKING") setState("AGENT_WORKING", "Agent sedang menyelesaikan kegiatan.");
+      if (session.status === "COMPLETED") {
+        window.clearInterval(pollTimer);
+        pollTimer = null;
+        setState("COMPLETE", "Semua kegiatan selesai. Perekaman sedang disimpan.");
+        await stopRecording();
+        setState("COMPLETE", "Pengujian selesai. Perekaman sudah disimpan.");
+      }
+    } catch (error) {
+      sessionError.hidden = false;
+      sessionError.textContent = `Status sesi tidak dapat diperbarui: ${error.message}`;
+    }
+  };
+
+  const start = async () => {
+    startButton.disabled = true;
+    liveSession.hidden = false;
+    sessionError.hidden = true;
+    setState("INITIALIZING", "Izinkan kamera, mikrofon, dan pilih layar yang akan direkam.");
+    participantWindow = window.open("about:blank", "cua-participant");
+    if (participantWindow) participantWindow.document.title = "Menyiapkan kegiatan";
+    try {
+      const userPermission = navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      const screenPermission = navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "monitor" },
+        audio: false
+      });
+      [userStream, screenStream] = await Promise.all([userPermission, screenPermission]);
+      cameraPreview.srcObject = userStream;
+
+      const healthResponse = await fetch("/api/study/readiness");
+      if (!healthResponse.ok) throw new Error("Backend atau database belum siap.");
+      const health = await healthResponse.json();
+      if (!health.ready) throw new Error("Backend, database, browser, atau agent belum siap.");
+      const agentReady = health.agent?.status === "ready";
+
+      session = await api("/api/study/automatic", { condition_id: "C0" });
+      await startRecording();
+      await verifyAndPlayIndonesianVoice();
+      await connectLiveTranscription();
+      session = await api(`/api/study/sessions/${session.study_session_id}/automatic-readiness`, {
+        checks: {
+          backend: true,
+          agent: agentReady,
+          microphone: userStream.getAudioTracks().length > 0,
+          camera: userStream.getVideoTracks().length > 0,
+          screen: screenStream.getVideoTracks().length > 0,
+          audio: typeof Audio !== "undefined"
+        }
+      });
+      if (session.status !== "READY") throw new Error("Salah satu perangkat belum siap.");
+      const task = await api(`/api/study/sessions/${session.study_session_id}/tasks/start`);
+      session = task;
+      if (!participantWindow) throw new Error("Jendela kegiatan diblokir browser.");
+      participantWindow.location.replace(task.start_url);
+      pollTimer = window.setInterval(() => void pollSession(), 500);
+      setState("SPEAKING", "AI Guide sedang menyiapkan kegiatan pertama.");
+    } catch (error) {
+      sessionError.hidden = false;
+      sessionError.textContent = error.message;
+      setState("ERROR", "Persiapan belum berhasil. Periksa izin browser lalu coba lagi.");
+      startButton.disabled = false;
+      participantWindow?.close();
+      userStream?.getTracks().forEach((track) => track.stop());
+      screenStream?.getTracks().forEach((track) => track.stop());
+      if (session) await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "FAILED" }).catch(() => {});
+    }
+  };
+
+  startButton.addEventListener("click", () => void start());
+  window.addEventListener("beforeunload", () => {
+    recorders.forEach((recorder) => { if (recorder.state === "recording") recorder.stop(); });
+    userStream?.getTracks().forEach((track) => track.stop());
+    screenStream?.getTracks().forEach((track) => track.stop());
   });
 })();

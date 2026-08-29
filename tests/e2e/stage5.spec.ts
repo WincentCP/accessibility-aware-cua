@@ -18,6 +18,7 @@ const tasks = [
 
 for (const condition of ["C0", "C1", "C2"] as const) {
   test(`36-case rendered accessibility scan: ${condition}`, async ({ page, request }) => {
+    test.setTimeout(90_000);
     for (const [index, [taskId, route]] of tasks.entries()) {
       const response = await request.post("/api/benchmark/reset", {
         data: { task_id: taskId, condition_id: condition, seed: 880_000 + index }

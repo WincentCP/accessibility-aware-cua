@@ -50,6 +50,16 @@ CORE_TASKS: tuple[dict[str, str], ...] = (
 )
 
 CONSENT_KEYS = ("store_name", "photo", "webcam_audio", "screen")
+READINESS_KEYS = ("backend", "agent", "microphone", "camera", "screen", "audio")
+VOICE_STATES = {
+    "IDLE",
+    "SPEAKING",
+    "LISTENING",
+    "PROCESSING",
+    "AGENT_WORKING",
+    "COMPLETE",
+    "ERROR",
+}
 
 
 def _now() -> str:
@@ -75,6 +85,13 @@ class StudySession:
     )
     created_at: str = field(default_factory=_now)
     events: list[dict[str, Any]] = field(default_factory=list)
+    automatic_mode: bool = False
+    voice_state: str = "IDLE"
+    readiness: dict[str, bool] = field(
+        default_factory=lambda: {key: False for key in READINESS_KEYS}
+    )
+    utterances: list[dict[str, Any]] = field(default_factory=list)
+    feedback: dict[str, str] | None = None
 
 
 class StudySessionStore:
@@ -110,6 +127,24 @@ class StudySessionStore:
             guardian_consent_confirmed=guardian_consent_confirmed,
         )
         self._event(session, "SESSION_CREATED")
+        with self._lock:
+            self._sessions[session.study_session_id] = session
+        return self.snapshot(session.study_session_id)
+
+    def create_automatic(self, *, condition_id: str = "C0") -> dict[str, Any]:
+        """Create an anonymous one-click session without in-app identity or consent forms."""
+
+        session_id = str(uuid4())
+        session = StudySession(
+            study_session_id=session_id,
+            participant_code=f"anon-{session_id[:8]}",
+            condition_id=condition_id,
+            is_minor=False,
+            guardian_consent_confirmed=False,
+            status="INITIALIZING",
+            automatic_mode=True,
+        )
+        self._event(session, "SESSION_CREATED", mode="AUTOMATIC_HANDS_FREE")
         with self._lock:
             self._sessions[session.study_session_id] = session
         return self.snapshot(session.study_session_id)
@@ -151,6 +186,87 @@ class StudySessionStore:
                 session.status = "CHECKS"
         return self.snapshot(study_session_id)
 
+    def set_automatic_readiness(
+        self, study_session_id: str, checks: dict[str, bool]
+    ) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        if not session.automatic_mode:
+            raise RuntimeError("Sesi ini tidak memakai pemeriksaan otomatis.")
+        unknown = set(checks) - set(READINESS_KEYS)
+        if unknown:
+            raise ValueError(f"Jenis pemeriksaan tidak dikenal: {sorted(unknown)}")
+        with self._lock:
+            session.readiness.update(checks)
+            for key, passed in checks.items():
+                self._event(session, "READINESS_CHECK", check_key=key, passed=passed)
+            if all(session.readiness.values()):
+                session.status = "READY"
+                self._event(session, "READINESS_COMPLETE")
+            else:
+                session.status = "INITIALIZING"
+        return self.snapshot(study_session_id)
+
+    def set_recording_state(self, study_session_id: str, state: str) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        normalized = state.strip().upper()
+        allowed = {"NOT_STARTED", "RECORDING", "STOPPING", "SAVED", "FAILED"}
+        if normalized not in allowed:
+            raise ValueError("Status perekaman tidak dikenal.")
+        with self._lock:
+            session.recording_state = normalized
+            self._event(session, "RECORDING_STATE", state=normalized)
+        return self.snapshot(study_session_id)
+
+    def set_voice_state(self, study_session_id: str, state: str) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        normalized = state.strip().upper()
+        if normalized not in VOICE_STATES:
+            raise ValueError("Status percakapan tidak dikenal.")
+        with self._lock:
+            session.voice_state = normalized
+            self._event(session, "VOICE_STATE", state=normalized)
+        return self.snapshot(study_session_id)
+
+    def add_utterance(self, study_session_id: str, text: str) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        normalized = " ".join(text.split()).strip()
+        if not normalized:
+            raise ValueError("Ucapan kosong tidak dapat disimpan.")
+        with self._lock:
+            utterance = {
+                "utterance_id": len(session.utterances) + 1,
+                "text": normalized[:2_000],
+                "at": _now(),
+            }
+            session.utterances.append(utterance)
+            session.voice_state = "PROCESSING"
+            self._event(session, "UTTERANCE_RECEIVED", utterance_id=utterance["utterance_id"])
+        return utterance
+
+    def submit_feedback(self, study_session_id: str, text: str) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        if session.status != "FEEDBACK":
+            raise RuntimeError("Sesi belum siap menerima feedback.")
+        normalized = " ".join(text.split()).strip()
+        if not normalized:
+            raise ValueError("Feedback kosong tidak dapat disimpan.")
+        with self._lock:
+            session.feedback = {"text": normalized[:4_000], "submitted_at": _now()}
+            session.status = "CLOSING"
+            session.voice_state = "PROCESSING"
+            self._event(session, "FEEDBACK_SUBMITTED")
+        return self.snapshot(study_session_id)
+
+    def complete_session(self, study_session_id: str) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        if session.status != "CLOSING" or not session.feedback:
+            raise RuntimeError("Feedback harus tersimpan sebelum sesi diselesaikan.")
+        with self._lock:
+            session.status = "COMPLETED"
+            session.voice_state = "COMPLETE"
+            self._event(session, "SESSION_COMPLETED")
+        return self.snapshot(study_session_id)
+
     def start_task(self, study_session_id: str) -> dict[str, Any]:
         session = self.get(study_session_id)
         if session.status not in {"READY", "BETWEEN_TASKS"}:
@@ -180,7 +296,12 @@ class StudySessionStore:
         self._event(session, "TASK_COMPLETED", task_id=task["task_id"], outcome=outcome)
         session.task_index += 1
         session.active_benchmark_session_id = None
-        session.status = "FEEDBACK" if session.task_index >= len(CORE_TASKS) else "BETWEEN_TASKS"
+        if session.task_index >= len(CORE_TASKS):
+            session.status = "FEEDBACK"
+            session.voice_state = "PROCESSING" if session.automatic_mode else "IDLE"
+            self._event(session, "TASKS_COMPLETE")
+        else:
+            session.status = "BETWEEN_TASKS"
         return self.snapshot(study_session_id)
 
     def log_event(self, study_session_id: str, kind: str, detail: str = "") -> dict[str, Any]:
@@ -209,6 +330,11 @@ class StudySessionStore:
             "status": session.status,
             "consent": dict(session.consent),
             "recording_state": session.recording_state,
+            "automatic_mode": session.automatic_mode,
+            "voice_state": session.voice_state,
+            "readiness": dict(session.readiness),
+            "utterances": list(session.utterances[-20:]),
+            "feedback": dict(session.feedback) if session.feedback else None,
             "readiness_checks": dict(session.readiness_checks),
             "task_index": session.task_index,
             "task_count": len(CORE_TASKS),
@@ -217,3 +343,20 @@ class StudySessionStore:
             "events": list(session.events[-20:]),
             "created_at": session.created_at,
         }
+
+    def export_result(self, study_session_id: str) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        with self._lock:
+            result = self.snapshot(study_session_id)
+            result.update(
+                {
+                    "format_version": "1.0",
+                    "utterances": list(session.utterances),
+                    "events": list(session.events),
+                    "recordings": {
+                        "screen_with_camera": "screen.webm",
+                        "camera_backup": "user.webm",
+                    },
+                }
+            )
+        return result

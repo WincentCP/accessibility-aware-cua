@@ -24,13 +24,21 @@ tidak pernah dikirim ke extension atau browser bridge.
 ## Menjalankan paling mudah di Windows
 
 Setelah setup satu kali dan `.env` terisi, klik dua kali `Mulai Pengujian.vbs`.
-Pilih **Mulai sesi penelitian**. Launcher membangun extension, menyalakan API,
-bridge browser, Chromium terisolasi, dan Researcher Console secara otomatis.
-Tutup jendela Chromium setelah sesi untuk menghentikan service.
+Pilih **Mulai Penelitian**. Launcher memastikan PostgreSQL aktif, membangun
+extension, menyalakan API dan bridge browser, lalu membuka browser penelitian
+serta Researcher Console secara otomatis.
 
-Untuk pemeriksaan otomatis tanpa biaya model, pilih **Periksa sistem otomatis**
-atau jalankan `npm run agent:test`. Mode ini memakai planner deterministik yang
-hanya diizinkan ketika `CUA_ENV=test`.
+Di Researcher Console, tekan **Mulai Penelitian** satu kali. Izinkan kamera dan
+mikrofon, lalu pilih layar yang akan direkam. Setelah itu peserta tidak perlu
+menekan tombol lagi. Perekaman, listening, agent, perpindahan empat task,
+feedback suara, penyimpanan hasil, dan penutupan berjalan otomatis.
+
+Untuk pemeriksaan developer tanpa biaya planner model, jalankan satu perintah
+`npm run agent:test`. Mode ini memakai planner deterministik yang hanya diizinkan
+ketika `CUA_ENV=test`.
+
+Untuk memeriksa jalur suara Gemini nyata dari TTS ke STT live, jalankan
+`npm run voice:test`. Skrip menyalakan dan mematikan API lokal sendiri.
 
 ## Konfigurasi `.env`
 
@@ -44,6 +52,9 @@ hanya diizinkan ketika `CUA_ENV=test`.
    GEMINI_API_KEY=<key-milik-Anda>
    CUA_PLANNER_MODEL=gemini-3.7-flash
    CUA_PLANNER_FALLBACK_MODEL=gemini-3.6-flash
+   CUA_STT_MODEL=gemini-3.5-transcribe-live
+   CUA_TTS_MODEL=gemini-3.1-flash-tts-preview
+   CUA_TTS_VOICE=Sulafat
    ```
 
 Tidak ada OpenAI API key atau provider OpenAI dalam runtime. Kunci Gemini tetap
@@ -59,18 +70,14 @@ hanya dibaca backend lokal dan tidak dikirim ke extension.
 - Jika bridge, model, atau verifikasi gagal, status menjadi `FAILED` dan agent
   tidak meneruskan aksi secara diam-diam.
 
-## Batas implementasi saat ini
+## Hasil sesi
 
-- Live MVP dipakai lebih dahulu untuk task rendah risiko seperti T01.
-- Pause/takeover berlaku pada checkpoint antar-aksi. Resume dilakukan setelah
-  agent benar-benar berstatus menunggu, bukan saat aksi masih berjalan.
-- Tindakan sensitif tetap berhenti pada explicit approval. Jalur approval
-  one-shot sudah dibuktikan pada core, tetapi kelanjutan approval dari side panel
-  ke live run perlu gate end-to-end tersendiri sebelum dipakai dalam studi.
-- Hidden oracle tetap tidak dikirim ke planner. Klaim selesai pada panel adalah
-  hasil postcondition agent; keberhasilan benchmark penelitian tetap dihitung
-  evaluator terpisah.
-- Ini belum membuktikan usability bagi pengguna tunanetra; walkthrough NVDA dan
-  user testing tetap diperlukan.
-- Perekaman webcam, audio, dan layar belum diimplementasikan. Researcher Console
-  sudah mencatat consent granular, tetapi tidak mengklaim atau memulai perekaman.
+- `.runtime/recordings/<session-id>/screen.webm` berisi layar, audio, dan frame
+  wajah peserta.
+- `.runtime/recordings/<session-id>/user.webm` adalah rekaman kamera cadangan.
+- `.runtime/study-results/<session-id>.json` berisi transkrip, feedback, urutan
+  task, state, dan event sesi anonim.
+
+Tes otomatis bukan pengganti pilot NVDA dan peserta tunanetra. Sebelum studi
+utama, lakukan pemeriksaan suara, posisi kamera, screen reader, retensi data,
+penghapusan rekaman, dan prosedur etik penelitian.

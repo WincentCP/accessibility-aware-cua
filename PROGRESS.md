@@ -1,6 +1,6 @@
 # Progress Implementasi
 
-Terakhir diperbarui: 27 Agustus 2026.
+Terakhir diperbarui: 29 Agustus 2026.
 
 ## Sudah tersedia
 
@@ -8,32 +8,38 @@ Terakhir diperbarui: 27 Agustus 2026.
 - Observer accessibility tree, executor semantik, verifikasi pasca-aksi, recovery terbatas, dan shared control.
 - Integrasi FastAPI, LangGraph, Gemini planner, browser bridge, dan extension MV3.
 - Redesign soft-pastel dengan Plus Jakarta Sans dan header dekoratif dihapus.
-- Researcher Console prototype untuk setup peserta, consent granular, instruksi standar, empat core task, dan event sesi.
+- Researcher Console satu tombol tanpa input identitas atau consent form di dalam aplikasi.
 - Mode studi menyembunyikan tujuan penelitian serta metadata teknis dari halaman peserta.
-- Planner deterministik T01 untuk pengujian lokal tanpa biaya API.
+- Planner deterministik empat core task untuk pengujian lokal tanpa biaya API.
 - Approval suara eksplisit yang dikonsumsi satu kali sebelum aksi sensitif.
 - Launcher Windows satu klik dan perintah `npm run agent:test`.
 - Chromium E2E untuk accessibility tree, aksi agent, verifikasi pasca-aksi,
   approval, state UI akhir, serta error handling fail-closed.
+- Perekaman otomatis layar dengan frame wajah dan audio, plus rekaman kamera cadangan.
+- Gemini live STT Bahasa Indonesia, Gemini TTS Bahasa Indonesia, turn-taking otomatis,
+  respons percakapan natural, dan reconnect sesi transkripsi.
+- Feedback suara setelah Task 4 serta hasil sesi anonim dalam JSON.
 
 ## Milestone workflow dan prototype selesai
 
 - Alur peserta hands-free tidak mewajibkan tombol selama sesi.
-- Researcher Console membacakan tujuan kegiatan, consent, cek perangkat, dan
-  empat instruksi standar.
+- Satu klik memulai pemeriksaan perangkat, permission browser, recording, dan
+  empat instruksi standar; setelah permission tidak ada tombol wajib.
 - Mode studi tidak merender tujuan penelitian, condition, seed, atau kontrol
   teknis pada halaman peserta.
 - Runtime penelitian hanya memakai Gemini; planner deterministik dibatasi untuk
   `CUA_ENV=test`.
 
-## Belum study-ready
+## Sisa sebelum studi utama
 
-- Transkripsi suara natural yang teruji dengan peserta dan variasi ujaran Bahasa Indonesia.
-- Recording webcam, audio, dan layar dengan penyimpanan serta penghapusan yang tervalidasi.
-- Persistence Researcher Console ke PostgreSQL.
-- Sinkronisasi otomatis task completion ke workflow studi.
+- Pilot kualitas suara dan variasi ujaran bersama pengguna Bahasa Indonesia.
+- Validasi manual NVDA, kamera nyata, microphone nyata, dan pemilih layar browser.
+- Persistence metadata sesi penuh ke PostgreSQL; saat ini hasil sesi juga disimpan
+  sebagai JSON lokal dan audit agent memakai penyimpanan aplikasi.
+- Validasi kebijakan retensi dan penghapusan rekaman.
 - Gate manual NVDA dan pilot dengan pengguna tunanetra.
-- Freeze naskah consent melalui prosedur etik penelitian.
+- Freeze informed consent dan izin dokumentasi melalui prosedur etik penelitian
+  di luar aplikasi.
 
 Runtime penelitian hanya memakai Gemini. Planner deterministik hanya tersedia saat
 `CUA_ENV=test` untuk pemeriksaan otomatis lokal dan tidak boleh digunakan pada sesi peserta.
