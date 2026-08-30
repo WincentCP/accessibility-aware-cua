@@ -126,8 +126,7 @@ try {
         "--autoplay-policy=no-user-gesture-required"
       ]
     });
-    const worker = context.serviceWorkers()[0] ?? await context.waitForEvent("serviceworker");
-    const extensionId = new URL(worker.url()).host;
+    await (context.serviceWorkers()[0] ? Promise.resolve() : context.waitForEvent("serviceworker"));
     const taskPage = () => [...context.pages()].reverse().find((candidate) => {
       try {
         const url = new URL(candidate.url());
@@ -140,16 +139,20 @@ try {
       token: env.CUA_APP_SECRET,
       port: Number(env.CUA_BROWSER_BRIDGE_PORT || 8765)
     });
-    let assistantPage;
-    context.on("page", (candidate) => {
-      void candidate.waitForLoadState("domcontentloaded").then(async () => {
-        if (!candidate.url().includes("study_session_id=")) return;
-        assistantPage ??= await context.newPage();
-        await assistantPage.goto(`chrome-extension://${extensionId}/sidepanel.html`);
-        await assistantPage.bringToFront();
-      }).catch(() => {});
-    });
     const researcher = context.pages()[0] ?? await context.newPage();
+    let participantPage;
+    researcher.on("response", (response) => {
+      const requestUrl = new URL(response.url());
+      if (response.request().method() !== "POST"
+        || !/\/api\/study\/sessions\/[^/]+\/tasks\/start$/u.test(requestUrl.pathname)
+        || !response.ok()) return;
+      void response.json().then(async (task) => {
+        if (!task?.start_url || participantPage) return;
+        participantPage = await context.newPage();
+        await participantPage.goto(new URL(task.start_url, apiBaseUrl).href, { waitUntil: "networkidle" });
+        await participantPage.bringToFront();
+      }).catch((error) => console.error("Halaman kegiatan tidak dapat dibuka.", error));
+    });
     await researcher.goto(`${apiBaseUrl}/researcher`, { waitUntil: "networkidle" });
     console.log("Researcher Console siap. Tutup browser untuk menghentikan seluruh service.");
     await new Promise((resolvePromise) => context.once("close", resolvePromise));

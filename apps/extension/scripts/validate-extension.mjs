@@ -12,6 +12,7 @@ if (manifest.manifest_version !== 3) failures.push("manifest_version must be 3")
 if (!manifest.side_panel?.default_path) failures.push("side_panel.default_path is missing");
 if (manifest.permissions?.includes("tabs")) failures.push("broad tabs permission is not allowed");
 if (!manifest.permissions?.includes("scripting")) failures.push("targeted scripting fallback is missing");
+if (!manifest.permissions?.includes("offscreen")) failures.push("background study coordinator permission is missing");
 if (!manifest.content_scripts?.[0]?.js?.includes("content-script.js")) failures.push("content script is missing");
 if (!html.includes('lang="id"')) failures.push("side panel language is missing");
 if (!html.includes("main-content")) failures.push("skip target is missing");

@@ -14,7 +14,6 @@
   const transcriptPreview = byId("transcript-preview");
 
   let session = null;
-  let participantWindow = null;
   let userStream = null;
   let screenStream = null;
   let compositeScreenStream = null;
@@ -150,17 +149,23 @@
     createRecorder("user", userStream);
     createRecorder("screen", await createCompositeScreenStream());
     session = await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "RECORDING" });
-    recordingState.textContent = "Aktif";
+    recordingState.textContent = "Rekaman aktif";
   };
 
-  const verifyAndPlayIndonesianVoice = async () => {
+  const openingGuide = "Yuk, kita mulai. Browser akan meminta izin kamera, mikrofon, dan layar. Pilih Izinkan. Untuk layar, pilih Seluruh layar, lalu pilih Bagikan. Saya akan menunggu.";
+
+  const requestIndonesianSpeech = async (text) => {
     const response = await fetch("/api/voice/speech", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: "Halo. Suara sudah siap." })
+      body: JSON.stringify({ text })
     });
     if (!response.ok) throw new Error("Panduan suara Bahasa Indonesia belum siap.");
-    const url = URL.createObjectURL(await response.blob());
+    return response.blob();
+  };
+
+  const playSpeechBlob = async (blob) => {
+    const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
     await new Promise((resolve, reject) => {
       audio.addEventListener("ended", resolve, { once: true });
@@ -170,9 +175,38 @@
     URL.revokeObjectURL(url);
   };
 
+  const speakWithIndonesianDeviceVoice = async (text) => {
+    if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return false;
+    const voice = window.speechSynthesis.getVoices()
+      .find((candidate) => candidate.lang.toLowerCase().startsWith("id"));
+    if (!voice) return false;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "id-ID";
+    utterance.voice = voice;
+    utterance.rate = 0.95;
+    await new Promise((resolve) => {
+      utterance.addEventListener("end", resolve, { once: true });
+      utterance.addEventListener("error", resolve, { once: true });
+      window.speechSynthesis.speak(utterance);
+    });
+    return true;
+  };
+
+  const playGuide = async (text, preparedSpeech) => {
+    try {
+      const blob = await (preparedSpeech || requestIndonesianSpeech(text));
+      if (!blob) throw new Error("Audio belum tersedia.");
+      await playSpeechBlob(blob);
+    } catch (error) {
+      if (!await speakWithIndonesianDeviceVoice(text)) throw error;
+    }
+  };
+
+  const openingGuideSpeech = requestIndonesianSpeech(openingGuide).catch(() => null);
+
   const stopRecording = async () => {
     if (!recorders.length) return;
-    recordingState.textContent = "Menyimpan";
+    recordingState.textContent = "Rekaman sedang disimpan";
     await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "STOPPING" });
     const stopped = recorders.map((recorder) => new Promise((resolve) => {
       if (recorder.state === "inactive") return resolve();
@@ -194,7 +228,7 @@
     transcriptionSocket?.close();
     if (audioContext?.state !== "closed") await audioContext?.close?.();
     session = await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "SAVED" });
-    recordingState.textContent = "Tersimpan";
+    recordingState.textContent = "Rekaman tersimpan";
   };
 
   const bytesToBase64 = (bytes) => {
@@ -292,14 +326,14 @@
         SPEAKING: "AI sedang berbicara",
         LISTENING: "Silakan berbicara",
         PROCESSING: "Memahami jawaban",
-        AGENT_WORKING: "Agent sedang bekerja",
+        AGENT_WORKING: "Asisten sedang bekerja",
         COMPLETE: "Selesai",
         ERROR: "Perlu bantuan"
       }[session.voice_state] || "Menunggu";
       shouldStreamSpeech = session.voice_state === "LISTENING";
       if (shouldStreamSpeech) setState("LISTENING", "Silakan berbicara. Sistem sedang mendengarkan.");
       else if (session.voice_state === "SPEAKING") setState("SPEAKING", "AI Guide sedang berbicara.");
-      else if (session.voice_state === "AGENT_WORKING") setState("AGENT_WORKING", "Agent sedang menyelesaikan kegiatan.");
+      else if (session.voice_state === "AGENT_WORKING") setState("AGENT_WORKING", "Asisten sedang menyelesaikan kegiatan.");
       if (session.status === "COMPLETED") {
         window.clearInterval(pollTimer);
         pollTimer = null;
@@ -317,10 +351,9 @@
     startButton.disabled = true;
     liveSession.hidden = false;
     sessionError.hidden = true;
-    setState("INITIALIZING", "Izinkan kamera, mikrofon, dan pilih layar yang akan direkam.");
-    participantWindow = window.open("about:blank", "cua-participant");
-    if (participantWindow) participantWindow.document.title = "Menyiapkan kegiatan";
+    setState("INITIALIZING", "Ikuti petunjuk suara untuk memberikan izin perangkat.");
     try {
+      const openingVoice = playGuide(openingGuide, openingGuideSpeech);
       const userPermission = navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: { width: { ideal: 1280 }, height: { ideal: 720 } }
@@ -330,6 +363,7 @@
         audio: false
       });
       [userStream, screenStream] = await Promise.all([userPermission, screenPermission]);
+      await openingVoice;
       cameraPreview.srcObject = userStream;
 
       const healthResponse = await fetch("/api/study/readiness");
@@ -340,7 +374,7 @@
 
       session = await api("/api/study/automatic", { condition_id: "C0" });
       await startRecording();
-      await verifyAndPlayIndonesianVoice();
+      await playGuide("Sip, semua izin sudah siap. Rekaman dimulai sekarang. Saya akan membuka kegiatan pertama.");
       await connectLiveTranscription();
       session = await api(`/api/study/sessions/${session.study_session_id}/automatic-readiness`, {
         checks: {
@@ -355,16 +389,14 @@
       if (session.status !== "READY") throw new Error("Salah satu perangkat belum siap.");
       const task = await api(`/api/study/sessions/${session.study_session_id}/tasks/start`);
       session = task;
-      if (!participantWindow) throw new Error("Jendela kegiatan diblokir browser.");
-      participantWindow.location.replace(task.start_url);
+      document.documentElement.dataset.taskUrl = task.start_url;
       pollTimer = window.setInterval(() => void pollSession(), 500);
-      setState("SPEAKING", "AI Guide sedang menyiapkan kegiatan pertama.");
+      setState("SPEAKING", "Kegiatan pertama siap. Halaman kegiatan sedang dibuka.");
     } catch (error) {
       sessionError.hidden = false;
       sessionError.textContent = error.message;
       setState("ERROR", "Persiapan belum berhasil. Periksa izin browser lalu coba lagi.");
       startButton.disabled = false;
-      participantWindow?.close();
       userStream?.getTracks().forEach((track) => track.stop());
       screenStream?.getTracks().forEach((track) => track.stop());
       if (session) await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "FAILED" }).catch(() => {});

@@ -113,24 +113,14 @@ const CONTENT_SCRIPT_READY = "__a11yCuaContentScriptReady";
 const injectPanel = (): void => {
   if (!document.body || document.getElementById(PANEL_ID)) return;
   const studyMode = new URL(window.location.href).searchParams.has("study_session_id");
+  if (studyMode) return;
   const pageMain = document.querySelector<HTMLElement>("main");
   if (pageMain && !pageMain.id) pageMain.id = "a11y-cua-page-content";
   const skipTarget = pageMain?.id ? `#${pageMain.id}` : "#a11y-cua-open-panel";
   const panel = document.createElement("aside");
   panel.id = PANEL_ID;
   panel.dataset.a11yCuaExtension = "true";
-  panel.setAttribute("aria-label", studyMode ? "Status asisten" : "Accessibility-Aware CUA extension panel");
-  if (studyMode) {
-    panel.innerHTML = `
-      <style>
-        #${PANEL_ID}{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-      </style>
-      <h2>Asisten</h2>
-      <p id="a11y-cua-bridge-status" role="status" aria-live="polite" aria-atomic="true">Asisten siap.</p>
-      <p id="a11y-cua-bridge-progress">Belum ada hasil yang diperiksa.</p>`;
-    document.body.prepend(panel);
-    return;
-  }
+  panel.setAttribute("aria-label", "Accessibility-Aware CUA extension panel");
   panel.innerHTML = `
     <style>
       #${PANEL_ID}{font:16px/1.5 system-ui,sans-serif;padding:.75rem;border:3px solid #075db7;background:#fff;color:#17202a}

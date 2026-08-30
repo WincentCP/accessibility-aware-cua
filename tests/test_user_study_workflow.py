@@ -92,7 +92,7 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
         response = self.client.get("/researcher")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Mulai Penelitian", response.text)
-        self.assertIn("peserta tidak perlu menekan tombol lagi", response.text)
+        self.assertIn("tidak perlu menekan tombol aplikasi lagi", response.text)
         self.assertNotIn("Kode peserta", response.text)
         self.assertNotIn("consent", response.text.lower())
         self.assertNotIn("Periksa sistem", response.text)

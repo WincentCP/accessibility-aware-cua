@@ -6,12 +6,17 @@ dan berbagi layar dari browser bukan pengganti informed consent.
 
 ## Alur peserta
 
-1. Peneliti membuka launcher dan memilih **Mulai Penelitian**.
-2. Browser meminta izin kamera dan mikrofon, lalu meminta layar yang akan direkam.
+1. Peneliti membuka launcher. Researcher Console muncul, lalu peserta atau peneliti
+   memilih **Mulai Penelitian** satu kali.
+2. AI Guide langsung mengatakan bahwa browser akan meminta izin kamera, mikrofon,
+   dan layar. Peserta mengikuti dialog browser; ini satu-satunya interaksi wajib
+   sebelum pengalaman menjadi hands-free.
 3. Setelah izin diberikan, rekaman dimulai. Layar direkam dengan frame wajah di
    kanan bawah dan rekaman kamera terpisah disimpan sebagai cadangan.
-4. AI Guide menyapa dalam Bahasa Indonesia, membacakan Task 1, lalu otomatis
-   mendengarkan. Peserta cukup berbicara seperti meminta bantuan kepada seseorang.
+4. Task 1 terbuka langsung pada tab kegiatan, tanpa tab kosong dan tanpa panel agen.
+   AI Guide menyapa dalam Bahasa Indonesia, menjelaskan tujuan singkat, menawarkan
+   untuk membacakan pilihan halaman, lalu otomatis mendengarkan. Peserta cukup
+   berbicara seperti meminta bantuan kepada seseorang.
 5. AI mengatur giliran bicara, menjalankan agent, memeriksa hasil, dan berpindah
    ke Task 2, Task 3, serta Task 4 tanpa tombol lanjutan.
 6. Setelah Task 4, AI menanyakan satu feedback terbuka singkat. Jawaban disimpan,
@@ -40,6 +45,8 @@ yang sama untuk seluruh peserta.
 - Jika AI sedang bekerja, AI mengatakan bahwa peserta tidak perlu menjawab dulu.
 - Pernyataan seperti "Saya menemukan tiga pilihan" tidak boleh berdiri sendiri.
   AI melanjutkan dengan pertanyaan seperti "Mau saya bacakan pilihannya?"
+- Jawaban "iya" setelah tawaran tersebut membacakan isi halaman; jawaban "iya"
+  tidak boleh dianggap sebagai perintah untuk menyelesaikan seluruh task.
 - "Ulang" dan "yang tadi" memakai konteks percakapan terakhir.
 - "Iya", "udah", dan "lanjut" dipahami sesuai pertanyaan atau task aktif.
 - "Lanjut" tidak berpindah task sebelum hasil task sebelumnya terverifikasi.

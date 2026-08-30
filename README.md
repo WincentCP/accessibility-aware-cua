@@ -19,11 +19,12 @@ Tahap 11 menambahkan deterministic safety policy, approval one-shot, pause/takeo
 atomik, focus handoff terverifikasi, fresh-observation resume, dan audit koreksi
 percakapan berversi.
 Tahap 12 menambahkan task-map compiler verified-only, invalidasi reference stale,
-extension MV3 dengan in-page landmark dan side panel, push-to-talk dengan review
-transkrip, serta shared-control keyboard. Gate otomatis PASS; gate NVDA Windows
+extension MV3 dengan koordinator suara latar belakang, turn-taking otomatis,
+serta shared-control keyboard. Gate otomatis PASS; gate NVDA Windows
 masih `PENDING_NVDA` dan sengaja tidak digantikan oleh axe/Playwright.
-Integrasi live berikutnya menghubungkan side panel, FastAPI, structured planner
-Gemini, LangGraph, dan Chromium yang terlihat melalui loopback semantic bridge.
+Integrasi live menghubungkan FastAPI, structured planner Gemini, LangGraph, dan
+browser penelitian melalui loopback semantic bridge. Panel developer tetap tersedia
+untuk debugging, tetapi tidak ditampilkan atau dibacakan kepada peserta penelitian.
 API key tetap hanya di backend lokal; extension tidak menerima atau menyimpannya.
 
 ## Yang sudah bisa dibuka
@@ -137,9 +138,9 @@ profil Chrome pribadi. Mode penelitian memakai transkripsi Gemini live Bahasa
 Indonesia dan turn-taking otomatis tanpa push-to-talk.
 
 Untuk workflow studi, launcher menyalakan bridge browser lokal dan membuka
-Researcher Console. Satu tombol memulai permission, perekaman layar dengan frame
-wajah, rekaman kamera cadangan, empat kegiatan, serta feedback suara. Status dan
-hanya progres yang lolos verifikasi pasca-aksi muncul di peta tugas. Lihat
+Researcher Console. Satu tombol memulai panduan izin, perekaman layar dengan frame
+wajah, rekaman kamera cadangan, empat kegiatan, serta feedback suara. Task 1 dibuka
+langsung pada tab kegiatan tanpa tab kosong atau panel tambahan. Lihat
 `docs/live_agent_quickstart.md` untuk urutan Windows dan batas implementasi.
 Panduan TTS Bahasa Indonesia membacakan task dan perubahan status penting;
 listening aktif otomatis setelah ucapan AI selesai.

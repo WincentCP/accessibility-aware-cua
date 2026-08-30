@@ -4,6 +4,31 @@ chrome.runtime.onInstalled.addListener(() => {
 
 const LOCAL_PAGE = /^http:\/\/127\.0\.0\.1:(?:8000|8015)\//u;
 let latestLiveRunId: string | null = null;
+let coordinatorCreation: Promise<void> | null = null;
+
+const isStudyPage = (url?: string): boolean => {
+  if (!url || !LOCAL_PAGE.test(url)) return false;
+  try {
+    return new URL(url).searchParams.has("study_session_id");
+  } catch {
+    return false;
+  }
+};
+
+const ensureStudyCoordinator = async (): Promise<void> => {
+  if (await chrome.offscreen.hasDocument()) return;
+  coordinatorCreation ??= chrome.offscreen.createDocument({
+    url: "sidepanel.html",
+    reasons: [chrome.offscreen.Reason.AUDIO_PLAYBACK],
+    justification: "Menjalankan panduan suara penelitian tanpa membuka panel peserta."
+  }).finally(() => { coordinatorCreation = null; });
+  await coordinatorCreation;
+};
+
+const wakeStudyCoordinator = async (): Promise<void> => {
+  await ensureStudyCoordinator();
+  await chrome.runtime.sendMessage({ type: "COORDINATOR_LOAD_ACTIVE_TASK" });
+};
 
 const ensureInPageLauncher = async (tabId: number, url?: string): Promise<void> => {
   if (url && !LOCAL_PAGE.test(url)) return;
@@ -19,7 +44,9 @@ const ensureInPageLauncher = async (tabId: number, url?: string): Promise<void> 
 };
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === "complete") void ensureInPageLauncher(tabId, tab.url);
+  if (changeInfo.status !== "complete") return;
+  void ensureInPageLauncher(tabId, tab.url);
+  if (isStudyPage(tab.url)) void wakeStudyCoordinator();
 });
 
 const activeBenchmarkTab = async (): Promise<{ tabId: number; sessionId: string; studySessionId?: string }> => {
@@ -74,6 +101,29 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
           } : { goal: task.goal })
         }
       });
+    }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  }
+  if (payload.type === "READ_CURRENT_PAGE") {
+    void activeBenchmarkTab().then(async ({ tabId }) => {
+      const [result] = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+          const normalize = (value: string | null | undefined): string =>
+            String(value ?? "").replace(/\s+/gu, " ").trim();
+          const headings = Array.from(document.querySelectorAll<HTMLElement>("main h1, main h2"))
+            .map((element) => normalize(element.innerText))
+            .filter(Boolean)
+            .slice(0, 4);
+          const controls = Array.from(document.querySelectorAll<HTMLElement>(
+            "main label, main button, main [role='option'], main select option"
+          )).map((element) => normalize(element.innerText || element.textContent))
+            .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index)
+            .slice(0, 12);
+          return { title: normalize(document.title), headings, controls };
+        }
+      });
+      sendResponse({ success: true, page: result?.result ?? { headings: [], controls: [] } });
     }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;
   }

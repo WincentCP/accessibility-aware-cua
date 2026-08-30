@@ -2,8 +2,8 @@
 
 ## Tujuan integrasi
 
-Integrasi ini membuat extension bukan lagi mock UI. Side panel mengirim tujuan
-dan `session_id` benchmark ke FastAPI. Backend mengobservasi accessibility tree,
+Integrasi ini membuat extension bukan lagi mock UI. Koordinator suara di latar
+belakang mengirim permintaan peserta dan `session_id` ke FastAPI. Backend mengobservasi accessibility tree,
 meminta satu keputusan terstruktur dari model, menjalankan primitive keyboard
 yang diizinkan, lalu memverifikasi postcondition. Peta tugas hanya menandai
 langkah sebagai selesai setelah verifikasi.
@@ -11,9 +11,9 @@ langkah sebagai selesai setelah verifikasi.
 Alur data:
 
 ```text
-side panel -> FastAPI lokal -> LangGraph + structured planner
+koordinator suara -> FastAPI lokal -> LangGraph + structured planner
            -> semantic bridge lokal -> Chromium benchmark
-           -> observer/verifier -> peta tugas side panel
+           -> observer/verifier -> progres sesi
 ```
 
 Browser bridge hanya bind ke `127.0.0.1`, memerlukan bearer token yang sama
@@ -29,9 +29,16 @@ extension, menyalakan API dan bridge browser, lalu membuka browser penelitian
 serta Researcher Console secara otomatis.
 
 Di Researcher Console, tekan **Mulai Penelitian** satu kali. Izinkan kamera dan
-mikrofon, lalu pilih layar yang akan direkam. Setelah itu peserta tidak perlu
-menekan tombol lagi. Perekaman, listening, agent, perpindahan empat task,
-feedback suara, penyimpanan hasil, dan penutupan berjalan otomatis.
+mikrofon, lalu pada dialog berbagi layar pilih **Seluruh layar** dan **Bagikan**.
+AI Guide membacakan petunjuk ini sejak awal. Setelah izin browser selesai, Task 1
+terbuka langsung tanpa tab kosong. Peserta tidak perlu menekan tombol aplikasi
+lagi. Perekaman, listening, tindakan asisten, perpindahan empat task, feedback
+suara, penyimpanan hasil, dan penutupan berjalan otomatis.
+
+Peserta tidak melihat panel agen. Koordinator suara tetap aktif di latar belakang,
+menawarkan untuk membacakan pilihan pada halaman, dan baru menjalankan tindakan
+setelah peserta menyebutkan bantuan yang diinginkan. Jawaban pendek seperti
+"iya", "ulang", "udah", dan "lanjut" ditafsirkan berdasarkan pertanyaan terakhir.
 
 Untuk pemeriksaan developer tanpa biaya planner model, jalankan satu perintah
 `npm run agent:test`. Mode ini memakai planner deterministik yang hanya diizinkan
@@ -63,7 +70,7 @@ hanya dibaca backend lokal dan tidak dikirim ke extension.
 ## Definition of Done smoke test
 
 - Terminal browser menampilkan `Live browser bridge siap`.
-- Side panel menerima tujuan tanpa meminta API key.
+- Koordinator suara menerima permintaan tanpa meminta API key.
 - Status bergerak dari `QUEUED` ke `RUNNING`.
 - Chromium berubah melalui aksi keyboard semantik, bukan koordinat layar.
 - Peta tugas tidak mengklaim selesai sebelum postcondition berstatus verified.

@@ -55,6 +55,10 @@ let lastGuideMessage = "";
 let terminalHandled = false;
 let lastWaitingAnnouncement = "";
 let feedbackMode = false;
+type DialogueContext = "OFFERING_OPTIONS" | "AWAITING_REQUEST" | "AGENT_WORKING" | "AWAITING_APPROVAL" | "FEEDBACK" | "COMPLETE";
+let dialogueContext: DialogueContext = "AWAITING_REQUEST";
+let loadingActiveTask = false;
+let loadedTaskKey: string | null = null;
 
 interface HandsFreeRecognitionResultEvent {
   results: ArrayLike<{ 0: { transcript: string } }>;
@@ -300,6 +304,7 @@ const startLiveGoal = async (value: string): Promise<void> => {
   activityProgress.textContent = "Belum ada hasil yang diperiksa.";
   promptParticipant("Baik, saya akan mulai membantu. Tidak perlu menjawab dulu.");
   await setStudyVoiceState("AGENT_WORKING").catch(() => undefined);
+  dialogueContext = "AGENT_WORKING";
   lastSpokenActivityKey = null;
   setAgentState("starting");
   announce("Permintaan diterima. Saya sedang menyiapkan bantuan.");
@@ -318,6 +323,7 @@ const startLiveGoal = async (value: string): Promise<void> => {
     const message = `Saya belum dapat memulai bantuan. ${error instanceof Error ? error.message : String(error)}`;
     promptParticipant(`${message} Minta peneliti membantu.`);
     announce(message);
+    dialogueContext = "AWAITING_REQUEST";
     await setStudyVoiceState("ERROR").catch(() => undefined);
   }
 };
@@ -389,6 +395,27 @@ const enterAutomaticListening = async (): Promise<void> => {
 const isAny = (value: string, phrases: string[]): boolean =>
   phrases.some((phrase) => value === phrase || value.includes(phrase));
 
+const readCurrentPage = async (): Promise<void> => {
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "READ_CURRENT_PAGE" }) as {
+      success?: boolean;
+      page?: { headings?: string[]; controls?: string[] };
+    };
+    if (!result?.success) throw new Error("Isi halaman belum tersedia.");
+    const controls = (result.page?.controls ?? []).filter(Boolean).slice(0, 8);
+    const heading = result.page?.headings?.find(Boolean);
+    if (!controls.length) {
+      await speak("Pilihan di halaman ini belum terbaca. Coba ceritakan bantuan yang kamu inginkan.");
+    } else {
+      await speak(`${heading ? `${heading}. ` : ""}Pilihan yang tersedia: ${controls.join(". ")}. Apa yang ingin kamu minta saya lakukan?`);
+    }
+  } catch {
+    await speak("Saya belum dapat membacakan halaman. Coba ceritakan bantuan yang kamu inginkan.");
+  }
+  dialogueContext = "AWAITING_REQUEST";
+  await enterAutomaticListening();
+};
+
 const handleStudyUtterance = async (spoken: string): Promise<void> => {
   if (!activeBenchmarkTask?.study_session_id) return;
   const normalized = spoken.trim().toLocaleLowerCase("id-ID");
@@ -418,30 +445,39 @@ const handleStudyUtterance = async (spoken: string): Promise<void> => {
     utterancePollTimer = null;
     activeRunId = null;
     await setStudyVoiceState("COMPLETE");
+    dialogueContext = "COMPLETE";
     setAgentState("complete");
     promptParticipant("Pengujian selesai. Terima kasih.");
     return;
   }
 
-  if (isAny(normalized, ["bacakan pilihan", "baca pilihannya", "pilihannya apa", "opsinya apa"])) {
-    const options = Array.from(document.querySelectorAll<HTMLElement>("#relevant-list li"))
-      .map((item) => item.textContent?.trim())
-      .filter((item): item is string => Boolean(item && item !== "Belum ada."));
-    await speak(options.length
-      ? `Saya menemukan ${options.length} pilihan. ${options.join(". ")}. Pilihan mana yang kamu inginkan?`
-      : "Pilihan belum tersedia. Ceritakan dulu apa yang ingin kamu lakukan.");
+  if (isAny(normalized, ["bacakan halaman", "baca halaman", "bacakan pilihan", "baca pilihannya", "pilihannya apa", "opsinya apa"])) {
+    await readCurrentPage();
+    return;
+  }
+
+  const affirmation = isAny(normalized, ["iya", "ya", "siap", "lanjut", "sudah", "udah", "boleh", "oke", "ok"]);
+  if (dialogueContext === "OFFERING_OPTIONS" && affirmation) {
+    await readCurrentPage();
+    return;
+  }
+
+  if (dialogueContext === "OFFERING_OPTIONS" && isAny(normalized, ["tidak", "enggak", "nggak", "ga", "gak"])) {
+    dialogueContext = "AWAITING_REQUEST";
+    await speak("Baik. Ceritakan bantuan yang kamu inginkan dengan kata-katamu sendiri.");
     await enterAutomaticListening();
     return;
   }
 
   if (isAny(normalized, ["saya bingung", "aku bingung", "harus bagaimana", "harus gimana", "saya harus apa"])) {
-    await speak("Tidak apa-apa. Cukup ceritakan bantuan yang kamu inginkan dengan kata-katamu sendiri. Saya akan membantu langkah demi langkah.");
+    dialogueContext = "AWAITING_REQUEST";
+    await speak("Tidak apa-apa. Kamu bisa meminta saya membacakan halaman, atau ceritakan bantuan yang kamu inginkan dengan kata-katamu sendiri.");
     await enterAutomaticListening();
     return;
   }
 
   if (activeRunId) {
-    if (isAny(normalized, ["iya", "ya", "setuju", "saya setuju", "lanjut"])) {
+    if (dialogueContext === "AWAITING_APPROVAL" && isAny(normalized, ["iya", "ya", "setuju", "saya setuju", "lanjut"])) {
       const result = await chrome.runtime.sendMessage({
         type: "LIVE_COMMAND",
         runId: activeRunId,
@@ -450,20 +486,26 @@ const handleStudyUtterance = async (spoken: string): Promise<void> => {
       });
       if (result?.success && result.run) {
         await setStudyVoiceState("AGENT_WORKING");
+        dialogueContext = "AGENT_WORKING";
         applyLiveRun(result.run as LiveRunResponse);
         return;
       }
     }
-    await speak("Saya belum memahami jawaban itu. Coba sampaikan dengan kalimat yang lebih singkat.");
+    await speak(dialogueContext === "AGENT_WORKING"
+      ? "Saya masih menyelesaikan permintaanmu. Tunggu sebentar."
+      : "Saya belum memahami jawaban itu. Coba jawab iya, tidak, atau jelaskan pilihanmu dengan singkat.");
     await enterAutomaticListening();
     return;
   }
 
-  const affirmation = isAny(normalized, ["iya", "ya", "siap", "lanjut", "sudah", "udah", "boleh", "oke", "ok"]);
-  const requestedGoal = affirmation && activeBenchmarkTask.instruction
-    ? activeBenchmarkTask.instruction
-    : spoken;
-  await startLiveGoal(requestedGoal);
+  if (affirmation) {
+    dialogueContext = "AWAITING_REQUEST";
+    await speak("Silakan ceritakan bantuan yang kamu inginkan dengan kata-katamu sendiri.");
+    await enterAutomaticListening();
+    return;
+  }
+
+  await startLiveGoal(spoken);
 };
 
 const pollStudyUtterances = async (): Promise<void> => {
@@ -518,17 +560,24 @@ confirmTranscript.addEventListener("click", () => {
 editTranscript.addEventListener("click", () => transcript.focus());
 
 const loadActiveTask = async (): Promise<void> => {
+  if (loadingActiveTask) return;
+  loadingActiveTask = true;
   setAgentState("loading");
   if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
     submitGoal.disabled = false;
     setAgentState("ready");
+    loadingActiveTask = false;
     return;
   }
   announce("Menyiapkan kegiatan yang sedang dibuka.");
   try {
     const result = await chrome.runtime.sendMessage({ type: "GET_ACTIVE_TASK" });
     if (!result?.success || !result.task) throw new Error(result?.error ?? "Task tidak ditemukan.");
-    activeBenchmarkTask = result.task as ActiveBenchmarkTask;
+    const nextTask = result.task as ActiveBenchmarkTask;
+    const taskKey = `${nextTask.study_session_id ?? "manual"}:${nextTask.task_id}:${nextTask.task_index ?? 0}`;
+    if (taskKey === loadedTaskKey) return;
+    loadedTaskKey = taskKey;
+    activeBenchmarkTask = nextTask;
     goal.value = activeBenchmarkTask.goal ?? "";
     setCommandContextReady(Boolean(activeBenchmarkTask.goal));
     byId("active-goal").textContent = activeBenchmarkTask.goal ?? "Menunggu permintaan peserta.";
@@ -547,8 +596,9 @@ const loadActiveTask = async (): Promise<void> => {
       activeRunId = null;
       const position = (activeBenchmarkTask.task_index ?? 0) + 1;
       const greeting = position === 1
-        ? `Halo. Perekaman sudah dimulai. Kita langsung masuk ke kegiatan pertama. ${instruction}`
-        : `Kita lanjut ke kegiatan ${position}. ${instruction}`;
+        ? `Halo. Perekaman sudah dimulai. Kita langsung masuk ke kegiatan pertama. ${instruction} Mau saya bacakan pilihan yang tersedia? Kamu juga boleh langsung mengatakan bantuan yang kamu inginkan.`
+        : `Kita lanjut ke kegiatan ${position}. ${instruction} Mau saya bacakan pilihan yang tersedia? Kamu juga boleh langsung meminta bantuan.`;
+      dialogueContext = "OFFERING_OPTIONS";
       await speak(greeting);
       startStudyUtterancePolling();
       await enterAutomaticListening();
@@ -562,6 +612,8 @@ const loadActiveTask = async (): Promise<void> => {
     promptParticipant("Kegiatan belum siap. Minta peneliti membantu.");
     announce(`Kegiatan belum tersedia. ${error instanceof Error ? error.message : String(error)}`);
     goal.focus();
+  } finally {
+    loadingActiveTask = false;
   }
 };
 
@@ -583,6 +635,7 @@ const advanceStudyAfterCompletion = async (): Promise<void> => {
     utterancePollTimer = null;
     await speak("Semua kegiatan sudah selesai. Terima kasih. Perekaman sekarang dihentikan dan disimpan.");
     await setStudyVoiceState("COMPLETE");
+    dialogueContext = "COMPLETE";
     setAgentState("complete");
     promptParticipant("Pengujian selesai. Terima kasih.");
     return;
@@ -590,6 +643,7 @@ const advanceStudyAfterCompletion = async (): Promise<void> => {
   if (result.feedback) {
     activeRunId = null;
     feedbackMode = true;
+    dialogueContext = "FEEDBACK";
     await speak("Sebelum selesai, ceritakan singkat apa yang terasa mudah atau sulit, dan apa yang perlu diperbaiki.");
     await enterAutomaticListening();
     return;
@@ -603,6 +657,7 @@ const advanceStudyAfterCompletion = async (): Promise<void> => {
 const handleWaitingStudyRun = async (run: LiveRunResponse): Promise<void> => {
   if (!activeBenchmarkTask?.study_session_id || run.announcement === lastWaitingAnnouncement) return;
   lastWaitingAnnouncement = run.announcement;
+  dialogueContext = "AWAITING_APPROVAL";
   await speak(`Saya perlu memastikan sebelum melanjutkan. ${run.announcement}`);
   await enterAutomaticListening();
 };
@@ -611,6 +666,7 @@ const handleFailedStudyRun = async (): Promise<void> => {
   if (!activeBenchmarkTask?.study_session_id || terminalHandled) return;
   terminalHandled = true;
   activeRunId = null;
+  dialogueContext = "AWAITING_REQUEST";
   await speak("Kegiatan belum berhasil. Coba jelaskan kembali apa yang ingin kamu lakukan.");
   terminalHandled = false;
   await enterAutomaticListening();
@@ -752,5 +808,16 @@ window.addEventListener("a11y-cua:voice-transcript", (event) => {
   announce("Transkrip siap. Periksa lalu konfirmasi atau ubah.");
   transcript.focus();
 });
+
+if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+  chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+    if (!message || typeof message !== "object"
+      || (message as { type?: string }).type !== "COORDINATOR_LOAD_ACTIVE_TASK") return false;
+    void loadActiveTask()
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  });
+}
 
 void loadActiveTask();

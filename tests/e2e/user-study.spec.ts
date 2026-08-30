@@ -3,14 +3,14 @@ import { expect, test } from "@playwright/test";
 
 test("research starts from one accessible action without identity or consent forms", async ({ page }) => {
   await page.goto("/researcher");
-  await expect(page.getByRole("heading", { name: "Satu klik, lalu ikuti panduan suara" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Siap mulai?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mulai Penelitian" })).toBeVisible();
   await expect(page.getByLabel("Kode peserta")).toHaveCount(0);
   await expect(page.getByText("Periksa sistem", { exact: false })).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
-test("one click requests media, starts recording, and opens task one", async ({ page }) => {
+test("one click guides permissions without a blank popup and prepares task one", async ({ page }) => {
   await page.addInitScript(() => {
     class FakeStream {
       getAudioTracks() { return [{ stop() {} }]; }
@@ -93,12 +93,14 @@ test("one click requests media, starts recording, and opens task one", async ({ 
   }));
 
   await page.goto("/researcher");
-  const popupPromise = page.waitForEvent("popup");
+  let popupOpened = false;
+  page.on("popup", () => { popupOpened = true; });
   await page.getByRole("button", { name: "Mulai Penelitian" }).click();
-  const participant = await popupPromise;
-  await expect(page.locator("#recording-state")).toHaveText("Aktif");
+  await expect(page.locator("#recording-state")).toHaveText("Rekaman aktif");
   await expect(page.locator("#task-state")).toContainText("Kegiatan 1 dari 4");
-  await expect(participant).toHaveURL(/study_session_id=/u);
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.taskUrl ?? ""))
+    .toMatch(/study_session_id=/u);
+  expect(popupOpened).toBe(false);
   await expect(page.getByLabel("Pratinjau kamera peserta")).toBeVisible();
   await expect(page.locator("canvas[hidden]")).toHaveCount(1);
 });
