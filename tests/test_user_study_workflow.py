@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import unittest
 
@@ -10,7 +11,7 @@ os.environ.setdefault("CUA_PLANNER_PROVIDER", "deterministic")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from apps.api.a11y_api.app import create_app  # noqa: E402
+from apps.api.a11y_api.app import STUDY_RESULTS_DIR, create_app  # noqa: E402
 from apps.api.a11y_api.config import Settings  # noqa: E402
 
 
@@ -152,12 +153,22 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
         self.assertEqual(final["voice_state"], "COMPLETE")
         self.assertIn("Mudah digunakan", final["feedback"]["text"])
         self.assertIsNone(final["current_task"])
+        recording_saved = self.client.post(
+            f"/api/study/sessions/{study_id}/recording-state",
+            json={"state": "SAVED"},
+        )
+        self.assertEqual(recording_saved.status_code, 200)
         exported = self.client.get(f"/api/study/sessions/{study_id}/result")
         self.assertEqual(exported.status_code, 200)
         self.assertEqual(exported.json()["format_version"], "1.0")
+        self.assertEqual(exported.json()["recording_state"], "SAVED")
         self.assertEqual(
             exported.json()["recordings"]["screen_with_camera"], "screen.webm"
         )
+        persisted = json.loads(
+            (STUDY_RESULTS_DIR / f"{study_id}.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(persisted["recording_state"], "SAVED")
 
 
 if __name__ == "__main__":

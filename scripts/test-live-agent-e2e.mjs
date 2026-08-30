@@ -3,6 +3,8 @@ import { chromium } from "playwright";
 import { startBrowserBridge } from "./browser-bridge.mjs";
 
 const baseUrl = process.env.CUA_TEST_API_BASE_URL || "http://127.0.0.1:8000";
+const bridgePort = Number(process.env.CUA_BROWSER_BRIDGE_PORT || 8765);
+const bridgeUrl = `http://127.0.0.1:${bridgePort}`;
 const secret = "local-test-agent-secret-2026-safe";
 const fail = (message) => { throw new Error(message); };
 const api = async (path, init) => {
@@ -41,7 +43,7 @@ try {
   let startedTask = await post(`/api/study/sessions/${studyId}/tasks/start`);
   if (!startedTask.response.ok) fail(`Task pertama gagal dibuka: ${JSON.stringify(startedTask.payload)}`);
   await page.goto(`${baseUrl}${startedTask.payload.start_url}`, { waitUntil: "networkidle" });
-  bridge = await startBrowserBridge({ page, token: secret, port: 8765 });
+  bridge = await startBrowserBridge({ page, token: secret, port: bridgePort });
 
   for (let index = 0; index < tasks.length; index += 1) {
     const expected = tasks[index];
@@ -49,7 +51,7 @@ try {
       fail(`Urutan task salah: ${JSON.stringify(startedTask.payload.current_task)}`);
     }
     lastBenchmarkSessionId = startedTask.payload.active_benchmark_session_id;
-    const ariaResponse = await fetch("http://127.0.0.1:8765/page/aria", {
+    const ariaResponse = await fetch(`${bridgeUrl}/page/aria`, {
       method: "POST",
       headers: { authorization: `Bearer ${secret}`, "content-type": "application/json" },
       body: JSON.stringify({ selector: "body" })

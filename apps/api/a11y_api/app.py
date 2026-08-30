@@ -40,6 +40,17 @@ DOMAIN_LABELS = {
 }
 
 
+def _persist_study_result(store: StudySessionStore, study_session_id: str) -> None:
+    export = store.export_result(study_session_id)
+    STUDY_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    target = STUDY_RESULTS_DIR / f"{study_session_id}.json"
+    temporary = target.with_suffix(".tmp")
+    temporary.write_text(
+        json.dumps(export, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    temporary.replace(target)
+
+
 class ResetRequest(BaseModel):
     task_id: str = Field(pattern=r"^T(?:0[1-9]|1[0-2])$")
     condition_id: str = Field(pattern=r"^C[0-2]$")
@@ -260,9 +271,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/study/sessions/{study_session_id}/recording-state", tags=["study"])
     def update_recording_state(study_session_id: str, payload: StudyStateRequest) -> dict:
         try:
-            return app.state.study_store.set_recording_state(
+            updated = app.state.study_store.set_recording_state(
                 study_session_id, payload.state
             )
+            if updated["status"] == "COMPLETED":
+                _persist_study_result(app.state.study_store, study_session_id)
+            return updated
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except ValueError as exc:
@@ -305,14 +319,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def complete_study_session(study_session_id: str) -> dict:
         try:
             completed = app.state.study_store.complete_session(study_session_id)
-            export = app.state.study_store.export_result(study_session_id)
-            STUDY_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-            target = STUDY_RESULTS_DIR / f"{study_session_id}.json"
-            temporary = target.with_suffix(".tmp")
-            temporary.write_text(
-                json.dumps(export, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
-            temporary.replace(target)
+            _persist_study_result(app.state.study_store, study_session_id)
             return completed
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
