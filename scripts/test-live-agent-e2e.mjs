@@ -38,7 +38,11 @@ try {
   const readiness = await post(`/api/study/sessions/${studyId}/automatic-readiness`, {
     checks: { backend: true, agent: true, microphone: true, camera: true, screen: true, audio: true }
   });
-  if (readiness.payload.status !== "READY") fail("Pemeriksaan otomatis tidak menghasilkan READY.");
+  if (readiness.payload.status !== "PROFILE") fail("Pemeriksaan otomatis tidak masuk ke tahap profil.");
+  const profile = await post(`/api/study/sessions/${studyId}/participant-profile`, {
+    name: "Raka Uji", name_spelling: "R A K A", participant_class: "Kelas 8", age: 14
+  });
+  if (profile.payload.status !== "READY") fail("Profil peserta tidak menghasilkan READY.");
 
   let startedTask = await post(`/api/study/sessions/${studyId}/tasks/start`);
   if (!startedTask.response.ok) fail(`Task pertama gagal dibuka: ${JSON.stringify(startedTask.payload)}`);

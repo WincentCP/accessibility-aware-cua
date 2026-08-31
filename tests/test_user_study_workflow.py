@@ -97,7 +97,7 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
         self.assertNotIn("consent", response.text.lower())
         self.assertNotIn("Periksa sistem", response.text)
 
-    def test_automatic_session_runs_four_tasks_without_identity_or_manual_progress(self) -> None:
+    def test_automatic_session_collects_profile_and_runs_four_tasks(self) -> None:
         created = self.client.post("/api/study/automatic", json={"condition_id": "C0"})
         self.assertEqual(created.status_code, 201)
         session = created.json()
@@ -120,7 +120,23 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
             },
         )
         self.assertEqual(readiness.status_code, 200)
-        self.assertEqual(readiness.json()["status"], "READY")
+        self.assertEqual(readiness.json()["status"], "PROFILE")
+
+        profile = self.client.post(
+            f"/api/study/sessions/{study_id}/participant-profile",
+            json={
+                "name": "Raka",
+                "name_spelling": "R A K A",
+                "participant_class": "Kelas 8",
+                "age": 14,
+            },
+        )
+        self.assertEqual(profile.status_code, 200)
+        self.assertEqual(profile.json()["status"], "READY")
+        self.assertEqual(profile.json()["participant_name"], "Raka")
+        self.assertEqual(profile.json()["participant_class"], "Kelas 8")
+        self.assertEqual(profile.json()["participant_age"], 14)
+        self.assertTrue(profile.json()["is_minor"])
 
         for index, task_id in enumerate(("T01", "T05", "T07", "T12")):
             started = self.client.post(f"/api/study/sessions/{study_id}/tasks/start")
@@ -169,6 +185,10 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
             (STUDY_RESULTS_DIR / f"{study_id}.json").read_text(encoding="utf-8")
         )
         self.assertEqual(persisted["recording_state"], "SAVED")
+        report = self.client.get(f"/api/study/sessions/{study_id}/report.pdf")
+        self.assertEqual(report.status_code, 200)
+        self.assertEqual(report.headers["content-type"], "application/pdf")
+        self.assertTrue(report.content.startswith(b"%PDF"))
 
 
 if __name__ == "__main__":

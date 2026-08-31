@@ -12,6 +12,8 @@
   const taskState = byId("task-state");
   const voiceState = byId("voice-state");
   const transcriptPreview = byId("transcript-preview");
+  const studyFrame = byId("study-task-frame");
+  const downloadReport = byId("download-report");
 
   let session = null;
   let userStream = null;
@@ -43,7 +45,15 @@
 
   const setState = (state, message) => {
     document.documentElement.dataset.researchState = state.toLowerCase();
-    stateLabel.textContent = state.replaceAll("_", " ").toLowerCase();
+    stateLabel.textContent = {
+      INITIALIZING: "Menyiapkan sesi",
+      SPEAKING: "AI sedang berbicara",
+      LISTENING: "Giliran kamu berbicara",
+      PROCESSING: "AI memahami jawaban",
+      AGENT_WORKING: "AI sedang bekerja",
+      COMPLETE: "Sesi selesai",
+      ERROR: "Perlu bantuan"
+    }[state] || "Menunggu";
     sessionMessage.textContent = message;
   };
 
@@ -340,6 +350,8 @@
         setState("COMPLETE", "Semua kegiatan selesai. Perekaman sedang disimpan.");
         await stopRecording();
         setState("COMPLETE", "Pengujian selesai. Perekaman sudah disimpan.");
+        downloadReport.href = `/api/study/sessions/${session.study_session_id}/report.pdf`;
+        downloadReport.hidden = false;
       }
     } catch (error) {
       sessionError.hidden = false;
@@ -373,8 +385,12 @@
       const agentReady = health.agent?.status === "ready";
 
       session = await api("/api/study/automatic", { condition_id: "C0" });
+      const shellUrl = new URL(window.location.href);
+      shellUrl.searchParams.set("study_session_id", session.study_session_id);
+      window.history.replaceState({}, "", shellUrl);
+      document.documentElement.dataset.studySessionId = session.study_session_id;
       await startRecording();
-      await playGuide("Sip, semua izin sudah siap. Rekaman dimulai sekarang. Saya akan membuka kegiatan pertama.");
+      await playGuide("Sip, semua izin sudah siap. Rekaman dimulai sekarang. Sebelum kegiatan pertama, kita kenalan sebentar ya.");
       await connectLiveTranscription();
       session = await api(`/api/study/sessions/${session.study_session_id}/automatic-readiness`, {
         checks: {
@@ -386,12 +402,12 @@
           audio: typeof Audio !== "undefined"
         }
       });
-      if (session.status !== "READY") throw new Error("Salah satu perangkat belum siap.");
-      const task = await api(`/api/study/sessions/${session.study_session_id}/tasks/start`);
-      session = task;
-      document.documentElement.dataset.taskUrl = task.start_url;
+      if (session.status !== "PROFILE") throw new Error("Salah satu perangkat belum siap.");
       pollTimer = window.setInterval(() => void pollSession(), 500);
-      setState("SPEAKING", "Kegiatan pertama siap. Halaman kegiatan sedang dibuka.");
+      setState("SPEAKING", "AI Guide sedang berkenalan dengan peserta.");
+      window.dispatchEvent(new CustomEvent("a11y-cua:study-onboarding-ready", {
+        detail: { studySessionId: session.study_session_id }
+      }));
     } catch (error) {
       sessionError.hidden = false;
       sessionError.textContent = error.message;

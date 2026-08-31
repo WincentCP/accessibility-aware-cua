@@ -23,6 +23,7 @@ from apps.api.a11y_api import APP_VERSION
 from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
 from apps.api.a11y_api.study import StudySessionStore
+from apps.api.a11y_api.study_report import build_study_report
 from packages.agent.gemini_tts import GeminiTTSClient
 from packages.agent.live import LiveAgentManager
 
@@ -103,6 +104,13 @@ class AutomaticStudyStartRequest(BaseModel):
 
 class AutomaticReadinessRequest(BaseModel):
     checks: dict[str, bool]
+
+
+class ParticipantProfileRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    name_spelling: str = Field(min_length=1, max_length=120)
+    participant_class: str = Field(min_length=1, max_length=40)
+    age: int = Field(ge=5, le=30)
 
 
 class StudyStateRequest(BaseModel):
@@ -260,6 +268,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return app.state.study_store.set_automatic_readiness(
                 study_session_id, payload.checks
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/api/study/sessions/{study_session_id}/participant-profile", tags=["study"])
+    def record_participant_profile(
+        study_session_id: str, payload: ParticipantProfileRequest
+    ) -> dict:
+        try:
+            return app.state.study_store.set_participant_profile(
+                study_session_id, **payload.model_dump()
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -474,6 +497,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return app.state.study_store.export_result(study_session_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get(
+        "/api/study/sessions/{study_session_id}/report.pdf",
+        tags=["study"],
+        response_class=Response,
+    )
+    def download_study_report(study_session_id: str) -> Response:
+        try:
+            result = app.state.study_store.export_result(study_session_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        if result["status"] != "COMPLETED":
+            raise HTTPException(status_code=409, detail="Laporan tersedia setelah sesi selesai.")
+        report = build_study_report(result)
+        filename = f"laporan-penelitian-{result['participant_code']}.pdf"
+        return Response(
+            report,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
     @app.post("/api/study/sessions/{study_session_id}/consent", tags=["study"])
     def record_study_consent(study_session_id: str, payload: StudyConsentRequest) -> dict:

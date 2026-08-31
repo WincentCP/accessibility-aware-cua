@@ -1,7 +1,3 @@
-chrome.runtime.onInstalled.addListener(() => {
-  void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-});
-
 const LOCAL_PAGE = /^http:\/\/127\.0\.0\.1:(?:8000|8015)\//u;
 let latestLiveRunId: string | null = null;
 let coordinatorCreation: Promise<void> | null = null;
@@ -30,24 +26,48 @@ const wakeStudyCoordinator = async (): Promise<void> => {
   await chrome.runtime.sendMessage({ type: "COORDINATOR_LOAD_ACTIVE_TASK" });
 };
 
-const ensureInPageLauncher = async (tabId: number, url?: string): Promise<void> => {
-  if (url && !LOCAL_PAGE.test(url)) return;
-  try {
-    await chrome.tabs.sendMessage(tabId, { type: "ENSURE_IN_PAGE_PANEL" });
-  } catch {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId }, files: ["content-script.js"] });
-    } catch {
-      // Non-benchmark and browser-internal pages are intentionally ignored.
-    }
-  }
-};
-
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status !== "complete") return;
-  void ensureInPageLauncher(tabId, tab.url);
   if (isStudyPage(tab.url)) void wakeStudyCoordinator();
 });
+
+const studyShellTab = async (studySessionId: string): Promise<chrome.tabs.Tab> => {
+  const tabs = await chrome.tabs.query({});
+  const tab = tabs.find((item) => {
+    if (!item.url || !LOCAL_PAGE.test(item.url)) return false;
+    return new URL(item.url).searchParams.get("study_session_id") === studySessionId;
+  });
+  if (typeof tab?.id !== "number") throw new Error("Halaman penelitian tidak ditemukan.");
+  return tab;
+};
+
+const loadTaskInStudyShell = async (studySessionId: string, taskUrl: string): Promise<void> => {
+  const tab = await studyShellTab(studySessionId);
+  const absoluteUrl = new URL(taskUrl, new URL(tab.url!).origin).href;
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    args: [absoluteUrl],
+    func: async (nextUrl: string) => {
+      const frame = document.querySelector<HTMLIFrameElement>("#study-task-frame");
+      if (!frame) throw new Error("Area kegiatan tidak ditemukan.");
+      await new Promise<void>((resolve, reject) => {
+        const timeout = window.setTimeout(() => reject(new Error("Halaman kegiatan terlalu lama dimuat.")), 10_000);
+        frame.addEventListener("load", () => {
+          window.clearTimeout(timeout);
+          resolve();
+        }, { once: true });
+        frame.hidden = false;
+        frame.src = nextUrl;
+      });
+      const task = new URL(nextUrl);
+      const shell = new URL(window.location.href);
+      shell.searchParams.set("study_session_id", task.searchParams.get("study_session_id") ?? "");
+      shell.searchParams.set("session_id", task.searchParams.get("session_id") ?? "");
+      window.history.replaceState({}, "", shell);
+      document.documentElement.dataset.taskUrl = nextUrl;
+    }
+  });
+};
 
 const activeBenchmarkTab = async (): Promise<{ tabId: number; sessionId: string; studySessionId?: string }> => {
   const tabs = await chrome.tabs.query({});
@@ -76,9 +96,17 @@ const apiJson = async (path: string, init?: RequestInit): Promise<Record<string,
   return payload;
 };
 
-chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
   if (!message || typeof message !== "object") return false;
-  const payload = message as { type?: string; goal?: string; runId?: string; command?: string; transcript?: string };
+  const payload = message as {
+    type?: string;
+    goal?: string;
+    runId?: string;
+    command?: string;
+    transcript?: string;
+    studySessionId?: string;
+    taskUrl?: string;
+  };
   if (payload.type === "GET_ACTIVE_TASK") {
     void activeBenchmarkTab().then(async ({ sessionId, studySessionId }) => {
       const session = await apiJson(`/api/benchmark/sessions/${sessionId}`);
@@ -97,7 +125,8 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
             study_session_id: studySessionId,
             instruction: currentTask?.instruction,
             task_index: study?.task_index,
-            task_count: study?.task_count
+            task_count: study?.task_count,
+            participant_name: study?.participant_name
           } : { goal: task.goal })
         }
       });
@@ -106,8 +135,8 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   }
   if (payload.type === "READ_CURRENT_PAGE") {
     void activeBenchmarkTab().then(async ({ tabId }) => {
-      const [result] = await chrome.scripting.executeScript({
-        target: { tabId },
+      const results = await chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
         func: () => {
           const normalize = (value: string | null | undefined): string =>
             String(value ?? "").replace(/\s+/gu, " ").trim();
@@ -120,15 +149,34 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
           )).map((element) => normalize(element.innerText || element.textContent))
             .filter((value, index, values) => Boolean(value) && values.indexOf(value) === index)
             .slice(0, 12);
-          return { title: normalize(document.title), headings, controls };
+          return { url: window.location.href, title: normalize(document.title), headings, controls };
         }
       });
+      const result = results.find((item) => item.result?.url?.includes("session_id="))
+        ?? results.find((item) => item.result?.controls?.length);
       sendResponse({ success: true, page: result?.result ?? { headings: [], controls: [] } });
     }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;
   }
+  if (payload.type === "STUDY_ONBOARDING_READY" && payload.studySessionId) {
+    void ensureStudyCoordinator()
+      .then(() => chrome.runtime.sendMessage({
+        type: "COORDINATOR_START_ONBOARDING",
+        studySessionId: payload.studySessionId
+      }))
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  }
+  if (payload.type === "LOAD_STUDY_TASK" && payload.studySessionId && payload.taskUrl) {
+    void loadTaskInStudyShell(payload.studySessionId, payload.taskUrl)
+      .then(() => wakeStudyCoordinator())
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  }
   if (payload.type === "COMPLETE_AND_START_NEXT_STUDY_TASK") {
-    void activeBenchmarkTab().then(async ({ tabId, studySessionId }) => {
+    void activeBenchmarkTab().then(async ({ studySessionId }) => {
       if (!studySessionId) throw new Error("Sesi penelitian tidak ditemukan.");
       const completed = await apiJson(`/api/study/sessions/${studySessionId}/tasks/complete`, {
         method: "POST",
@@ -146,7 +194,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
         method: "POST",
         body: "{}"
       });
-      await chrome.tabs.update(tabId, { url: String(next.start_url), active: true });
+      await loadTaskInStudyShell(studySessionId, String(next.start_url));
       sendResponse({ success: true, completed: false, session: next });
     }).catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;
@@ -190,15 +238,5 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
       .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;
   }
-  if (payload.type !== "OPEN_SIDE_PANEL") return false;
-  const windowId = sender.tab?.windowId;
-  if (typeof windowId !== "number") {
-    sendResponse({ success: false, error: "WINDOW_NOT_FOUND" });
-    return false;
-  }
-  void chrome.sidePanel.open({ windowId }).then(
-    () => sendResponse({ success: true }),
-    () => sendResponse({ success: false, error: "OPEN_FAILED" })
-  );
-  return true;
+  return false;
 });

@@ -11,23 +11,25 @@
   </section>
 
   <section id="live-session" class="research-panel live-session" aria-labelledby="session-title" hidden>
-    <div class="session-heading">
-      <div>
+    <div class="study-status-bar">
+      <div class="study-status-copy">
+        <span id="session-state" class="state-label">Menyiapkan</span>
         <h2 id="session-title">Dengarkan AI Guide</h2>
+        <p id="session-message" class="session-message" role="status" aria-live="assertive" aria-atomic="true">Memeriksa perangkat.</p>
       </div>
-      <span id="session-state" class="state-label">Menyiapkan</span>
+      <div class="session-progress" aria-label="Perkembangan kegiatan">
+        <p id="task-state">Menunggu kegiatan</p>
+        <p id="recording-state">Rekaman belum dimulai</p>
+      </div>
     </div>
-
-    <p id="session-message" class="session-message" role="status" aria-live="assertive" aria-atomic="true">Memeriksa perangkat.</p>
     <p id="transcript-preview" class="plain-note" aria-live="polite">Belum ada ucapan yang diterima.</p>
-
-    <div class="session-progress" aria-label="Perkembangan kegiatan">
-      <p id="task-state">Menunggu kegiatan</p>
-      <p id="recording-state">Rekaman belum dimulai</p>
-    </div>
     <p id="voice-state" class="sr-only" aria-live="polite">Panduan suara sedang disiapkan.</p>
 
-    <video id="camera-preview" class="camera-preview" autoplay muted playsinline aria-label="Pratinjau kamera peserta"></video>
+    <div class="study-workspace">
+      <iframe id="study-task-frame" class="study-task-frame" title="Halaman kegiatan penelitian" hidden></iframe>
+      <video id="camera-preview" class="camera-preview" autoplay muted playsinline aria-label="Pratinjau kamera peserta"></video>
+    </div>
+    <a id="download-report" class="button-link download-report" href="#" download hidden>Unduh laporan PDF</a>
     <p id="session-error" class="inline-error" role="alert" hidden></p>
   </section>
 </main>

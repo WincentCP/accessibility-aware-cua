@@ -99,7 +99,7 @@ class Stage4RepositoryContractTests(unittest.TestCase):
         manifest = json.loads((extension / "public" / "manifest.json").read_text(encoding="utf-8"))
         html = (extension / "sidepanel.html").read_text(encoding="utf-8")
         self.assertEqual(manifest["manifest_version"], 3)
-        self.assertEqual(manifest["side_panel"]["default_path"], "sidepanel.html")
+        self.assertNotIn("side_panel", manifest)
         self.assertNotIn("tabs", manifest["permissions"])
         self.assertIn('lang="id"', html)
         self.assertIn("Dengarkan saya", html)

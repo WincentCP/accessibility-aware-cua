@@ -33,6 +33,7 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
   if (!token || token.length < 24) throw new Error("CUA_APP_SECRET tidak valid untuk browser bridge.");
 
   const currentPage = () => getPage?.() ?? page;
+  const currentKeyboard = () => currentPage().keyboard ?? currentPage().page?.().keyboard;
   const locate = (payload) => currentPage().getByRole(payload.role, {
     ...(payload.name ? { name: payload.name } : {}),
     exact: payload.exact !== false
@@ -92,12 +93,17 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
           if (op === "set_checked") await locator.setChecked(Boolean(payload.checked), { timeout: 3_000 });
           if (op === "scroll") await locator.scrollIntoViewIfNeeded({ timeout: 3_000 });
         } else if (op === "keyboard_press") {
-          await currentPage().keyboard.press(String(payload.key ?? ""));
+          await currentKeyboard().press(String(payload.key ?? ""));
         } else if (op === "goto") {
           await currentPage().goto(localUrl(String(payload.value ?? "")), { waitUntil: "domcontentloaded", timeout: 5_000 });
         } else if (op === "go_back") {
           const before = currentPage().url();
-          await currentPage().goBack({ waitUntil: "domcontentloaded", timeout: 5_000 });
+          if (typeof currentPage().goBack === "function") {
+            await currentPage().goBack({ waitUntil: "domcontentloaded", timeout: 5_000 });
+          } else {
+            await currentPage().evaluate(() => window.history.back());
+            await currentPage().waitForTimeout(300);
+          }
           result.moved = currentPage().url() !== before;
         } else if (op === "wait") {
           await currentPage().waitForTimeout(Number(payload.duration_ms ?? 0));

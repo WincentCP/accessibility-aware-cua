@@ -127,31 +127,18 @@ try {
       ]
     });
     await (context.serviceWorkers()[0] ? Promise.resolve() : context.waitForEvent("serviceworker"));
-    const taskPage = () => [...context.pages()].reverse().find((candidate) => {
+    const researcher = context.pages()[0] ?? await context.newPage();
+    const taskSurface = () => researcher.frames().find((frame) => {
       try {
-        const url = new URL(candidate.url());
+        const url = new URL(frame.url());
         return url.hostname === "127.0.0.1" && url.searchParams.has("session_id");
       } catch { return false; }
-    }) ?? context.pages()[0];
+    }) ?? researcher;
     const bridge = await startBrowserBridge({
-      page: context.pages()[0],
-      getPage: taskPage,
+      page: researcher,
+      getPage: taskSurface,
       token: env.CUA_APP_SECRET,
       port: Number(env.CUA_BROWSER_BRIDGE_PORT || 8765)
-    });
-    const researcher = context.pages()[0] ?? await context.newPage();
-    let participantPage;
-    researcher.on("response", (response) => {
-      const requestUrl = new URL(response.url());
-      if (response.request().method() !== "POST"
-        || !/\/api\/study\/sessions\/[^/]+\/tasks\/start$/u.test(requestUrl.pathname)
-        || !response.ok()) return;
-      void response.json().then(async (task) => {
-        if (!task?.start_url || participantPage) return;
-        participantPage = await context.newPage();
-        await participantPage.goto(new URL(task.start_url, apiBaseUrl).href, { waitUntil: "networkidle" });
-        await participantPage.bringToFront();
-      }).catch((error) => console.error("Halaman kegiatan tidak dapat dibuka.", error));
     });
     await researcher.goto(`${apiBaseUrl}/researcher`, { waitUntil: "networkidle" });
     console.log("Researcher Console siap. Tutup browser untuk menghentikan seluruh service.");

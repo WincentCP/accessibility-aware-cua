@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("research starts from one accessible action without identity or consent forms", async ({ page }) => {
+test("research starts from one accessible action without a visual identity form", async ({ page }) => {
   await page.goto("/researcher");
   await expect(page.getByRole("heading", { name: "Siap mulai?" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mulai Penelitian" })).toBeVisible();
@@ -10,7 +10,7 @@ test("research starts from one accessible action without identity or consent for
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
-test("one click guides permissions without a blank popup and prepares task one", async ({ page }) => {
+test("one click guides permissions in one tab and enters voice onboarding", async ({ page }) => {
   await page.addInitScript(() => {
     class FakeStream {
       getAudioTracks() { return [{ stop() {} }]; }
@@ -98,8 +98,8 @@ test("one click guides permissions without a blank popup and prepares task one",
   await page.getByRole("button", { name: "Mulai Penelitian" }).click();
   await expect(page.locator("#recording-state")).toHaveText("Rekaman aktif");
   await expect(page.locator("#task-state")).toContainText("Kegiatan 1 dari 4");
-  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.taskUrl ?? ""))
-    .toMatch(/study_session_id=/u);
+  await expect(page.locator("#session-message")).toContainText("berkenalan");
+  await expect(page.locator("#study-task-frame")).toBeHidden();
   expect(popupOpened).toBe(false);
   await expect(page.getByLabel("Pratinjau kamera peserta")).toBeVisible();
   await expect(page.locator("canvas[hidden]")).toHaveCount(1);

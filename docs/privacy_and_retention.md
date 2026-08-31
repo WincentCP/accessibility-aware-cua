@@ -5,12 +5,14 @@ bukan pengganti lembar persetujuan etik ketika studi pengguna dimulai.
 
 ## Prinsip pengumpulan minimum
 
-- Studi benchmark hanya memakai data sintetis; jangan masukkan akun, identitas,
-  alamat, pembayaran, password, OTP, token, API key, atau cookie nyata.
-- Push-to-talk mengirim audio hanya ke adaptor Whisper lokal selama transkripsi.
-  Audio berada sementara di memori extension/API, tidak ditulis ke file atau
-  PostgreSQL, lalu dibuang setelah transkripsi, pembatalan, atau error. Transkrip
-  selalu ditinjau pengguna sebelum menjadi input final.
+- Kegiatan memakai data tugas sintetis; jangan masukkan akun, alamat, pembayaran,
+  password, OTP, token, API key, atau cookie nyata. Nama, ejaan nama, kelas, dan
+  umur peserta adalah data pribadi penelitian yang memang dikumpulkan dan harus
+  dibatasi aksesnya.
+- Audio peserta ditangkap otomatis selama sesi untuk transkripsi dan perekaman
+  penelitian. Tidak ada push-to-talk atau peninjauan transkrip oleh peserta.
+  Perlakuan rekaman, transkrip, dan PDF harus mengikuti informed consent serta
+  persetujuan etik yang berlaku.
 - Accessibility snapshot menyimpan struktur semantik relevan, bukan dump halaman
   penuh. Nilai field sensitif tidak boleh masuk `AXNode.value_summary`.
 - Semua payload melewati `redact_payload()` sebelum write database/log.
@@ -19,10 +21,11 @@ bukan pengganti lembar persetujuan etik ketika studi pengguna dimulai.
 
 | Jenis data | Default | Alasan |
 |---|---:|---|
-| Raw audio | 0 hari | Tidak disimpan. |
+| Rekaman layar, kamera, dan audio | Sesuai informed consent | Data penelitian teridentifikasi; hapus sesuai prosedur studi. |
 | Password/OTP/token/API key/cookie | 0 hari | Tidak boleh dikumpulkan; nilai dimasking. |
 | Transcript voice dan message sintetis | 30 hari | Debug pilot, lalu hapus/anonymize. |
 | Audit step, verification, task map | 90 hari | Analisis skripsi dan reproduksi. |
+| Profil peserta dan laporan PDF | Sesuai informed consent | Data pribadi; akses terbatas dan jangan masukkan ke Git. |
 | Metrik teragregasi tanpa identitas | Sampai skripsi selesai + 1 tahun | Audit akademik. |
 
 Retensi produksi studi harus dikunci ulang dalam informed consent dan persetujuan

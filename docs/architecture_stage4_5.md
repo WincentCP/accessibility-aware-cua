@@ -55,7 +55,7 @@ atau approval checkpoint.
 ## Extension shell
 
 Extension menggunakan Manifest V3, TypeScript, Vite, dan side panel. Permission
-hanya `activeTab`, `sidePanel`, serta host lokal. Shell sudah keyboard-operable,
+hanya `activeTab`, `scripting`, `offscreen`, serta host lokal. Koordinator berjalan di latar belakang,
 memiliki goal teks, input suara bila browser mendukung, status, placeholder peta
 tugas, dan shared-control controls. Planner/LangGraph, accessibility-tree
 observer, verify-after-action, dan focus handoff baru dihubungkan pada tahap

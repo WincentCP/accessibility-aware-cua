@@ -65,7 +65,10 @@ Setelah setup dependency satu kali dan file `.env` terisi, klik dua kali
 PostgreSQL aktif dan membuka seluruh layanan, browser penelitian, serta
 Researcher Console. Setelah tombol `Mulai Penelitian` di console ditekan dan
 izin perangkat diberikan, peserta tidak perlu menekan tombol lain sampai sesi
-dan feedback selesai.
+dan feedback selesai. Seluruh task berjalan dalam satu halaman. AI berkenalan
+melalui suara, selalu membacakan pilihan, mengingatkan dengan ramah saat peserta
+diam, dan memanggil peserta dengan namanya. Setelah sesi selesai, peneliti dapat
+mengunduh laporan PDF langsung dari console.
 
 Developer dapat menjalankan pengujian empat task, accessibility tree, tindakan
 agent, verifikasi, transisi task, feedback, dan error handling dengan satu

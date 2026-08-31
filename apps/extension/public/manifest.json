@@ -3,18 +3,12 @@
   "name": "Accessibility-Aware CUA Research Shell",
   "short_name": "A11y CUA",
   "version": "0.12.0",
-  "description": "Accessible task map, voice input, and shared-control panel for the local CUA research prototype.",
-  "permissions": ["activeTab", "sidePanel", "scripting", "offscreen"],
+  "description": "Koordinator suara hands-free untuk prototype penelitian CUA lokal.",
+  "permissions": ["activeTab", "scripting", "offscreen"],
   "host_permissions": ["http://127.0.0.1:8000/*"],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
-  },
-  "action": {
-    "default_title": "Buka Accessibility-Aware CUA"
-  },
-  "side_panel": {
-    "default_path": "sidepanel.html"
   },
   "content_scripts": [
     {

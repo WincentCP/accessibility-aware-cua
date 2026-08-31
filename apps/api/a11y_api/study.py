@@ -92,6 +92,10 @@ class StudySession:
     )
     utterances: list[dict[str, Any]] = field(default_factory=list)
     feedback: dict[str, str] | None = None
+    participant_name: str | None = None
+    participant_name_spelling: str | None = None
+    participant_class: str | None = None
+    participant_age: int | None = None
 
 
 class StudySessionStore:
@@ -132,7 +136,7 @@ class StudySessionStore:
         return self.snapshot(session.study_session_id)
 
     def create_automatic(self, *, condition_id: str = "C0") -> dict[str, Any]:
-        """Create an anonymous one-click session without in-app identity or consent forms."""
+        """Create a one-click session whose short participant profile is collected by voice."""
 
         session_id = str(uuid4())
         session = StudySession(
@@ -200,10 +204,39 @@ class StudySessionStore:
             for key, passed in checks.items():
                 self._event(session, "READINESS_CHECK", check_key=key, passed=passed)
             if all(session.readiness.values()):
-                session.status = "READY"
+                session.status = "PROFILE"
                 self._event(session, "READINESS_COMPLETE")
             else:
                 session.status = "INITIALIZING"
+        return self.snapshot(study_session_id)
+
+    def set_participant_profile(
+        self,
+        study_session_id: str,
+        *,
+        name: str,
+        name_spelling: str,
+        participant_class: str,
+        age: int,
+    ) -> dict[str, Any]:
+        session = self.get(study_session_id)
+        if session.status not in {"PROFILE", "READY"}:
+            raise RuntimeError("Profil peserta belum dapat disimpan pada tahap ini.")
+        normalized_name = " ".join(name.split()).strip()
+        normalized_spelling = " ".join(name_spelling.split()).strip()
+        normalized_class = " ".join(participant_class.split()).strip()
+        if not normalized_name or not normalized_spelling or not normalized_class:
+            raise ValueError("Nama, ejaan nama, dan kelas wajib diisi.")
+        if not 5 <= age <= 30:
+            raise ValueError("Umur peserta harus antara 5 dan 30 tahun.")
+        with self._lock:
+            session.participant_name = normalized_name[:80]
+            session.participant_name_spelling = normalized_spelling[:120]
+            session.participant_class = normalized_class[:40]
+            session.participant_age = age
+            session.is_minor = age < 18
+            session.status = "READY"
+            self._event(session, "PARTICIPANT_PROFILE_RECORDED", age=age)
         return self.snapshot(study_session_id)
 
     def set_recording_state(self, study_session_id: str, state: str) -> dict[str, Any]:
@@ -324,6 +357,10 @@ class StudySessionStore:
         return {
             "study_session_id": session.study_session_id,
             "participant_code": session.participant_code,
+            "participant_name": session.participant_name,
+            "participant_name_spelling": session.participant_name_spelling,
+            "participant_class": session.participant_class,
+            "participant_age": session.participant_age,
             "condition_id": session.condition_id,
             "is_minor": session.is_minor,
             "guardian_consent_confirmed": session.guardian_consent_confirmed,

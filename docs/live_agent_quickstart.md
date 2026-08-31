@@ -30,15 +30,19 @@ serta Researcher Console secara otomatis.
 
 Di Researcher Console, tekan **Mulai Penelitian** satu kali. Izinkan kamera dan
 mikrofon, lalu pada dialog berbagi layar pilih **Seluruh layar** dan **Bagikan**.
-AI Guide membacakan petunjuk ini sejak awal. Setelah izin browser selesai, Task 1
-terbuka langsung tanpa tab kosong. Peserta tidak perlu menekan tombol aplikasi
-lagi. Perekaman, listening, tindakan asisten, perpindahan empat task, feedback
-suara, penyimpanan hasil, dan penutupan berjalan otomatis.
+AI Guide membacakan petunjuk ini sejak awal. Setelah izin browser selesai, AI
+menanyakan nama, ejaan nama, kelas, dan umur satu per satu. Task 1 kemudian
+terbuka di area kegiatan pada halaman yang sama, tanpa tab kosong. Peserta tidak
+perlu menekan tombol aplikasi lagi. Perekaman, listening, tindakan asisten,
+perpindahan empat task, feedback suara, penyimpanan hasil, dan penutupan berjalan
+otomatis.
 
-Peserta tidak melihat panel agen. Koordinator suara tetap aktif di latar belakang,
-menawarkan untuk membacakan pilihan pada halaman, dan baru menjalankan tindakan
-setelah peserta menyebutkan bantuan yang diinginkan. Jawaban pendek seperti
-"iya", "ulang", "udah", dan "lanjut" ditafsirkan berdasarkan pertanyaan terakhir.
+Peserta tidak melihat panel agen. Koordinator suara tetap aktif di latar belakang
+dan selalu membacakan semua pilihan halaman tanpa menanyakannya lebih dahulu.
+Jawaban pendek seperti "iya", "ulang", "udah", dan "lanjut" ditafsirkan
+berdasarkan pertanyaan terakhir. Jika peserta diam, AI menawarkan pengulangan
+instruksi secara otomatis. Status visual menunjukkan kapan AI berbicara,
+mendengarkan, memahami jawaban, atau sedang bekerja.
 
 Untuk pemeriksaan developer tanpa biaya planner model, jalankan satu perintah
 `npm run agent:test`. Mode ini memakai planner deterministik yang hanya diizinkan
@@ -83,7 +87,11 @@ hanya dibaca backend lokal dan tidak dikirim ke extension.
   wajah peserta.
 - `.runtime/recordings/<session-id>/user.webm` adalah rekaman kamera cadangan.
 - `.runtime/study-results/<session-id>.json` berisi transkrip, feedback, urutan
-  task, state, dan event sesi anonim.
+  task, state, event sesi, nama, ejaan nama, kelas, dan umur peserta.
+- Setelah sesi selesai, tombol **Unduh laporan PDF** muncul di Researcher Console.
+  PDF berisi profil peserta, ringkasan, durasi dan hasil task, feedback, serta
+  transkrip. Karena memuat data pribadi, simpan PDF secara terbatas dan jangan
+  memasukkannya ke Git.
 
 Tes otomatis bukan pengganti pilot NVDA dan peserta tunanetra. Sebelum studi
 utama, lakukan pemeriksaan suara, posisi kamera, screen reader, retensi data,
