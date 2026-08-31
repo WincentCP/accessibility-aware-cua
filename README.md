@@ -26,6 +26,9 @@ Integrasi live menghubungkan FastAPI, structured planner Gemini, LangGraph, dan
 browser penelitian melalui loopback semantic bridge. Panel developer tetap tersedia
 untuk debugging, tetapi tidak ditampilkan atau dibacakan kepada peserta penelitian.
 API key tetap hanya di backend lokal; extension tidak menerima atau menyimpannya.
+Evaluation Layer v1 menambahkan baseline visual B0 yang terisolasi, baseline
+semantic B1, konfigurasi proposed P, pilot mini-site terpisah, runner resumable,
+hidden-oracle scoring, PostgreSQL audit, report CSV/JSON, serta final-set gate.
 
 ## Yang sudah bisa dibuka
 
@@ -39,8 +42,9 @@ API key tetap hanya di backend lokal; extension tidak menerima atau menyimpannya
   atau koneksi ke situs eksternal.
 
 API mengubah state internal berdasarkan aksi form. Hidden oracle hanya tersedia
-sebagai kode evaluator dan tidak mempunyai endpoint HTTP. Karena itu halaman
-agent tidak menerima target, expected state, predicate, atau near miss.
+melalui boundary evaluator loopback yang memerlukan secret lokal dan tidak masuk
+OpenAPI; browser agent tidak menerima token atau responsnya. Halaman agent tetap
+tidak menerima target, expected state, predicate, atau near miss.
 
 ## Struktur
 
@@ -50,7 +54,7 @@ apps/extension/    extension MV3 TypeScript/Vite (side panel aksesibel)
 packages/agent/    state, observer AX, privasi, audit PostgreSQL, checkpoint LangGraph
 benchmark/public/  kontrak yang boleh dilihat runner/agent
 benchmark/private/ oracle dan manifest evaluator
-evaluation/        boundary runner evaluasi berikutnya
+evaluation/        runner manifest, hidden scoring, persistence, dan report
 tests/             unit, integration, browser, axe, keyboard
 docs/              arsitektur dan runbook
 evidence/          ringkasan gate yang dapat diaudit
@@ -73,6 +77,11 @@ mengunduh laporan PDF langsung dari console.
 Developer dapat menjalankan pengujian empat task, accessibility tree, tindakan
 agent, verifikasi, transisi task, feedback, dan error handling dengan satu
 perintah `npm run agent:test`.
+
+Pilot teknis B0/B1/P yang resumable dapat dijalankan dengan satu perintah
+`npm run evaluation:pilot`. B0 hanya menerima screenshot dan melakukan aksi
+koordinat; B1/P memakai accessibility tree. CSV/JSON dibuat otomatis dan gate
+final dijelaskan di `evaluation/README.md`.
 
 Runtime penelitian hanya memakai Gemini. Planner deterministik tersedia khusus
 mode tes lokal; tidak ada dukungan atau kebutuhan OpenAI API key.

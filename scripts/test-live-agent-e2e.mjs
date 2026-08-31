@@ -48,6 +48,19 @@ try {
   if (!startedTask.response.ok) fail(`Task pertama gagal dibuka: ${JSON.stringify(startedTask.payload)}`);
   await page.goto(`${baseUrl}${startedTask.payload.start_url}`, { waitUntil: "networkidle" });
   bridge = await startBrowserBridge({ page, token: secret, port: bridgePort });
+  const visualSnapshotResponse = await fetch(`${bridgeUrl}/page/screenshot`, {
+    headers: { authorization: `Bearer ${secret}` }
+  });
+  const visualSnapshot = await visualSnapshotResponse.json();
+  if (!visualSnapshotResponse.ok || visualSnapshot.mime_type !== "image/jpeg" || !visualSnapshot.image_base64) {
+    fail(`Visual screenshot bridge gagal: ${JSON.stringify(visualSnapshot)}`);
+  }
+  const coordinateResponse = await fetch(`${bridgeUrl}/page/action`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${secret}`, "content-type": "application/json" },
+    body: JSON.stringify({ op: "coordinate_click", x: 4, y: 4 })
+  });
+  if (!coordinateResponse.ok) fail("Coordinate bridge B0 gagal pada Chromium nyata.");
 
   for (let index = 0; index < tasks.length; index += 1) {
     const expected = tasks[index];
@@ -146,7 +159,8 @@ try {
       "automatic_task_transition",
       "spoken_feedback_saved_before_recording_stop",
       "recording_lifecycle_completed",
-      "bridge_error_failed_closed"
+      "bridge_error_failed_closed",
+      "visual_screenshot_and_coordinate_bridge"
     ]
   }, null, 2));
 } finally {

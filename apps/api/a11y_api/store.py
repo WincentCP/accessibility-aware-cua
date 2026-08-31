@@ -61,8 +61,6 @@ class CaseStore:
 
     def reset(self, task_id: str, condition_id: str, seed: int) -> dict[str, Any]:
         task = get_task(task_id)
-        if task_id.startswith("P"):
-            raise ValueError("Pilot task tidak dirender oleh mini-site final Tahap 5.")
         if condition_id not in CONDITIONS:
             raise ValueError(f"condition_id tidak dikenal: {condition_id}")
         if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
@@ -228,6 +226,31 @@ class CaseStore:
             state["draft_saved"] = True
             state["approval_status"] = "required"
             state["phase"] = "draft_saved"
+        elif task_id == "P01":
+            state["selected_route_id"] = self._require_record(
+                session, values.get("route_id"), "Rute pilot"
+            )
+            state["draft_saved"] = True
+        elif task_id == "P02":
+            selected = []
+            if _checked(values, "item_a"):
+                selected.append("pmp-a")
+            if _checked(values, "item_b"):
+                selected.append("pmp-b")
+            if not selected:
+                raise InvalidAction("Pilih setidaknya satu item pilot.")
+            state["comparison_ids"] = selected
+        elif task_id == "P03":
+            state["selected_slot_id"] = self._require_record(
+                session, values.get("slot_id"), "Slot pilot"
+            )
+        elif task_id == "P04":
+            timezone = _clean_text(values.get("timezone"), max_length=40)
+            allowed = {str(record["value"]) for record in session.public_fixture["records"]}
+            if timezone not in allowed:
+                raise InvalidAction("Zona waktu pilot tidak tersedia.")
+            state["draft_timezone"] = timezone
+            state["draft_saved"] = True
         else:
             raise InvalidAction(f"Task {task_id} belum memiliki handler mini-site.")
 
@@ -258,6 +281,17 @@ class CaseStore:
             return {"locale": state["locale"], "theme": state["theme"]}
         if task_id == "T12":
             return deepcopy(state["draft_profile"] or {"display_name": "", "bio": ""})
+        if task_id == "P01":
+            return {"route_id": state["selected_route_id"]}
+        if task_id == "P02":
+            return {
+                "item_a": "pmp-a" in state["comparison_ids"],
+                "item_b": "pmp-b" in state["comparison_ids"],
+            }
+        if task_id == "P03":
+            return {"slot_id": state["selected_slot_id"]}
+        if task_id == "P04":
+            return {"timezone": state["draft_timezone"]}
         return {}
 
     @staticmethod
@@ -266,6 +300,14 @@ class CaseStore:
         initial_phases = {"search", "results", "passenger", "product", "address", "slots", "form", "manage", "settings", "appearance", "profile"}
         if phase in initial_phases:
             return {"kind": "ready", "message": "Fixture siap. Belum ada aksi yang dicatat."}
+        pilot_ready = {
+            "P01": state.get("selected_route_id") is None and not state.get("draft_saved"),
+            "P02": not state.get("comparison_ids"),
+            "P03": state.get("selected_slot_id") is None,
+            "P04": state.get("draft_timezone") is None and not state.get("draft_saved"),
+        }
+        if pilot_ready.get(task_id):
+            return {"kind": "ready", "message": "Fixture pilot siap. Belum ada aksi yang dicatat."}
         messages = {
             "T01": "Rute dipilih. Berhenti di review; booking tidak dilakukan.",
             "T02": "Filter dan rute dicatat. Berhenti di review; booking tidak dilakukan.",
@@ -279,5 +321,9 @@ class CaseStore:
             "T10": "Preferensi notifikasi disimpan.",
             "T11": "Bahasa dan tema disimpan setelah re-render terkontrol.",
             "T12": "Profil dummy disimpan sebagai draft. Profil aktif tidak diubah.",
+            "P01": "Rute pilot disimpan sebagai draft. Booking tidak dilakukan.",
+            "P02": "Daftar perbandingan pilot diperbarui. Checkout tidak dilakukan.",
+            "P03": "Slot pilot dipilih. Appointment belum dikonfirmasi.",
+            "P04": "Zona waktu pilot disimpan sebagai draft. Pengaturan aktif tidak berubah.",
         }
         return {"kind": "updated", "message": messages[task_id]}

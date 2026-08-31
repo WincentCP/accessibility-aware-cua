@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID, uuid4
 
+from a11y_benchmark.catalog import get_task
 from packages.agent.contracts import (
     AgentAction,
     RelevantItem,
@@ -18,7 +19,7 @@ from packages.agent.contracts import (
 from packages.agent.deterministic_test_client import DeterministicT01Client
 from packages.agent.executor import DeterministicExecutor
 from packages.agent.gemini_client import GeminiStructuredClient
-from packages.agent.graph import OrchestrationServices, build_agent_graph
+from packages.agent.graph import GraphFeatures, OrchestrationServices, build_agent_graph
 from packages.agent.observer import AccessibilityObserver
 from packages.agent.planner import PlannerConfig, PlannerDecision, StructuredPlanner
 from packages.agent.predicates import VerificationPlan
@@ -37,6 +38,7 @@ class LiveRun:
     benchmark_session_id: str
     task_id: str
     goal: str
+    configuration: str = "P"
     status: str = "QUEUED"
     announcement: str = "Run menunggu browser agent."
     task_map: dict[str, Any] | None = None
@@ -57,7 +59,13 @@ class LiveAgentManager:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="cua-live-agent")
         self._compiler = TaskMapCompiler()
 
-    def start(self, *, benchmark_session_id: str, goal: str | None = None) -> LiveRun:
+    def start(
+        self,
+        *,
+        benchmark_session_id: str,
+        goal: str | None = None,
+        configuration: str = "P",
+    ) -> LiveRun:
         if not self.settings.live_agent_enabled:
             raise RuntimeError("Live agent dinonaktifkan oleh konfigurasi.")
         provider = self.settings.planner_provider
@@ -67,6 +75,11 @@ class LiveAgentManager:
             raise RuntimeError("Planner deterministik hanya diizinkan pada CUA_ENV=test.")
         if provider not in {"gemini", "deterministic"}:
             raise RuntimeError(f"Planner provider tidak didukung: {provider}.")
+        if configuration not in {"B1", "P"}:
+            raise RuntimeError(
+                "Runtime live hanya mendukung B1 dan P. B0 visual memerlukan adapter "
+                "screenshot+koordinat terpisah dan tidak boleh disimulasikan dengan accessibility tree."
+            )
         view = self.case_store.view(benchmark_session_id)
         page = RemotePage(self.settings.browser_bridge_url, self.settings.app_secret)
         try:
@@ -80,6 +93,7 @@ class LiveAgentManager:
             benchmark_session_id=benchmark_session_id,
             task_id=view["task_id"],
             goal=" ".join((goal or benchmark_goal).split()).strip(),
+            configuration=configuration,
         )
         if not run.goal:
             raise ValueError("Tujuan tidak boleh kosong.")
@@ -102,10 +116,43 @@ class LiveAgentManager:
                 "run_id": str(run.run_id),
                 "benchmark_session_id": run.benchmark_session_id,
                 "task_id": run.task_id,
+                "configuration": run.configuration,
                 "status": run.status,
                 "announcement": run.announcement,
                 "task_map": run.task_map,
                 "error": run.error,
+                "pending_interaction": (
+                    {"kind": (run.state.get("pending_interrupt") or {}).get("kind")}
+                    if run.status == "WAITING_USER"
+                    else None
+                ),
+                "metrics": {
+                    "step_count": int(run.state.get("step_count", 0)),
+                    "recovery_count": int(run.state.get("recovery_count", 0)),
+                    "intervention_count": int(run.state.get("intervention_count", 0)),
+                    "started_at_ms": int(run.state.get("started_at_ms", 0)),
+                    "planner_models": sorted(
+                        {
+                            str(item.get("model_id"))
+                            for item in run.state.get("planner_telemetry", [])
+                            if item.get("model_id")
+                        }
+                    ),
+                    "prompt_hashes": sorted(
+                        {
+                            str(item.get("prompt_hash"))
+                            for item in run.state.get("planner_telemetry", [])
+                            if item.get("prompt_hash")
+                        }
+                    ),
+                    "prompt_versions": sorted(
+                        {
+                            str(item.get("prompt_version"))
+                            for item in run.state.get("planner_telemetry", [])
+                            if item.get("prompt_version")
+                        }
+                    ),
+                },
             }
 
     def command(
@@ -230,7 +277,11 @@ class LiveAgentManager:
         effects: dict[str, str],
     ) -> None:
         services = run.services
-        if services is None or services.observer.registry.current is None:
+        if (
+            run.configuration != "P"
+            or services is None
+            or services.observer.registry.current is None
+        ):
             return
         observation = services.observer.registry.current
         planned: AgentAction | None = None
@@ -326,13 +377,16 @@ class LiveAgentManager:
                 "planner_telemetry": list(previous.get("planner_telemetry", [])),
                 "token_usage": int(previous.get("token_usage", 0)),
                 "token_budget": 20_000,
-                "max_steps": 12,
+                "max_steps": int(get_task(run.task_id)["max_steps"]),
                 "started_at_ms": int(previous.get("started_at_ms", int(time.time() * 1_000))),
                 "handoff_status": "NONE",
                 "intervention_count": int(previous.get("intervention_count", 0)),
                 "error_code": "NONE",
             }
-            graph = build_agent_graph(services)
+            graph = build_agent_graph(
+                services,
+                features=GraphFeatures(bounded_recovery=run.configuration == "P"),
+            )
             verifications = list(run.verifications)
             seen_verifications = {
                 verification.verification_id for verification in verifications

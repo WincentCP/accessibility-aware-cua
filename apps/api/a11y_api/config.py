@@ -95,7 +95,7 @@ class Settings:
             port=port,
             require_postgres=_as_bool(os.getenv("CUA_REQUIRE_POSTGRES", "false")),
             database_url=os.getenv(
-                "DATABASE_URL", "postgresql://cua:cua_local_only@127.0.0.1:5432/cua"
+                "DATABASE_URL", "postgresql://cua:cua_local_only@127.0.0.1:5433/cua"
             ),
             browser_profile_dir=resolved_profile,
             browser_headless=_as_bool(os.getenv("CUA_BROWSER_HEADLESS", "false")),

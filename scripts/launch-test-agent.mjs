@@ -7,6 +7,7 @@ import { startBrowserBridge } from "./browser-bridge.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const checkMode = process.argv.includes("--check");
+const evaluationPilotMode = process.argv.includes("--evaluation-pilot");
 const env = { ...process.env };
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const envPath = resolve(root, ".env");
@@ -31,6 +32,9 @@ const python = pythonCandidates.find((candidate) => candidate === "python" || ca
 if (!python) throw new Error("Python project tidak ditemukan. Jalankan setup satu kali terlebih dahulu.");
 
 const children = [];
+let ownsServer = false;
+let browserContext = null;
+let browserBridge = null;
 const run = (command, args, options = {}) => new Promise((resolvePromise, reject) => {
   const child = spawn(command, args, {
     cwd: root,
@@ -63,6 +67,41 @@ const waitForHealth = async () => {
   }
   throw new Error("Server tidak siap dalam 30 detik. Periksa .runtime/logs atau output launcher.");
 };
+const probe = (command, args) => new Promise((resolvePromise) => {
+  const child = spawn(command, args, {
+    cwd: root,
+    env,
+    stdio: "ignore",
+    shell: process.platform === "win32",
+    windowsHide: true
+  });
+  child.once("error", () => resolvePromise(false));
+  child.once("exit", (code) => resolvePromise(code === 0));
+});
+const ensureDockerReady = async () => {
+  if (await probe("docker", ["info"])) return;
+  if (process.platform === "win32") {
+    const desktop = "C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe";
+    if (!existsSync(desktop)) {
+      throw new Error("Docker Desktop tidak ditemukan. Instal Docker Desktop satu kali terlebih dahulu.");
+    }
+    console.log("Membuka Docker Desktop dan menunggu engine siap...");
+    const dockerDesktop = spawn(desktop, [], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: false
+    });
+    dockerDesktop.unref();
+  }
+  const deadline = Date.now() + 120_000;
+  while (Date.now() < deadline) {
+    if (await probe("docker", ["info"])) return;
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 2_000));
+  }
+  throw new Error(
+    "Docker engine belum siap setelah 2 menit. Buka Docker Desktop, selesaikan pesan WSL jika ada, lalu coba lagi."
+  );
+};
 const stopChildren = () => {
   for (const child of children) if (!child.killed) child.kill();
 };
@@ -74,6 +113,7 @@ try {
     throw new Error("GEMINI_API_KEY belum diisi di .env. Runtime penelitian hanya memakai Gemini.");
   }
   if (!checkMode && String(env.CUA_REQUIRE_POSTGRES).toLowerCase() === "true") {
+    await ensureDockerReady();
     console.log("Menyiapkan database penelitian...");
     await run("docker", ["compose", "up", "-d", "postgres"]);
     let databaseReady = false;
@@ -90,7 +130,6 @@ try {
   }
   console.log("Menyiapkan tampilan asisten...");
   await run(npmCommand, ["run", "extension:build"]);
-  let ownsServer = false;
   let existingResponse = null;
   try {
     existingResponse = await fetch(`${apiBaseUrl}/health`);
@@ -118,7 +157,7 @@ try {
   } else {
     const extension = resolve(root, "apps", "extension", "dist");
     const profile = resolve(root, env.CUA_BROWSER_PROFILE_DIR || ".runtime/playwright-profile");
-    const context = await chromium.launchPersistentContext(profile, {
+    browserContext = await chromium.launchPersistentContext(profile, {
       headless: false,
       args: [
         `--disable-extensions-except=${extension}`,
@@ -126,28 +165,39 @@ try {
         "--autoplay-policy=no-user-gesture-required"
       ]
     });
-    await (context.serviceWorkers()[0] ? Promise.resolve() : context.waitForEvent("serviceworker"));
-    const researcher = context.pages()[0] ?? await context.newPage();
+    await (browserContext.serviceWorkers()[0]
+      ? Promise.resolve()
+      : browserContext.waitForEvent("serviceworker"));
+    const researcher = browserContext.pages()[0] ?? await browserContext.newPage();
     const taskSurface = () => researcher.frames().find((frame) => {
       try {
         const url = new URL(frame.url());
         return url.hostname === "127.0.0.1" && url.searchParams.has("session_id");
       } catch { return false; }
     }) ?? researcher;
-    const bridge = await startBrowserBridge({
+    browserBridge = await startBrowserBridge({
       page: researcher,
       getPage: taskSurface,
       token: env.CUA_APP_SECRET,
       port: Number(env.CUA_BROWSER_BRIDGE_PORT || 8765)
     });
-    await researcher.goto(`${apiBaseUrl}/researcher`, { waitUntil: "networkidle" });
-    console.log("Researcher Console siap. Tutup browser untuk menghentikan seluruh service.");
-    await new Promise((resolvePromise) => context.once("close", resolvePromise));
-    await bridge.close();
+    if (evaluationPilotMode) {
+      console.log("Menjalankan pilot teknis B0, B1, dan P secara berurutan...");
+      await run(python, ["-m", "evaluation.cli", "run", "pilot"]);
+      await run(python, ["-m", "evaluation.cli", "report"]);
+      console.log("Pilot teknis selesai. Hasil tersimpan di .runtime/evaluation/report.");
+      await browserContext.close();
+    } else {
+      await researcher.goto(`${apiBaseUrl}/researcher`, { waitUntil: "networkidle" });
+      console.log("Researcher Console siap. Tutup browser untuk menghentikan seluruh service.");
+      await new Promise((resolvePromise) => browserContext.once("close", resolvePromise));
+    }
   }
-  if (ownsServer) stopChildren();
 } catch (error) {
-  stopChildren();
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
+} finally {
+  if (browserBridge) await browserBridge.close().catch(() => {});
+  if (browserContext) await browserContext.close().catch(() => {});
+  if (ownsServer) stopChildren();
 }

@@ -39,7 +39,9 @@ class AuditRepository:
 
     @contextmanager
     def connection(self) -> Iterator[psycopg.Connection]:
-        with psycopg.connect(self.database_url, row_factory=dict_row) as connection:
+        with psycopg.connect(
+            self.database_url, row_factory=dict_row, connect_timeout=5
+        ) as connection:
             yield connection
 
     def migrate(self) -> None:

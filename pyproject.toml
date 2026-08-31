@@ -26,13 +26,14 @@ dev = [
 
 [project.scripts]
 cua-api = "apps.api.a11y_api.app:run"
+cua-evaluate = "evaluation.cli:main"
 
 [build-system]
 requires = ["setuptools==80.7.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["a11y_benchmark*", "apps*", "packages*"]
+include = ["a11y_benchmark*", "apps*", "evaluation*", "packages*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

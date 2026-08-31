@@ -78,6 +78,13 @@ class OrchestrationServices:
         self.control = self.control or AtomicControlGate()
 
 
+@dataclass(frozen=True, slots=True)
+class GraphFeatures:
+    """Treatment switches; defaults preserve the proposed agent behavior."""
+
+    bounded_recovery: bool = True
+
+
 def apply_correction_to_state(state: AgentGraphState, correction: str) -> AgentGraphState:
     """Version a user correction without replacing session/thread/run identity."""
     goal = apply_user_correction(
@@ -127,7 +134,13 @@ def _route(state: AgentGraphState) -> str:
     return GraphRoute(state["route"]).value
 
 
-def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = None):
+def build_agent_graph(
+    services: OrchestrationServices,
+    *,
+    checkpointer: Any = None,
+    features: GraphFeatures | None = None,
+):
+    active_features = features or GraphFeatures()
     builder = StateGraph(AgentGraphState)
 
     def normalize(state: AgentGraphState) -> AgentGraphState:
@@ -244,7 +257,13 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
             execution=result.model_dump(mode="json"),
             step_count=state.get("step_count", 0) + 1,
             error_code=result.error_code.value,
-            route=GraphRoute.VERIFY.value if result.success else GraphRoute.RECOVER.value,
+            route=(
+                GraphRoute.VERIFY.value
+                if result.success
+                else GraphRoute.RECOVER.value
+                if active_features.bounded_recovery
+                else GraphRoute.ABORT.value
+            ),
         )
 
     def verify(state: AgentGraphState) -> AgentGraphState:
@@ -261,7 +280,13 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
             plan_obj,
             execution_started_at=datetime.fromisoformat(execution["started_at"]),
         )
-        route = GraphRoute.RECONCILE if result.status is VerificationStatus.VERIFIED else GraphRoute.RECOVER
+        route = (
+            GraphRoute.RECONCILE
+            if result.status is VerificationStatus.VERIFIED
+            else GraphRoute.RECOVER
+            if active_features.bounded_recovery
+            else GraphRoute.ABORT
+        )
         return AgentGraphState(
             verification=result.model_dump(mode="json"),
             verification_evidence=[item.model_dump(mode="json") for item in evidence],
@@ -380,12 +405,17 @@ def build_agent_graph(services: OrchestrationServices, *, checkpointer: Any = No
             GraphRoute.VERIFY.value: "verify",
             GraphRoute.RECOVER.value: "recover",
             GraphRoute.INTERRUPT.value: "interrupt",
+            GraphRoute.ABORT.value: "abort",
         },
     )
     builder.add_conditional_edges(
         "verify",
         _route,
-        {GraphRoute.RECONCILE.value: "reconcile_task_map", GraphRoute.RECOVER.value: "recover"},
+        {
+            GraphRoute.RECONCILE.value: "reconcile_task_map",
+            GraphRoute.RECOVER.value: "recover",
+            GraphRoute.ABORT.value: "abort",
+        },
     )
     builder.add_conditional_edges(
         "recover",

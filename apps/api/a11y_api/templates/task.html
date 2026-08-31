@@ -189,6 +189,38 @@
       </div>
       <p id="profile-help">Perubahan hanya disimpan sebagai draft dan memerlukan approval sebelum diterapkan.</p>
       <button type="submit" aria-describedby="profile-help">Simpan draft profil</button>
+
+      {% elif task_id == "P01" %}
+      <fieldset>
+        <legend>Pilih rute pilot DemoCity ke TestBay</legend>
+        {% for record in records %}
+        <label class="stacked-option"><input type="radio" name="route_id" value="{{ record.id }}" required {% if form.route_id == record.id %}checked{% endif %}> {% if is_c1 %}Gunakan rute pilot{% else %}Pilih rute pilot{% endif %} pukul {{ record.depart }}</label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit">Simpan rute sebagai draft</button>
+
+      {% elif task_id == "P02" %}
+      <fieldset>
+        <legend>Item pilot untuk dibandingkan</legend>
+        <label class="stacked-option"><input type="checkbox" name="item_a" {% if form.item_a %}checked{% endif %}> Item pilot A</label>
+        <label class="stacked-option"><input type="checkbox" name="item_b" {% if form.item_b %}checked{% endif %}> Item pilot B</label>
+      </fieldset>
+      <button type="submit">Simpan daftar perbandingan pilot</button>
+
+      {% elif task_id == "P03" %}
+      <fieldset>
+        <legend>Pilih slot pilot</legend>
+        {% for record in records %}
+        <label class="stacked-option"><input type="radio" name="slot_id" value="{{ record.id }}" required {% if form.slot_id == record.id %}checked{% endif %}> Pilih {{ "daring" if record.mode == "online" else "luring" }} pukul {{ record.time }}</label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit">Simpan slot pilot tanpa konfirmasi</button>
+
+      {% elif task_id == "P04" %}
+      <div class="form-grid">
+        <div><label for="timezone">Zona waktu draft</label><select id="timezone" name="timezone" required><option value="">Pilih zona waktu</option>{% for record in records %}<option value="{{ record.value }}" {% if form.timezone == record.value %}selected{% endif %}>{{ record.value }}</option>{% endfor %}</select></div>
+      </div>
+      <button type="submit">Simpan zona waktu sebagai draft</button>
       {% endif %}
     </form>
   </section>

@@ -33,6 +33,14 @@ class DeterministicT01Client:
             return "T07"
         if 'textbox "Nama tampilan dummy"' in observation:
             return "T12"
+        if 'checkbox "Item pilot A"' in observation:
+            return "P02"
+        if 'radio "Pilih daring pukul' in observation:
+            return "P03"
+        if 'combobox "Zona waktu draft"' in observation:
+            return "P04"
+        if 'radio "Pilih rute pilot pukul' in observation or 'radio "Gunakan rute pilot pukul' in observation:
+            return "P01"
         return "T01"
 
     def generate(
@@ -120,6 +128,40 @@ class DeterministicT01Client:
                 ("type", "textbox", ("Nama tampilan dummy",), "Budi Demo", "Nama tampilan dummy diisi.", "field_value", "Budi Demo"),
                 ("type", "textbox", ("Bio dummy",), "Pengguna uji aksesibilitas", "Bio dummy diisi.", "field_value", "Pengguna uji aksesibilitas"),
                 ("click", "button", ("Simpan draft profil", "Simpan tanpa menerapkan"), None, "Profil dummy disimpan sebagai draft.", "text", "Profil dummy disimpan sebagai draft"),
+            )
+            payload = self._step_payload(observation, len(verified), steps)
+        elif task_id == "P01":
+            valid_times = tuple(
+                f"{prefix} {hour}:{minute:02d}"
+                for prefix in ("Pilih rute pilot pukul", "Gunakan rute pilot pukul")
+                for hour, minute in ((10, 20), (10, 25), (10, 30), (10, 35), (10, 40))
+            )
+            steps = (
+                ("check", "radio", valid_times, None, "Rute pilot setelah pukul sepuluh dipilih.", "element_state", True),
+                ("click", "button", ("Simpan rute sebagai draft",), None, "Rute pilot disimpan sebagai draft.", "text", "Rute pilot disimpan sebagai draft"),
+            )
+            payload = self._step_payload(observation, len(verified), steps)
+        elif task_id == "P02":
+            steps = (
+                ("check", "checkbox", ("Item pilot A",), None, "Item pilot A dipilih.", "element_state", True),
+                ("check", "checkbox", ("Item pilot B",), None, "Item pilot B dipilih.", "element_state", True),
+                ("click", "button", ("Simpan daftar perbandingan pilot",), None, "Dua item pilot disimpan untuk dibandingkan.", "text", "Daftar perbandingan pilot diperbarui"),
+            )
+            payload = self._step_payload(observation, len(verified), steps)
+        elif task_id == "P03":
+            valid_times = tuple(
+                f"Pilih daring pukul 0{hour}:{minute:02d}"
+                for hour, minute in ((8, 50), (8, 55), (9, 0), (9, 5), (9, 10))
+            )
+            steps = (
+                ("check", "radio", valid_times, None, "Slot daring pilot dipilih.", "element_state", True),
+                ("click", "button", ("Simpan slot pilot tanpa konfirmasi",), None, "Slot pilot disimpan tanpa konfirmasi.", "text", "Slot pilot dipilih"),
+            )
+            payload = self._step_payload(observation, len(verified), steps)
+        elif task_id == "P04":
+            steps = (
+                ("select", "combobox", ("Zona waktu draft",), "Asia/Jakarta", "Zona waktu draft dipilih.", "element_state", True),
+                ("click", "button", ("Simpan zona waktu sebagai draft",), None, "Zona waktu disimpan sebagai draft.", "text", "Zona waktu pilot disimpan sebagai draft"),
             )
             payload = self._step_payload(observation, len(verified), steps)
         else:

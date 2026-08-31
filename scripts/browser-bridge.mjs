@@ -33,6 +33,7 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
   if (!token || token.length < 24) throw new Error("CUA_APP_SECRET tidak valid untuk browser bridge.");
 
   const currentPage = () => getPage?.() ?? page;
+  const currentBrowserPage = () => currentPage().page?.() ?? currentPage();
   const currentKeyboard = () => currentPage().keyboard ?? currentPage().page?.().keyboard;
   const locate = (payload) => currentPage().getByRole(payload.role, {
     ...(payload.name ? { name: payload.name } : {}),
@@ -47,11 +48,36 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
       }
       const url = new URL(request.url ?? "/", "http://127.0.0.1");
       if (request.method === "GET" && url.pathname === "/health") {
-        sendJson(response, 200, { status: "ready", page_url: currentPage().url() });
+        const browserVersion = await currentPage().evaluate(() => navigator.userAgent);
+        sendJson(response, 200, {
+          status: "ready",
+          page_url: currentPage().url(),
+          browser_version: browserVersion
+        });
         return;
       }
       if (request.method === "GET" && url.pathname === "/page/meta") {
         sendJson(response, 200, { url: currentPage().url(), title: await currentPage().title() });
+        return;
+      }
+      if (request.method === "GET" && url.pathname === "/page/screenshot") {
+        const viewport = await currentPage().evaluate(() => ({
+          width: window.innerWidth,
+          height: window.innerHeight
+        }));
+        const screenshot = await currentBrowserPage().screenshot({
+          type: "jpeg",
+          quality: 70,
+          animations: "disabled",
+          caret: "hide"
+        });
+        sendJson(response, 200, {
+          image_base64: screenshot.toString("base64"),
+          mime_type: "image/jpeg",
+          width: viewport.width,
+          height: viewport.height,
+          url: currentPage().url()
+        });
         return;
       }
       if (request.method !== "POST") {
@@ -94,6 +120,30 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
           if (op === "scroll") await locator.scrollIntoViewIfNeeded({ timeout: 3_000 });
         } else if (op === "keyboard_press") {
           await currentKeyboard().press(String(payload.key ?? ""));
+        } else if (op === "coordinate_click" || op === "coordinate_type") {
+          const viewport = await currentPage().evaluate(() => ({
+            width: window.innerWidth,
+            height: window.innerHeight
+          }));
+          const x = Number(payload.x);
+          const y = Number(payload.y);
+          if (!Number.isInteger(x) || !Number.isInteger(y)) throw new Error("INVALID_COORDINATE");
+          if (x < 0 || y < 0 || x >= viewport.width || y >= viewport.height) {
+            throw new Error("COORDINATE_OUT_OF_VIEWPORT");
+          }
+          await currentBrowserPage().mouse.click(x, y);
+          if (op === "coordinate_type") {
+            const value = String(payload.value ?? "");
+            if (value.length > 4_000) throw new Error("INPUT_TOO_LONG");
+            await currentKeyboard().press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+            await currentKeyboard().type(value);
+          }
+        } else if (op === "coordinate_scroll") {
+          const deltaY = Number(payload.delta_y);
+          if (!Number.isInteger(deltaY) || deltaY === 0 || Math.abs(deltaY) > 1_000) {
+            throw new Error("INVALID_SCROLL_DELTA");
+          }
+          await currentBrowserPage().mouse.wheel(0, deltaY);
         } else if (op === "goto") {
           await currentPage().goto(localUrl(String(payload.value ?? "")), { waitUntil: "domcontentloaded", timeout: 5_000 });
         } else if (op === "go_back") {

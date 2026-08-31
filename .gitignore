@@ -15,3 +15,4 @@ coverage/
 reports/
 .impeccable/review/
 .DS_Store
+debug.log

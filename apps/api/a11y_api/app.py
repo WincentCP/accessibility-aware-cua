@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -17,8 +18,9 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from websockets.asyncio.client import connect as websocket_connect
 
-from a11y_benchmark.catalog import CONDITIONS, FINAL_TASKS
-from a11y_benchmark.manifests import final_seed
+from a11y_benchmark.catalog import CONDITIONS, FINAL_TASKS, PILOT_TASKS
+from a11y_benchmark.manifests import final_seed, pilot_seed
+from a11y_benchmark.oracles.engine import evaluate
 from apps.api.a11y_api import APP_VERSION
 from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
@@ -32,7 +34,7 @@ RECORDINGS_DIR = ROOT / ".runtime" / "recordings"
 STUDY_RESULTS_DIR = ROOT / ".runtime" / "study-results"
 load_dotenv(ROOT / ".env")
 
-TASK_BY_ROUTE = {task["start_route"]: task["id"] for task in FINAL_TASKS}
+TASK_BY_ROUTE = {task["start_route"]: task["id"] for task in [*FINAL_TASKS, *PILOT_TASKS]}
 DOMAIN_LABELS = {
     "travel": "Travel Demo",
     "marketplace": "Marketplace Demo",
@@ -53,7 +55,7 @@ def _persist_study_result(store: StudySessionStore, study_session_id: str) -> No
 
 
 class ResetRequest(BaseModel):
-    task_id: str = Field(pattern=r"^T(?:0[1-9]|1[0-2])$")
+    task_id: str = Field(pattern=r"^(?:T(?:0[1-9]|1[0-2])|P0[1-4])$")
     condition_id: str = Field(pattern=r"^C[0-2]$")
     seed: int = Field(ge=0, le=2_147_483_647)
 
@@ -61,6 +63,7 @@ class ResetRequest(BaseModel):
 class LiveRunRequest(BaseModel):
     benchmark_session_id: str = Field(min_length=24, max_length=128)
     goal: str | None = Field(default=None, min_length=1, max_length=4_000)
+    configuration: str = Field(default="P", pattern=r"^(?:B1|P)$")
 
 
 class LiveCommandRequest(BaseModel):
@@ -575,6 +578,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             run = app.state.live_agent.start(
                 benchmark_session_id=payload.benchmark_session_id,
                 goal=payload.goal,
+                configuration=payload.configuration,
             )
             return app.state.live_agent.snapshot(run.run_id)
         except SessionNotFound as exc:
@@ -632,6 +636,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return app.state.case_store.view(session_id)
         except SessionNotFound as exc:
             raise HTTPException(status_code=404, detail="Sesi benchmark tidak ditemukan; lakukan reset.") from exc
+
+    @app.get(
+        "/internal/evaluation/sessions/{session_id}/oracle",
+        include_in_schema=False,
+    )
+    def evaluator_oracle(request: Request, session_id: str) -> dict:
+        """Local evaluator-only boundary; the agent never receives this token or response."""
+
+        supplied = request.headers.get("authorization", "")
+        expected = f"Bearer {active_settings.app_secret}"
+        if not hmac.compare_digest(supplied, expected):
+            raise HTTPException(status_code=401, detail="Evaluator tidak terotorisasi.")
+        try:
+            view = app.state.case_store.view(session_id)
+            state = app.state.case_store.private_state(session_id)
+        except SessionNotFound as exc:
+            raise HTTPException(status_code=404, detail="Sesi benchmark tidak ditemukan.") from exc
+        return evaluate(view["task_id"], state)
 
     @app.post("/api/benchmark/sessions/{session_id}/actions", include_in_schema=False)
     async def apply_action(request: Request, session_id: str):
@@ -726,7 +748,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(status_code=400, detail="task_id tidak sesuai dengan route.")
             if condition_id not in CONDITIONS:
                 raise HTTPException(status_code=400, detail="condition_id tidak dikenal.")
-            selected_seed = seed if seed is not None else final_seed(selected_task_id, condition_id, 1)
+            selected_seed = seed if seed is not None else (
+                pilot_seed(selected_task_id, condition_id)
+                if selected_task_id.startswith("P")
+                else final_seed(selected_task_id, condition_id, 1)
+            )
             reset_result = app.state.case_store.reset(selected_task_id, condition_id, selected_seed)
             return RedirectResponse(reset_result["start_url"], status_code=303)
 
