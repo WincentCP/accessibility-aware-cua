@@ -2,18 +2,25 @@
   "use strict";
 
   const byId = (id) => document.getElementById(id);
+  const startScreen = byId("research-start");
   const startButton = byId("start-research");
   const liveSession = byId("live-session");
+  const completionPanel = byId("completion-panel");
   const stateLabel = byId("session-state");
+  const sessionTitle = byId("session-title");
   const sessionMessage = byId("session-message");
   const sessionError = byId("session-error");
   const cameraPreview = byId("camera-preview");
   const recordingState = byId("recording-state");
   const taskState = byId("task-state");
   const voiceState = byId("voice-state");
+  const currentInstruction = byId("current-instruction");
   const transcriptPreview = byId("transcript-preview");
   const studyFrame = byId("study-task-frame");
   const downloadReport = byId("download-report");
+  const microphonePermissionState = byId("microphone-permission-state");
+  const cameraPermissionState = byId("camera-permission-state");
+  const screenPermissionState = byId("screen-permission-state");
 
   let session = null;
   let userStream = null;
@@ -54,7 +61,21 @@
       COMPLETE: "Sesi selesai",
       ERROR: "Perlu bantuan"
     }[state] || "Menunggu";
+    sessionTitle.textContent = {
+      INITIALIZING: "Menyiapkan akses",
+      SPEAKING: "Dengarkan AI Guide",
+      LISTENING: "Silakan bicara",
+      PROCESSING: "Sebentar ya",
+      AGENT_WORKING: "AI sedang membantu",
+      COMPLETE: "Kegiatan selesai",
+      ERROR: "Ada yang perlu diperiksa"
+    }[state] || "Dengarkan AI Guide";
     sessionMessage.textContent = message;
+  };
+
+  const setPermissionState = (element, ready) => {
+    element.textContent = ready ? "Siap" : "Belum siap";
+    element.dataset.ready = String(ready);
   };
 
   const postRecordingChunk = (kind, sequence, chunk) => {
@@ -332,6 +353,8 @@
       taskState.textContent = session.status === "COMPLETED"
         ? "Semua kegiatan selesai"
         : `Kegiatan ${taskNumber} dari ${session.task_count}`;
+      const instruction = session.current_task?.instruction;
+      if (instruction) currentInstruction.textContent = instruction;
       voiceState.textContent = {
         SPEAKING: "AI sedang berbicara",
         LISTENING: "Silakan berbicara",
@@ -343,7 +366,9 @@
       shouldStreamSpeech = session.voice_state === "LISTENING";
       if (shouldStreamSpeech) setState("LISTENING", "Silakan berbicara. Sistem sedang mendengarkan.");
       else if (session.voice_state === "SPEAKING") setState("SPEAKING", "AI Guide sedang berbicara.");
+      else if (session.voice_state === "PROCESSING") setState("PROCESSING", "Jawabanmu sedang dipahami.");
       else if (session.voice_state === "AGENT_WORKING") setState("AGENT_WORKING", "Asisten sedang menyelesaikan kegiatan.");
+      else if (session.voice_state === "ERROR") setState("ERROR", "AI Guide sedang membantu memulihkan sesi.");
       if (session.status === "COMPLETED") {
         window.clearInterval(pollTimer);
         pollTimer = null;
@@ -352,6 +377,9 @@
         setState("COMPLETE", "Pengujian selesai. Perekaman sudah disimpan.");
         downloadReport.href = `/api/study/sessions/${session.study_session_id}/report.pdf`;
         downloadReport.hidden = false;
+        liveSession.hidden = true;
+        completionPanel.hidden = false;
+        byId("completion-title").focus?.();
       }
     } catch (error) {
       sessionError.hidden = false;
@@ -361,7 +389,14 @@
 
   const start = async () => {
     startButton.disabled = true;
+    startButton.textContent = "Mulai Penelitian";
+    [microphonePermissionState, cameraPermissionState, screenPermissionState].forEach((element) => {
+      element.textContent = "Menunggu izin";
+      delete element.dataset.ready;
+    });
+    startScreen.hidden = true;
     liveSession.hidden = false;
+    completionPanel.hidden = true;
     sessionError.hidden = true;
     setState("INITIALIZING", "Ikuti petunjuk suara untuk memberikan izin perangkat.");
     try {
@@ -377,6 +412,9 @@
       [userStream, screenStream] = await Promise.all([userPermission, screenPermission]);
       await openingVoice;
       cameraPreview.srcObject = userStream;
+      setPermissionState(microphonePermissionState, userStream.getAudioTracks().length > 0);
+      setPermissionState(cameraPermissionState, userStream.getVideoTracks().length > 0);
+      setPermissionState(screenPermissionState, screenStream.getVideoTracks().length > 0);
 
       const healthResponse = await fetch("/api/study/readiness");
       if (!healthResponse.ok) throw new Error("Backend atau database belum siap.");
@@ -413,6 +451,9 @@
       sessionError.textContent = error.message;
       setState("ERROR", "Persiapan belum berhasil. Periksa izin browser lalu coba lagi.");
       startButton.disabled = false;
+      startButton.textContent = "Coba Lagi";
+      startScreen.hidden = false;
+      liveSession.hidden = true;
       userStream?.getTracks().forEach((track) => track.stop());
       screenStream?.getTracks().forEach((track) => track.stop());
       if (session) await api(`/api/study/sessions/${session.study_session_id}/recording-state`, { state: "FAILED" }).catch(() => {});

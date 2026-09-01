@@ -91,6 +91,8 @@ class HandsFreeStudyWorkflowTests(unittest.TestCase):
     def test_researcher_console_is_available_without_participant_controls(self) -> None:
         response = self.client.get("/researcher")
         self.assertEqual(response.status_code, 200)
+        self.assertIn("Sesi Kegiatan", response.text)
+        self.assertIn("cukup dengarkan dan bicara", response.text)
         self.assertIn("Mulai Penelitian", response.text)
         self.assertIn("tidak perlu menekan tombol aplikasi lagi", response.text)
         self.assertNotIn("Kode peserta", response.text)

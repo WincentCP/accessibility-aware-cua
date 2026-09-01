@@ -3,8 +3,9 @@ import { expect, test } from "@playwright/test";
 
 test("research starts from one accessible action without a visual identity form", async ({ page }) => {
   await page.goto("/researcher");
-  await expect(page.getByRole("heading", { name: "Siap mulai?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sesi Kegiatan" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mulai Penelitian" })).toBeVisible();
+  await expect(page.getByText("Tekan mulai. Setelah itu, cukup dengarkan dan bicara.")).toBeVisible();
   await expect(page.getByLabel("Kode peserta")).toHaveCount(0);
   await expect(page.getByText("Periksa sistem", { exact: false })).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -96,6 +97,9 @@ test("one click guides permissions in one tab and enters voice onboarding", asyn
   let popupOpened = false;
   page.on("popup", () => { popupOpened = true; });
   await page.getByRole("button", { name: "Mulai Penelitian" }).click();
+  await expect(page.locator("#microphone-permission-state")).toHaveText("Siap");
+  await expect(page.locator("#camera-permission-state")).toHaveText("Siap");
+  await expect(page.locator("#screen-permission-state")).toHaveText("Siap");
   await expect(page.locator("#recording-state")).toHaveText("Rekaman aktif");
   await expect(page.locator("#task-state")).toContainText("Kegiatan 1 dari 4");
   await expect(page.locator("#session-message")).toContainText("berkenalan");
@@ -103,4 +107,5 @@ test("one click guides permissions in one tab and enters voice onboarding", asyn
   expect(popupOpened).toBe(false);
   await expect(page.getByLabel("Pratinjau kamera peserta")).toBeVisible();
   await expect(page.locator("canvas[hidden]")).toHaveCount(1);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

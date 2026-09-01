@@ -166,6 +166,17 @@ The recurring spatial rhythm is 0.55rem for compact gaps, 0.75–1rem for contro
 
 **The Two-Surface Rule.** Keep participant control progressive in the side panel and benchmark context explicit in the mini-site; share tokens and behavior, not page composition.
 
+### Hands-Free Participant Session
+
+The `/researcher` route uses a dedicated warm-neutral participant theme inspired by the approved Stitch concept. It keeps the existing hands-free information architecture and behavior intact while using amber as its single page accent. The raw Stitch HTML is not a runtime dependency.
+
+- **Start:** one centered action, a short promise, and one permission note.
+- **Permission guidance:** the same page announces the next browser action and reports microphone, camera, and screen readiness without adding participant controls.
+- **Active session:** the voice orb, textual turn state, current instruction, latest recognized utterance, task frame, and camera preview share one continuous surface.
+- **Completion:** recording status is final, the report download becomes available, and a new session can be started only after the study has ended.
+
+The voice orb may animate only to reinforce speaking, listening, or working state. Every animation has an equivalent visible text label and live-region announcement, and reduced-motion mode keeps the orb static.
+
 ## Elevation & Depth
 
 The system uses a restrained hybrid of borders, tonal layering, and low-chroma navy shadows. Most containers remain flat with a one-pixel cool border. Shadows are reserved for the identity hero, the primary task/work surface, primary buttons, selected records, and hoverable domain panels; they indicate hierarchy or response, never decoration.
