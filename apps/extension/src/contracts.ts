@@ -248,4 +248,5 @@ export interface ActiveBenchmarkTask {
   task_index?: number;
   task_count?: number;
   participant_name?: string;
+  study_status?: string;
 }

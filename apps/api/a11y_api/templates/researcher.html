@@ -2,7 +2,7 @@
 {% block title %}Mulai Penelitian{% endblock %}
 {% block body_class %}researcher-console{% endblock %}
 {% block content %}
-<main id="main-content" class="research-shell automatic-research" tabindex="-1">
+<main id="main-content" class="research-shell automatic-research" tabindex="-1" aria-label="Sesi penelitian">
   <section id="research-start" class="research-intro research-start-screen" aria-labelledby="research-title">
     <div class="voice-orb voice-orb-idle" aria-hidden="true"><span></span></div>
     <h1 id="research-title">Sesi Kegiatan</h1>
@@ -19,11 +19,21 @@
       </div>
     </div>
 
-    <div class="voice-stage">
-      <div class="voice-orb voice-orb-live" aria-hidden="true"><span></span></div>
-      <span id="session-state" class="state-label">Menyiapkan sesi</span>
-      <h1 id="session-title">Dengarkan AI Guide</h1>
-      <p id="session-message" class="session-message" role="status" aria-live="assertive" aria-atomic="true">Memeriksa perangkat.</p>
+    <div class="session-guide">
+      <div class="voice-stage">
+        <div class="voice-orb voice-orb-live" aria-hidden="true"><span></span></div>
+        <div class="voice-stage-copy">
+          <span id="session-state" class="state-label">Menyiapkan sesi</span>
+          <h1 id="session-title">Dengarkan AI Guide</h1>
+          <p id="session-message" class="session-message" role="status" aria-live="assertive" aria-atomic="true">Memeriksa perangkat.</p>
+        </div>
+      </div>
+
+      <section class="heard-card" aria-labelledby="heard-title">
+        <h2 id="heard-title">Instruksi saat ini</h2>
+        <p id="current-instruction">AI Guide akan membacakan kegiatan berikutnya.</p>
+        <p id="transcript-preview" class="transcript-preview" aria-live="polite">Belum ada ucapan yang diterima.</p>
+      </section>
     </div>
 
     <ul id="permission-status" class="permission-status" aria-label="Status izin perangkat">
@@ -32,11 +42,6 @@
       <li><span>Layar</span><strong id="screen-permission-state">Menunggu izin</strong></li>
     </ul>
 
-    <section class="heard-card" aria-labelledby="heard-title">
-      <h2 id="heard-title">Instruksi saat ini</h2>
-      <p id="current-instruction">AI Guide akan membacakan kegiatan berikutnya.</p>
-      <p id="transcript-preview" class="transcript-preview" aria-live="polite">Belum ada ucapan yang diterima.</p>
-    </section>
     <p id="voice-state" class="sr-only" aria-live="polite">Panduan suara sedang disiapkan.</p>
 
     <div class="study-workspace">

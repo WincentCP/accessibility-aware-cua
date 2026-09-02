@@ -95,9 +95,9 @@ def test_approval_contract_is_keyboard_operable_and_voice_approval_explicit() ->
         card.approval_id,
         choice=ApprovalChoice.APPROVE,
         channel=InputChannel.VOICE,
-        voice_transcript="Saya setuju",
+        voice_transcript="Iya, saya setuju.",
     )
-    assert result.announced_transcript == "saya setuju"
+    assert result.announced_transcript == "iya saya setuju"
 
 
 def test_approval_is_consumed_once_so_resume_cannot_double_execute() -> None:

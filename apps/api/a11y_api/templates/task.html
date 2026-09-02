@@ -2,7 +2,7 @@
 {% block title %}{% if study_mode %}Kegiatan peserta{% else %}{{ task_id }} - {{ task.name }}{% endif %}{% endblock %}
 {% block body_class %}{% if study_mode %}study-mode{% else %}condition-{{ condition_id|lower }}{% if is_c1 %} reflowed{% endif %}{% endif %}{% endblock %}
 {% block content %}
-<main id="main-content" tabindex="-1" class="page-shell task-layout">
+<main id="main-content" tabindex="-1" class="page-shell task-layout" aria-label="{% if study_mode %}Halaman kegiatan{% else %}Halaman benchmark{% endif %}">
   {% if not study_mode %}
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/">Beranda</a> <span aria-hidden="true">/</span>

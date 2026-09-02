@@ -66,6 +66,7 @@ let participantName = "";
 let profileDraft = { name: "", nameSpelling: "", participantClass: "" };
 let silenceTimer: number | null = null;
 let silencePromptCount = 0;
+let workAcknowledgementTimer: number | null = null;
 
 interface HandsFreeRecognitionResultEvent {
   results: ArrayLike<{ 0: { transcript: string } }>;
@@ -159,14 +160,23 @@ const waitForIndonesianBrowserVoice = async (): Promise<SpeechSynthesisVoice | n
 const speakWithBrowserIndonesian = async (message: string): Promise<boolean> => {
   if (!voiceGuideEnabled || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return false;
   const indonesianVoice = await waitForIndonesianBrowserVoice();
-  if (!indonesianVoice) return false;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(message);
   utterance.lang = "id-ID";
-  utterance.voice = indonesianVoice;
+  if (indonesianVoice) utterance.voice = indonesianVoice;
   utterance.rate = 0.95;
-  window.speechSynthesis.speak(utterance);
-  return true;
+  return await new Promise((resolve) => {
+    let settled = false;
+    const finish = (played: boolean): void => {
+      if (settled) return;
+      settled = true;
+      resolve(played);
+    };
+    utterance.addEventListener("end", () => finish(true), { once: true });
+    utterance.addEventListener("error", () => finish(false), { once: true });
+    window.speechSynthesis.speak(utterance);
+    window.setTimeout(() => finish(false), Math.max(4_000, message.length * 120));
+  });
 };
 
 const speak = async (message: string): Promise<void> => {
@@ -177,6 +187,32 @@ const speak = async (message: string): Promise<void> => {
   setAgentState("speaking");
   voiceState.textContent = "AI sedang berbicara. Tunggu sampai selesai.";
   const requestSequence = speechRequestSequence;
+  const studySessionId = activeBenchmarkTask?.study_session_id ?? activeStudySessionId;
+  if (studySessionId && typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+    try {
+      const result = await chrome.runtime.sendMessage({
+        type: "PLAY_STUDY_SPEECH",
+        studySessionId,
+        text: message
+      }) as { success?: boolean; provider?: string; error?: string };
+      if (!voiceGuideEnabled || requestSequence !== speechRequestSequence) return;
+      if (result?.success) {
+        voiceState.textContent = result.provider?.startsWith("browser")
+          ? "Menggunakan suara Bahasa Indonesia dari perangkat."
+          : "Panduan suara Indonesia aktif melalui Gemini.";
+        return;
+      }
+      console.warn("Study speech unavailable", result?.error ?? "unknown error");
+      const usedDeviceFallback = await speakWithBrowserIndonesian(message);
+      if (usedDeviceFallback) {
+        voiceState.textContent = "Gemini TTS sementara tidak tersedia. Menggunakan suara perangkat.";
+        return;
+      }
+      throw new Error(result?.error ?? "Panduan suara tidak dapat diputar di tab penelitian.");
+    } catch (error) {
+      console.warn("Study tab playback unavailable", error);
+    }
+  }
   try {
     const response = await fetch("http://127.0.0.1:8000/api/voice/speech", {
       method: "POST",
@@ -192,8 +228,16 @@ const speak = async (message: string): Promise<void> => {
     activeGuideAudioUrl = URL.createObjectURL(audioBlob);
     activeGuideAudio = new Audio(activeGuideAudioUrl);
     await new Promise<void>((resolve, reject) => {
-      activeGuideAudio?.addEventListener("ended", () => resolve(), { once: true });
-      activeGuideAudio?.addEventListener("error", () => reject(new Error("Audio Gemini gagal diputar.")), { once: true });
+      const timeout = window.setTimeout(
+        () => reject(new Error("Pemutaran audio Gemini melewati batas waktu.")),
+        Math.max(8_000, message.length * 140)
+      );
+      const finish = (error?: Error): void => {
+        window.clearTimeout(timeout);
+        if (error) reject(error); else resolve();
+      };
+      activeGuideAudio?.addEventListener("ended", () => finish(), { once: true });
+      activeGuideAudio?.addEventListener("error", () => finish(new Error("Audio Gemini gagal diputar.")), { once: true });
       void activeGuideAudio?.play().catch(reject);
     });
     if (activeGuideAudioUrl) URL.revokeObjectURL(activeGuideAudioUrl);
@@ -207,10 +251,31 @@ const speak = async (message: string): Promise<void> => {
       voiceState.textContent = "Gemini TTS sementara tidak tersedia. Menggunakan suara Bahasa Indonesia dari perangkat.";
       await new Promise((resolve) => window.setTimeout(resolve, Math.max(900, message.length * 55)));
     } else {
-      voiceState.textContent = "Panduan suara Indonesia sementara tidak tersedia. Fallback suara Inggris sengaja tidak digunakan.";
+      voiceState.textContent = "Panduan suara belum tersedia.";
       console.warn("Indonesian voice unavailable", error);
+      throw error;
     }
   }
+};
+
+const clearWorkAcknowledgement = (): void => {
+  if (workAcknowledgementTimer !== null) window.clearTimeout(workAcknowledgementTimer);
+  workAcknowledgementTimer = null;
+};
+
+const scheduleWorkAcknowledgement = (delay = 9_000): void => {
+  clearWorkAcknowledgement();
+  if (!activeBenchmarkTask?.study_session_id) return;
+  workAcknowledgementTimer = window.setTimeout(() => {
+    workAcknowledgementTimer = null;
+    if (dialogueContext !== "AGENT_WORKING") return;
+    void speak("Saya masih bekerja. Tunggu sebentar ya.")
+      .then(() => setStudyVoiceState("AGENT_WORKING"))
+      .catch((error) => console.warn("Work acknowledgement unavailable", error))
+      .finally(() => {
+        if (dialogueContext === "AGENT_WORKING") scheduleWorkAcknowledgement(15_000);
+      });
+  }, delay);
 };
 
 const renderItems = (targetId: string, items: TaskMapItem[], empty: string): void => {
@@ -324,19 +389,24 @@ const startLiveGoal = async (value: string): Promise<void> => {
     const runRequest = chrome.runtime.sendMessage({ type: "START_LIVE_AGENT", goal: normalized });
     await speak(`Oke${participantName ? `, ${participantName}` : ""}. Saya bantu sekarang ya. Kamu tidak perlu melakukan apa-apa dulu.`);
     await setStudyVoiceState("AGENT_WORKING").catch(() => undefined);
+    scheduleWorkAcknowledgement();
     const result = await runRequest;
     if (!result?.success || !result.run) throw new Error(result?.error ?? "Asisten tidak dapat dimulai.");
     applyLiveRun(result.run as LiveRunResponse);
     if (pollTimer !== null) window.clearInterval(pollTimer);
     pollTimer = window.setInterval(pollLiveRun, 750);
   } catch (error) {
+    clearWorkAcknowledgement();
     submitGoal.disabled = false;
     setAgentState("error");
-    const message = `Saya belum dapat memulai bantuan. ${error instanceof Error ? error.message : String(error)}`;
-    promptParticipant(`${message} Minta peneliti membantu.`);
-    announce(message);
+    const participantMessage = "Bantuan belum dapat dimulai. Saya akan mendengarkan lagi.";
+    promptParticipant(participantMessage);
+    announce(participantMessage);
     dialogueContext = "AWAITING_REQUEST";
     await setStudyVoiceState("ERROR").catch(() => undefined);
+    console.warn("Live goal failed", error);
+    await speak("Maaf, bantuan belum dapat dimulai. Coba ucapkan kembali permintaanmu dengan singkat.").catch(() => undefined);
+    await enterAutomaticListening().catch(() => undefined);
   }
 };
 
@@ -410,8 +480,16 @@ const enterAutomaticListening = async (): Promise<void> => {
   }, silencePromptCount === 0 ? 8_000 : 14_000);
 };
 
-const isAny = (value: string, phrases: string[]): boolean =>
-  phrases.some((phrase) => value === phrase || value.includes(phrase));
+const normalizeIntentText = (value: string): string =>
+  value.toLocaleLowerCase("id-ID").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+const isAny = (value: string, phrases: string[]): boolean => {
+  const normalizedValue = ` ${normalizeIntentText(value)} `;
+  return phrases.some((phrase) => {
+    const normalizedPhrase = normalizeIntentText(phrase);
+    return normalizedPhrase.length > 0 && normalizedValue.includes(` ${normalizedPhrase} `);
+  });
+};
 
 const readCurrentPage = async (): Promise<void> => {
   try {
@@ -588,7 +666,7 @@ const handleStudyUtterance = async (spoken: string): Promise<void> => {
   }
 
   if (activeRunId) {
-    if (dialogueContext === "AWAITING_APPROVAL" && isAny(normalized, ["iya", "ya", "setuju", "saya setuju", "lanjut"])) {
+    if (dialogueContext === "AWAITING_APPROVAL" && isAny(normalized, ["setujui", "saya setuju"])) {
       const result = await chrome.runtime.sendMessage({
         type: "LIVE_COMMAND",
         runId: activeRunId,
@@ -601,6 +679,11 @@ const handleStudyUtterance = async (spoken: string): Promise<void> => {
         applyLiveRun(result.run as LiveRunResponse);
         return;
       }
+      console.warn("Study approval failed", result?.error ?? "unknown error");
+    } else if (dialogueContext === "AWAITING_APPROVAL" && isAny(normalized, ["iya", "ya", "oke", "ok", "lanjut"])) {
+      await speak("Kalau kamu setuju, katakan: saya setuju. Kalau tidak, katakan: tidak.");
+      await enterAutomaticListening();
+      return;
     }
     await speak(dialogueContext === "AGENT_WORKING"
       ? "Saya masih menyelesaikan permintaanmu. Tunggu sebentar."
@@ -685,6 +768,7 @@ const loadActiveTask = async (): Promise<void> => {
     const result = await chrome.runtime.sendMessage({ type: "GET_ACTIVE_TASK" });
     if (!result?.success || !result.task) throw new Error(result?.error ?? "Task tidak ditemukan.");
     const nextTask = result.task as ActiveBenchmarkTask;
+    if (["FEEDBACK", "COMPLETED"].includes(nextTask.study_status ?? "")) return;
     const taskKey = `${nextTask.study_session_id ?? "manual"}:${nextTask.task_id}:${nextTask.task_index ?? 0}`;
     if (taskKey === loadedTaskKey) return;
     loadedTaskKey = taskKey;
@@ -753,6 +837,7 @@ const startStudyOnboarding = async (studySessionId: string): Promise<void> => {
 
 const advanceStudyAfterCompletion = async (): Promise<void> => {
   if (!activeBenchmarkTask?.study_session_id || terminalHandled) return;
+  clearWorkAcknowledgement();
   terminalHandled = true;
   const currentPosition = (activeBenchmarkTask.task_index ?? 0) + 1;
   await speak(`Kegiatan ${currentPosition} selesai dan hasilnya sudah diperiksa.`);
@@ -790,14 +875,16 @@ const advanceStudyAfterCompletion = async (): Promise<void> => {
 
 const handleWaitingStudyRun = async (run: LiveRunResponse): Promise<void> => {
   if (!activeBenchmarkTask?.study_session_id || run.announcement === lastWaitingAnnouncement) return;
+  clearWorkAcknowledgement();
   lastWaitingAnnouncement = run.announcement;
   dialogueContext = "AWAITING_APPROVAL";
-  await speak(`Saya perlu memastikan sebelum melanjutkan. ${run.announcement}`);
+  await speak(`Saya perlu memastikan sebelum melanjutkan. ${run.announcement} Kalau kamu setuju, katakan: saya setuju. Kalau tidak, katakan: tidak.`);
   await enterAutomaticListening();
 };
 
 const handleFailedStudyRun = async (): Promise<void> => {
   if (!activeBenchmarkTask?.study_session_id || terminalHandled) return;
+  clearWorkAcknowledgement();
   terminalHandled = true;
   activeRunId = null;
   dialogueContext = "AWAITING_REQUEST";
@@ -813,6 +900,7 @@ const applyLiveRun = (run: LiveRunResponse): void => {
   if (run.task_map) renderTaskMap(run.task_map);
   renderActivity(run);
   const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
+  if (terminal) clearWorkAcknowledgement();
   setCommandContextReady(!terminal);
   if (terminal && pollTimer !== null) {
     window.clearInterval(pollTimer);
@@ -838,7 +926,9 @@ const stopMissingRunPolling = (message: string): void => {
 
 const pollLiveRun = (): void => {
   if (!activeRunId || typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return;
-  void chrome.runtime.sendMessage({ type: "GET_LIVE_RUN", runId: activeRunId }).then((result) => {
+  const requestedRunId = activeRunId;
+  void chrome.runtime.sendMessage({ type: "GET_LIVE_RUN", runId: requestedRunId }).then((result) => {
+    if (activeRunId !== requestedRunId) return;
     if (result?.success && result.run) {
       applyLiveRun(result.run as LiveRunResponse);
       return;

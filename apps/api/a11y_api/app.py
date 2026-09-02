@@ -26,7 +26,7 @@ from apps.api.a11y_api.config import ROOT, ConfigurationError, Settings
 from apps.api.a11y_api.store import CaseStore, InvalidAction, SessionNotFound
 from apps.api.a11y_api.study import StudySessionStore
 from apps.api.a11y_api.study_report import build_study_report
-from packages.agent.gemini_tts import GeminiTTSClient
+from packages.agent.gemini_tts import GeminiTTSClient, GeminiTTSQuotaError
 from packages.agent.live import LiveAgentManager
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -152,6 +152,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = active_settings
     app.state.case_store = CaseStore(active_settings.app_secret)
     app.state.study_store = StudySessionStore(app.state.case_store)
+    app.state.tts_cache = {}
     app.state.live_agent = LiveAgentManager(
         settings=active_settings,
         case_store=app.state.case_store,
@@ -611,23 +612,47 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if active_settings.tts_provider == "gemini":
             if not active_settings.gemini_api_key:
                 raise HTTPException(status_code=503, detail="GEMINI_API_KEY belum diisi di .env lokal.")
-            client = GeminiTTSClient(
-                active_settings.gemini_api_key,
-                model=active_settings.tts_model,
-                voice=active_settings.tts_voice,
-            )
         else:
             raise HTTPException(status_code=503, detail="TTS hanya mendukung provider Gemini.")
+        cache_key = (active_settings.tts_voice, payload.text)
+        cached_audio = app.state.tts_cache.get(cache_key)
+        if cached_audio is not None:
+            return Response(
+                content=cached_audio,
+                media_type="audio/wav",
+                headers={"Cache-Control": "private, max-age=300", "X-TTS-Cache": "HIT"},
+            )
+        client = GeminiTTSClient(
+            active_settings.gemini_api_key,
+            model=active_settings.tts_model,
+            voice=active_settings.tts_voice,
+            max_retries=active_settings.gemini_max_retries,
+        )
         try:
-            audio = client.generate(payload.text)
+            try:
+                audio = client.generate(payload.text)
+            except GeminiTTSQuotaError:
+                if not active_settings.tts_fallback_model:
+                    raise
+                client.close()
+                client = GeminiTTSClient(
+                    active_settings.gemini_api_key,
+                    model=active_settings.tts_fallback_model,
+                    voice=active_settings.tts_voice,
+                    max_retries=active_settings.gemini_max_retries,
+                )
+                audio = client.generate(payload.text)
         except RuntimeError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
         finally:
             client.close()
+        if len(app.state.tts_cache) >= 64:
+            app.state.tts_cache.pop(next(iter(app.state.tts_cache)))
+        app.state.tts_cache[cache_key] = audio
         return Response(
             content=audio,
             media_type="audio/wav",
-            headers={"Cache-Control": "private, max-age=300"},
+            headers={"Cache-Control": "private, max-age=300", "X-TTS-Cache": "MISS"},
         )
 
     @app.get("/api/benchmark/sessions/{session_id}", tags=["benchmark"])

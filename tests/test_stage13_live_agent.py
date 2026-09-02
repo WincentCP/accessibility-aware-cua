@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("CUA_ENV", "test")
@@ -13,7 +14,11 @@ os.environ.setdefault("CUA_APP_SECRET", "test-secret")
 from apps.api.a11y_api.app import create_app
 from apps.api.a11y_api.config import Settings
 from packages.agent.gemini_client import GeminiStructuredClient
-from packages.agent.gemini_tts import INDONESIAN_TTS_DIRECTION, GeminiTTSClient
+from packages.agent.gemini_tts import (
+    INDONESIAN_TTS_DIRECTION,
+    GeminiTTSClient,
+    GeminiTTSQuotaError,
+)
 from packages.agent.remote_page import RemoteBridgeError, RemotePage
 
 
@@ -83,6 +88,30 @@ def test_gemini_tts_returns_browser_playable_wav() -> None:
     assert captured["model"] == "test-tts"
     assert captured["generation_config"]["speech_config"] == [{"voice": "Puck"}]
     assert captured["input"] == f"{INDONESIAN_TTS_DIRECTION}Halo, tugas sudah siap."
+
+
+def test_gemini_tts_quota_fails_fast_for_model_fallback() -> None:
+    requests = 0
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        requests += 1
+        return httpx.Response(429, json={"error": {"message": "Quota exceeded"}})
+
+    client = GeminiTTSClient(
+        "gemini-key",
+        model="quota-limited-tts",
+        max_retries=3,
+        base_url="https://unit.test/v1beta",
+        transport=httpx.MockTransport(handler),
+    )
+    try:
+        with pytest.raises(GeminiTTSQuotaError):
+            client.generate("Halo")
+    finally:
+        client.close()
+
+    assert requests == 1
 
 
 def test_remote_page_uses_bearer_token_and_semantic_actions_only() -> None:
@@ -180,6 +209,64 @@ def test_voice_api_fails_closed_when_key_is_missing() -> None:
         response = client.post("/api/voice/speech", json={"text": "Halo!"})
     assert response.status_code == 503
     assert response.json()["detail"] == "GEMINI_API_KEY belum diisi di .env lokal."
+
+
+def test_voice_api_uses_configured_retry_limit(monkeypatch) -> None:
+    captured: dict = {}
+
+    class FakeTTSClient:
+        def __init__(self, api_key: str, **kwargs) -> None:
+            captured.update(api_key=api_key, **kwargs)
+
+        def generate(self, text: str) -> bytes:
+            captured["text"] = text
+            captured["generate_calls"] = captured.get("generate_calls", 0) + 1
+            return b"RIFF-test-audio"
+
+        def close(self) -> None:
+            captured["closed"] = True
+
+    monkeypatch.setattr("apps.api.a11y_api.app.GeminiTTSClient", FakeTTSClient)
+    app = create_app(_settings(api_key="test-key"))
+    with TestClient(app) as client:
+        response = client.post("/api/voice/speech", json={"text": "Halo!"})
+        cached_response = client.post("/api/voice/speech", json={"text": "Halo!"})
+
+    assert response.status_code == 200
+    assert captured["max_retries"] == 3
+    assert captured["model"] == "gemini-3.1-flash-tts-preview"
+    assert captured["voice"] == "Sulafat"
+    assert captured["text"] == "Halo!"
+    assert captured["closed"] is True
+    assert captured["generate_calls"] == 1
+    assert response.headers["x-tts-cache"] == "MISS"
+    assert cached_response.headers["x-tts-cache"] == "HIT"
+
+
+def test_voice_api_switches_to_fallback_model_when_primary_quota_is_full(monkeypatch) -> None:
+    models: list[str] = []
+
+    class FakeTTSClient:
+        def __init__(self, _api_key: str, **kwargs) -> None:
+            self.model = str(kwargs["model"])
+            models.append(self.model)
+
+        def generate(self, _text: str) -> bytes:
+            if self.model == "gemini-3.1-flash-tts-preview":
+                raise GeminiTTSQuotaError("quota penuh")
+            return b"RIFF-fallback-audio"
+
+        def close(self) -> None:
+            pass
+
+    monkeypatch.setattr("apps.api.a11y_api.app.GeminiTTSClient", FakeTTSClient)
+    app = create_app(_settings(api_key="test-key"))
+    with TestClient(app) as client:
+        response = client.post("/api/voice/speech", json={"text": "Halo dari fallback"})
+
+    assert response.status_code == 200
+    assert models == ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts"]
+    assert response.content == b"RIFF-fallback-audio"
 
 
 def test_live_request_accepts_automatic_public_benchmark_goal() -> None:

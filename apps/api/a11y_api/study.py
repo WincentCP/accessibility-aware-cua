@@ -13,38 +13,33 @@ CORE_TASKS: tuple[dict[str, str], ...] = (
         "task_id": "T01",
         "label": "Mencari perjalanan",
         "instruction": (
-            "Instruksi kegiatan pertama. Kamu ingin mencari perjalanan dari Medan ke Bali "
-            "tanggal 14 Oktober. Keberangkatannya antara jam sembilan sampai setengah dua belas "
-            "dan harganya paling tinggi sembilan ratus ribu rupiah. Pilih yang sesuai, tetapi "
-            "jangan lakukan pemesanan. Silakan gunakan asisten untuk menyelesaikan kegiatan ini."
+            "Cari perjalanan dari Medan ke Bali untuk tanggal 14 Oktober. Pilih keberangkatan "
+            "antara jam sembilan sampai setengah dua belas, dengan harga paling tinggi sembilan "
+            "ratus ribu rupiah. Berhenti sebelum pemesanan."
         ),
     },
     {
         "task_id": "T05",
         "label": "Memilih variasi produk",
         "instruction": (
-            "Instruksi kegiatan kedua. Kamu ingin memilih Jaket Demo warna Navy, ukuran M, "
-            "sebanyak dua. Tambahkan ke keranjang, tetapi jangan lanjut ke pembayaran. "
-            "Silakan gunakan asisten untuk menyelesaikan kegiatan ini."
+            "Pilih Jaket Demo warna Navy, ukuran M, sebanyak dua. Tambahkan ke keranjang dan "
+            "berhenti sebelum pembayaran."
         ),
     },
     {
         "task_id": "T07",
         "label": "Memilih jadwal konsultasi",
         "instruction": (
-            "Instruksi kegiatan ketiga. Kamu ingin memilih jadwal konsultasi layanan dengan "
-            "Rina pada hari Selasa antara jam satu sampai jam tiga siang. Simpan untuk "
-            "diperiksa, tetapi jangan mengonfirmasi janji. Silakan gunakan asisten untuk "
-            "menyelesaikan kegiatan ini."
+            "Pilih jadwal konsultasi dengan Rina pada hari Selasa, antara jam satu sampai jam "
+            "tiga siang. Simpan untuk diperiksa dan jangan konfirmasi janji."
         ),
     },
     {
         "task_id": "T12",
         "label": "Menyimpan profil sebagai draft",
         "instruction": (
-            "Instruksi kegiatan keempat. Ubah profil dummy dengan nama tampilan Budi Demo dan "
-            "bio Pengguna uji aksesibilitas. Simpan sebagai draft, lalu berhenti sebelum "
-            "perubahan diterapkan. Silakan gunakan asisten untuk menyelesaikan kegiatan ini."
+            "Pada profil dummy, isi nama tampilan Budi Demo dan bio Pengguna uji aksesibilitas. "
+            "Simpan sebagai draft, lalu berhenti sebelum perubahan diterapkan."
         ),
     },
 )

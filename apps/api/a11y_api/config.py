@@ -42,6 +42,7 @@ class Settings:
     tts_enabled: bool = True
     tts_provider: str = "gemini"
     tts_model: str = "gemini-3.1-flash-tts-preview"
+    tts_fallback_model: str | None = "gemini-2.5-flash-preview-tts"
     tts_voice: str = "Sulafat"
     stt_model: str = "gemini-3.5-transcribe-live"
 
@@ -111,6 +112,9 @@ class Settings:
             tts_enabled=_as_bool(os.getenv("CUA_TTS_ENABLED", "true")),
             tts_provider=os.getenv("CUA_TTS_PROVIDER", "gemini").strip().lower(),
             tts_model=os.getenv("CUA_TTS_MODEL", "gemini-3.1-flash-tts-preview"),
+            tts_fallback_model=os.getenv(
+                "CUA_TTS_FALLBACK_MODEL", "gemini-2.5-flash-preview-tts"
+            ).strip() or None,
             tts_voice=os.getenv("CUA_TTS_VOICE", "Sulafat"),
             stt_model=os.getenv("CUA_STT_MODEL", "gemini-3.5-transcribe-live"),
         )

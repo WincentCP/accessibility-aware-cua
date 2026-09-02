@@ -38,6 +38,11 @@
   let shouldStreamSpeech = false;
   let lastFinalTranscript = "";
   let lastFinalAt = 0;
+  let guidePlaybackId = 0;
+  let activeGuideAudio = null;
+  let cancelActiveGuideAudio = null;
+  let coordinatorRetryCount = 0;
+  let coordinatorReady = false;
 
   const api = async (path, body = {}) => {
     const response = await fetch(path, {
@@ -191,49 +196,110 @@
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text })
     });
-    if (!response.ok) throw new Error("Panduan suara Bahasa Indonesia belum siap.");
+    if (!response.ok) throw new Error(`Permintaan panduan suara gagal (${response.status}).`);
     return response.blob();
   };
 
-  const playSpeechBlob = async (blob) => {
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    await new Promise((resolve, reject) => {
-      audio.addEventListener("ended", resolve, { once: true });
-      audio.addEventListener("error", () => reject(new Error("Panduan suara tidak dapat diputar.")), { once: true });
-      void audio.play().catch(reject);
-    });
-    URL.revokeObjectURL(url);
+  const stopGuidePlayback = () => {
+    guidePlaybackId += 1;
+    window.speechSynthesis?.cancel?.();
+    activeGuideAudio?.pause?.();
+    cancelActiveGuideAudio?.();
   };
 
-  const speakWithIndonesianDeviceVoice = async (text) => {
+  const playSpeechBlob = async (blob, playbackId) => {
+    if (playbackId !== guidePlaybackId) return false;
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    activeGuideAudio = audio;
+    await new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        if (activeGuideAudio === audio) {
+          activeGuideAudio = null;
+          cancelActiveGuideAudio = null;
+        }
+        URL.revokeObjectURL(url);
+        if (error) reject(error);
+        else resolve();
+      };
+      cancelActiveGuideAudio = () => finish();
+      audio.addEventListener("ended", () => finish(), { once: true });
+      audio.addEventListener("error", () => finish(new Error("Panduan suara tidak dapat diputar.")), { once: true });
+      void audio.play().catch(finish);
+    });
+    return playbackId === guidePlaybackId;
+  };
+
+  const speakWithIndonesianDeviceVoice = async (text, playbackId) => {
     if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return false;
     const voice = window.speechSynthesis.getVoices()
       .find((candidate) => candidate.lang.toLowerCase().startsWith("id"));
-    if (!voice) return false;
+    if (playbackId !== guidePlaybackId) return false;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "id-ID";
-    utterance.voice = voice;
+    if (voice) utterance.voice = voice;
     utterance.rate = 0.95;
-    await new Promise((resolve) => {
-      utterance.addEventListener("end", resolve, { once: true });
-      utterance.addEventListener("error", resolve, { once: true });
+    const played = await new Promise((resolve) => {
+      let settled = false;
+      const finish = (success) => {
+        if (settled) return;
+        settled = true;
+        resolve(success);
+      };
+      utterance.addEventListener("end", () => finish(true), { once: true });
+      utterance.addEventListener("error", () => finish(false), { once: true });
       window.speechSynthesis.speak(utterance);
+      window.setTimeout(() => finish(false), Math.max(4_000, text.length * 120));
     });
-    return true;
+    return played && playbackId === guidePlaybackId;
   };
 
-  const playGuide = async (text, preparedSpeech) => {
+  const playGuide = async (text) => {
+    stopGuidePlayback();
+    const playbackId = guidePlaybackId;
     try {
-      const blob = await (preparedSpeech || requestIndonesianSpeech(text));
+      const blob = await requestIndonesianSpeech(text);
+      if (playbackId !== guidePlaybackId) return false;
       if (!blob) throw new Error("Audio belum tersedia.");
-      await playSpeechBlob(blob);
+      return await playSpeechBlob(blob, playbackId);
     } catch (error) {
-      if (!await speakWithIndonesianDeviceVoice(text)) throw error;
+      if (playbackId !== guidePlaybackId) return false;
+      if (!await speakWithIndonesianDeviceVoice(text, playbackId)) throw error;
+      return true;
     }
   };
 
-  const openingGuideSpeech = requestIndonesianSpeech(openingGuide).catch(() => null);
+  const requestVoiceCoordinator = () => {
+    if (!session?.study_session_id) return;
+    window.dispatchEvent(new CustomEvent("a11y-cua:study-onboarding-ready", {
+      detail: { studySessionId: session.study_session_id }
+    }));
+  };
+
+  window.addEventListener("a11y-cua:coordinator-ready", () => {
+    coordinatorReady = true;
+    coordinatorRetryCount = 0;
+  });
+
+  window.addEventListener("a11y-cua:coordinator-error", () => {
+    if (coordinatorReady || !session?.study_session_id) return;
+    coordinatorRetryCount += 1;
+    if (coordinatorRetryCount <= 2) {
+      setState("PROCESSING", "Panduan suara sedang disambungkan kembali.");
+      void playGuide("Sebentar ya, panduan suara sedang saya sambungkan kembali.")
+        .catch(() => undefined)
+        .finally(() => window.setTimeout(requestVoiceCoordinator, 700));
+      return;
+    }
+    setState("ERROR", "Panduan suara belum tersambung. Sistem berhenti agar peserta tidak menunggu tanpa arahan.");
+    sessionError.hidden = false;
+    sessionError.textContent = "Panduan suara belum tersambung setelah tiga percobaan.";
+    void playGuide("Maaf, panduan suara belum tersambung. Sesi dihentikan agar kamu tidak menunggu tanpa arahan.")
+      .catch(() => undefined);
+  });
 
   const stopRecording = async () => {
     if (!recorders.length) return;
@@ -398,9 +464,12 @@
     liveSession.hidden = false;
     completionPanel.hidden = true;
     sessionError.hidden = true;
-    setState("INITIALIZING", "Ikuti petunjuk suara untuk memberikan izin perangkat.");
+    setState("INITIALIZING", "Berikan izin kamera, mikrofon, dan layar pada browser.");
+    let permissionGuideTimer = null;
     try {
-      const openingVoice = playGuide(openingGuide, openingGuideSpeech);
+      permissionGuideTimer = window.setTimeout(() => {
+        void playGuide(openingGuide).catch(() => undefined);
+      }, 700);
       const userPermission = navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: { width: { ideal: 1280 }, height: { ideal: 720 } }
@@ -410,11 +479,13 @@
         audio: false
       });
       [userStream, screenStream] = await Promise.all([userPermission, screenPermission]);
-      await openingVoice;
+      window.clearTimeout(permissionGuideTimer);
+      stopGuidePlayback();
       cameraPreview.srcObject = userStream;
       setPermissionState(microphonePermissionState, userStream.getAudioTracks().length > 0);
       setPermissionState(cameraPermissionState, userStream.getVideoTracks().length > 0);
       setPermissionState(screenPermissionState, screenStream.getVideoTracks().length > 0);
+      setState("INITIALIZING", "Izin siap. Menyiapkan rekaman dan AI Guide.");
 
       const healthResponse = await fetch("/api/study/readiness");
       if (!healthResponse.ok) throw new Error("Backend atau database belum siap.");
@@ -428,7 +499,6 @@
       window.history.replaceState({}, "", shellUrl);
       document.documentElement.dataset.studySessionId = session.study_session_id;
       await startRecording();
-      await playGuide("Sip, semua izin sudah siap. Rekaman dimulai sekarang. Sebelum kegiatan pertama, kita kenalan sebentar ya.");
       await connectLiveTranscription();
       session = await api(`/api/study/sessions/${session.study_session_id}/automatic-readiness`, {
         checks: {
@@ -443,10 +513,12 @@
       if (session.status !== "PROFILE") throw new Error("Salah satu perangkat belum siap.");
       pollTimer = window.setInterval(() => void pollSession(), 500);
       setState("SPEAKING", "AI Guide sedang berkenalan dengan peserta.");
-      window.dispatchEvent(new CustomEvent("a11y-cua:study-onboarding-ready", {
-        detail: { studySessionId: session.study_session_id }
-      }));
+      coordinatorReady = false;
+      coordinatorRetryCount = 0;
+      requestVoiceCoordinator();
     } catch (error) {
+      window.clearTimeout(permissionGuideTimer);
+      stopGuidePlayback();
       sessionError.hidden = false;
       sessionError.textContent = error.message;
       setState("ERROR", "Persiapan belum berhasil. Periksa izin browser lalu coba lagi.");

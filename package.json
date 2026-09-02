@@ -14,6 +14,7 @@
     "browser:open": "node scripts/open-benchmark.mjs",
     "agent:launch": "node scripts/launch-test-agent.mjs",
     "agent:test": "node scripts/launch-test-agent.mjs --check",
+    "study:test": "npm run voice:test && npm run agent:test",
     "evaluation:validate": ".venv\\Scripts\\python.exe -m evaluation.cli validate pilot",
     "evaluation:pilot": "node scripts/launch-test-agent.mjs --evaluation-pilot",
     "evaluation:report": ".venv\\Scripts\\python.exe -m evaluation.cli report",

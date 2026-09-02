@@ -16,7 +16,7 @@
     "\\b(?:save|simpan|commit)\\b",
     "\\b(?:book|booking|pesan sekarang)\\b"
   ],
-  "voice_approval_phrases": ["setujui", "saya setuju"],
+  "voice_approval_phrases": ["setujui", "saya setuju", "iya saya setuju", "ya saya setuju"],
   "keyboard_shortcuts": {
     "REJECT": "Escape",
     "CANCEL": "Alt+C",

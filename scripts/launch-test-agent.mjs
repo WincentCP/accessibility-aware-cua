@@ -67,6 +67,25 @@ const waitForHealth = async () => {
   }
   throw new Error("Server tidak siap dalam 30 detik. Periksa .runtime/logs atau output launcher.");
 };
+const prewarmVoice = async () => {
+  const opening = "Hai, sebelum mulai kita kenalan sebentar ya. Siapa nama kamu?";
+  console.log("Memastikan panduan suara Indonesia siap...");
+  const response = await fetch(`${apiBaseUrl}/api/voice/speech`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: opening }),
+    signal: AbortSignal.timeout(90_000)
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(
+      `Panduan suara belum siap (${response.status}). ${detail || "Periksa kuota dan konfigurasi Gemini."}`
+    );
+  }
+  const audio = await response.arrayBuffer();
+  if (audio.byteLength < 128) throw new Error("Panduan suara mengembalikan audio kosong.");
+  console.log("Panduan suara siap.");
+};
 const probe = (command, args) => new Promise((resolvePromise) => {
   const child = spawn(command, args, {
     cwd: root,
@@ -150,9 +169,11 @@ try {
     ownsServer = true;
   }
   await waitForHealth();
+  if (!checkMode) await prewarmVoice();
 
   if (checkMode) {
     await run("node", ["scripts/test-live-agent-e2e.mjs"]);
+    await run("node", ["scripts/test-blind-study-ui-e2e.mjs"]);
     console.log("Pemeriksaan otomatis selesai dan semua pemeriksaan utama lulus.");
   } else {
     const extension = resolve(root, "apps", "extension", "dist");
@@ -169,12 +190,15 @@ try {
       ? Promise.resolve()
       : browserContext.waitForEvent("serviceworker"));
     const researcher = browserContext.pages()[0] ?? await browserContext.newPage();
-    const taskSurface = () => researcher.frames().find((frame) => {
-      try {
-        const url = new URL(frame.url());
-        return url.hostname === "127.0.0.1" && url.searchParams.has("session_id");
-      } catch { return false; }
-    }) ?? researcher;
+    const taskSurface = () => {
+      const taskFrames = researcher.frames().filter((frame) => frame !== researcher.mainFrame());
+      return taskFrames.find((frame) => {
+        try {
+          const url = new URL(frame.url());
+          return url.hostname === "127.0.0.1" && url.searchParams.has("session_id");
+        } catch { return false; }
+      }) ?? taskFrames[0] ?? researcher;
+    };
     browserBridge = await startBrowserBridge({
       page: researcher,
       getPage: taskSurface,

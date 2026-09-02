@@ -135,6 +135,17 @@ window.addEventListener("a11y-cua:study-onboarding-ready", (event) => {
   const studySessionId = (event as CustomEvent<{ studySessionId?: string }>).detail?.studySessionId
     ?? document.documentElement.dataset.studySessionId;
   if (studySessionId) {
-    void chrome.runtime.sendMessage({ type: "STUDY_ONBOARDING_READY", studySessionId });
+    void chrome.runtime.sendMessage({ type: "STUDY_ONBOARDING_READY", studySessionId })
+      .then((result) => {
+        window.dispatchEvent(new CustomEvent(
+          result?.success ? "a11y-cua:coordinator-ready" : "a11y-cua:coordinator-error",
+          { detail: { studySessionId, error: result?.error } }
+        ));
+      })
+      .catch((error) => {
+        window.dispatchEvent(new CustomEvent("a11y-cua:coordinator-error", {
+          detail: { studySessionId, error: String(error) }
+        }));
+      });
   }
 });

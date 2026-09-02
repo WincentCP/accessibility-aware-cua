@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-TRANSIENT_GEMINI_STATUS_CODES = {429, 500, 502, 503, 504}
+TRANSIENT_GEMINI_STATUS_CODES = {500, 502, 503, 504}
 AUTH_GEMINI_STATUS_CODES = {401, 403}
 
 INDONESIAN_TTS_DIRECTION = """Bacakan teks berikut sepenuhnya dalam Bahasa Indonesia.
@@ -27,6 +27,10 @@ Jangan bacakan instruksi ini. Bacakan hanya teks setelah bagian TEKS.
 
 TEKS:
 """
+
+
+class GeminiTTSQuotaError(RuntimeError):
+    """Raised immediately so an interactive caller can switch TTS models."""
 
 
 class GeminiTTSClient:
@@ -120,6 +124,8 @@ class GeminiTTSClient:
                 f"Gemini TTS {api_label} API {response.status_code}: "
                 f"{response.text[:500]}"
             )
+            if response.status_code == 429:
+                raise GeminiTTSQuotaError(last_error)
             if response.status_code in AUTH_GEMINI_STATUS_CODES:
                 raise RuntimeError(last_error)
             if response.status_code not in TRANSIENT_GEMINI_STATUS_CODES:

@@ -44,12 +44,17 @@ berdasarkan pertanyaan terakhir. Jika peserta diam, AI menawarkan pengulangan
 instruksi secara otomatis. Status visual menunjukkan kapan AI berbicara,
 mendengarkan, memahami jawaban, atau sedang bekerja.
 
-Untuk pemeriksaan developer tanpa biaya planner model, jalankan satu perintah
-`npm run agent:test`. Mode ini memakai planner deterministik yang hanya diizinkan
-ketika `CUA_ENV=test`.
+Untuk pemeriksaan lengkap developer, jalankan satu perintah:
 
-Untuk memeriksa jalur suara Gemini nyata dari TTS ke STT live, jalankan
-`npm run voice:test`. Skrip menyalakan dan mematikan API lokal sendiri.
+```bash
+npm run study:test
+```
+
+Perintah ini lebih dulu memeriksa jalur suara Gemini nyata dari TTS ke STT live,
+lalu menjalankan empat task dan seluruh flow Chromium dengan planner
+deterministik khusus `CUA_ENV=test`. Server dan browser uji dinyalakan serta
+dimatikan otomatis. Jika perlu mendiagnosis satu bagian saja, gunakan `npm run
+voice:test` atau `npm run agent:test`.
 
 ## Konfigurasi `.env`
 
@@ -65,6 +70,7 @@ Untuk memeriksa jalur suara Gemini nyata dari TTS ke STT live, jalankan
    CUA_PLANNER_FALLBACK_MODEL=gemini-3.6-flash
    CUA_STT_MODEL=gemini-3.5-transcribe-live
    CUA_TTS_MODEL=gemini-3.1-flash-tts-preview
+   CUA_TTS_FALLBACK_MODEL=gemini-2.5-flash-preview-tts
    CUA_TTS_VOICE=Sulafat
    ```
 

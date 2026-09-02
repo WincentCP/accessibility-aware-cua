@@ -15,8 +15,8 @@ const ensureStudyCoordinator = async (): Promise<void> => {
   if (await chrome.offscreen.hasDocument()) return;
   coordinatorCreation ??= chrome.offscreen.createDocument({
     url: "sidepanel.html",
-    reasons: [chrome.offscreen.Reason.AUDIO_PLAYBACK],
-    justification: "Menjalankan panduan suara penelitian tanpa membuka panel peserta."
+    reasons: [chrome.offscreen.Reason.AUDIO_PLAYBACK, chrome.offscreen.Reason.WEB_RTC],
+    justification: "Menjaga koordinator percakapan dan panduan suara tetap aktif selama sesi penelitian hands-free."
   }).finally(() => { coordinatorCreation = null; });
   await coordinatorCreation;
 };
@@ -39,6 +39,108 @@ const studyShellTab = async (studySessionId: string): Promise<chrome.tabs.Tab> =
   });
   if (typeof tab?.id !== "number") throw new Error("Halaman penelitian tidak ditemukan.");
   return tab;
+};
+
+const playSpeechInStudyShell = async (
+  studySessionId: string,
+  text: string
+): Promise<{ success: boolean; provider?: string; error?: string }> => {
+  const tab = await studyShellTab(studySessionId);
+  const results = await chrome.scripting.executeScript({
+    target: { tabId: tab.id! },
+    args: [text],
+    func: async (message: string) => {
+      const root = document.documentElement;
+      root.dataset.guideAudioState = "loading";
+      try {
+        const response = await fetch("/api/voice/speech", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text: message })
+        });
+        if (!response.ok) {
+          const detail = await response.text().catch(() => "");
+          throw new Error(`Speech API ${response.status}${detail ? `: ${detail}` : ""}`);
+        }
+        if (response.headers.get("x-a11y-cua-test-playback") === "complete") {
+          await response.arrayBuffer();
+          root.dataset.guideAudioState = "ended";
+          return { success: true, provider: "gemini-test" };
+        }
+        const audioUrl = URL.createObjectURL(await response.blob());
+        const audio = new Audio(audioUrl);
+        root.dataset.guideAudioState = "playing";
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = window.setTimeout(
+              () => reject(new Error("Pemutaran audio Gemini melewati batas waktu.")),
+              Math.max(8_000, message.length * 140)
+            );
+            const finish = (error?: Error): void => {
+              window.clearTimeout(timeout);
+              if (error) reject(error); else resolve();
+            };
+            audio.addEventListener("ended", () => finish(), { once: true });
+            audio.addEventListener("error", () => finish(new Error("Audio Gemini gagal diputar.")), { once: true });
+            void audio.play().catch(reject);
+          });
+        } finally {
+          URL.revokeObjectURL(audioUrl);
+        }
+        root.dataset.guideAudioState = "ended";
+        return { success: true, provider: "gemini" };
+      } catch (error) {
+        if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+          root.dataset.guideAudioState = "error";
+          return { success: false, error: String(error) };
+        }
+        const findVoice = (): SpeechSynthesisVoice | null => {
+          const voices = window.speechSynthesis.getVoices();
+          return voices.find((voice) => voice.lang.toLowerCase() === "id-id")
+            ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("id"))
+            ?? null;
+        };
+        let voice = findVoice();
+        if (!voice) {
+          voice = await new Promise<SpeechSynthesisVoice | null>((resolve) => {
+            let settled = false;
+            const finish = (): void => {
+              if (settled) return;
+              settled = true;
+              window.speechSynthesis.removeEventListener("voiceschanged", finish);
+              resolve(findVoice());
+            };
+            window.speechSynthesis.addEventListener("voiceschanged", finish, { once: true });
+            window.setTimeout(finish, 1_500);
+          });
+        }
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = "id-ID";
+        if (voice) utterance.voice = voice;
+        utterance.rate = 0.95;
+        root.dataset.guideAudioState = "playing";
+        const played = await new Promise<boolean>((resolve) => {
+          let settled = false;
+          const finish = (success: boolean): void => {
+            if (settled) return;
+            settled = true;
+            resolve(success);
+          };
+          utterance.addEventListener("end", () => finish(true), { once: true });
+          utterance.addEventListener("error", () => finish(false), { once: true });
+          window.speechSynthesis.speak(utterance);
+          window.setTimeout(() => finish(false), Math.max(4_000, message.length * 120));
+        });
+        if (!played) {
+          root.dataset.guideAudioState = "error";
+          return { success: false, error: String(error) };
+        }
+        root.dataset.guideAudioState = "ended";
+        return { success: true, provider: voice ? "browser-id" : "browser-default-id" };
+      }
+    }
+  });
+  return results[0]?.result ?? { success: false, error: "Tab penelitian tidak mengembalikan hasil audio." };
 };
 
 const loadTaskInStudyShell = async (studySessionId: string, taskUrl: string): Promise<void> => {
@@ -106,6 +208,7 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
     transcript?: string;
     studySessionId?: string;
     taskUrl?: string;
+    text?: string;
   };
   if (payload.type === "GET_ACTIVE_TASK") {
     void activeBenchmarkTab().then(async ({ sessionId, studySessionId }) => {
@@ -126,7 +229,8 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
             instruction: currentTask?.instruction,
             task_index: study?.task_index,
             task_count: study?.task_count,
-            participant_name: study?.participant_name
+            participant_name: study?.participant_name,
+            study_status: study?.status
           } : { goal: task.goal })
         }
       });
@@ -164,7 +268,17 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
         type: "COORDINATOR_START_ONBOARDING",
         studySessionId: payload.studySessionId
       }))
+      .then((result) => {
+        if (!result?.success) throw new Error(result?.error ?? "Koordinator suara belum siap.");
+        return result;
+      })
       .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+    return true;
+  }
+  if (payload.type === "PLAY_STUDY_SPEECH" && payload.studySessionId && payload.text) {
+    void playSpeechInStudyShell(payload.studySessionId, payload.text)
+      .then((result) => sendResponse(result))
       .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
     return true;
   }
@@ -205,6 +319,7 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       body: JSON.stringify({ benchmark_session_id: sessionId, ...(payload.goal ? { goal: payload.goal } : {}) })
     })).then((result) => {
       latestLiveRunId = String(result.run_id);
+      Object.assign(globalThis, { __a11yCuaLatestRunId: latestLiveRunId });
       sendResponse({ success: true, run: result });
     })
       .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
@@ -223,7 +338,11 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       method: "POST",
       body: JSON.stringify({ command: payload.command, ...(payload.transcript ? { transcript: payload.transcript } : {}) })
     }).then((result) => sendResponse({ success: true, run: result }))
-      .catch((error) => sendResponse({ success: false, error: String(error.message ?? error) }));
+      .catch((error) => {
+        Object.assign(globalThis, { __a11yCuaLastCommandError: String(error.message ?? error) });
+        console.warn("Live command failed", payload.command, payload.runId, error);
+        sendResponse({ success: false, error: String(error.message ?? error) });
+      });
     return true;
   }
   if (payload.type === "SHARED_CONTROL" && payload.command) {

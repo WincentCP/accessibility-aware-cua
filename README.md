@@ -74,9 +74,11 @@ melalui suara, selalu membacakan pilihan, mengingatkan dengan ramah saat peserta
 diam, dan memanggil peserta dengan namanya. Setelah sesi selesai, peneliti dapat
 mengunduh laporan PDF langsung dari console.
 
-Developer dapat menjalankan pengujian empat task, accessibility tree, tindakan
-agent, verifikasi, transisi task, feedback, dan error handling dengan satu
-perintah `npm run agent:test`.
+Developer cukup menjalankan `npm run study:test`. Satu perintah ini memeriksa
+suara Gemini Indonesia dari TTS ke STT live, lalu empat task, accessibility
+tree, tindakan agent, verifikasi, transisi task, feedback, recording, PDF, dan
+error handling di Chromium. Untuk diagnosis terpisah, gunakan `npm run
+voice:test` atau `npm run agent:test`.
 
 Pilot teknis B0/B1/P yang resumable dapat dijalankan dengan satu perintah
 `npm run evaluation:pilot`. B0 hanya menerima screenshot dan melakukan aksi

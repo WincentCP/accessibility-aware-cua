@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+import unicodedata
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -217,8 +218,14 @@ class ApprovalRegistry:
                 raise KeyError("Approval tidak terdaftar.")
             announced = None
             if channel is InputChannel.VOICE:
-                announced = " ".join((voice_transcript or "").split()).casefold()
-                allowed = {item.casefold() for item in self.policy.config.voice_approval_phrases}
+                def normalize_phrase(value: str) -> str:
+                    normalized = unicodedata.normalize("NFKC", value).casefold()
+                    return " ".join(
+                        "".join(character if character.isalnum() else " " for character in normalized).split()
+                    )
+
+                announced = normalize_phrase(voice_transcript or "")
+                allowed = {normalize_phrase(item) for item in self.policy.config.voice_approval_phrases}
                 if choice is ApprovalChoice.APPROVE and announced not in allowed:
                     raise ValueError("Voice approval harus eksplisit dan cocok dengan frasa policy.")
             resolution = ApprovalResolution(

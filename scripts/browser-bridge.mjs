@@ -57,8 +57,19 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
         return;
       }
       if (request.method === "GET" && url.pathname === "/page/meta") {
-        sendJson(response, 200, { url: currentPage().url(), title: await currentPage().title() });
-        return;
+        let lastError;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            const activePage = currentPage();
+            const title = await activePage.title();
+            sendJson(response, 200, { url: activePage.url(), title });
+            return;
+          } catch (error) {
+            lastError = error;
+            if (attempt < 2) await currentBrowserPage().waitForTimeout(150);
+          }
+        }
+        throw lastError;
       }
       if (request.method === "GET" && url.pathname === "/page/screenshot") {
         const viewport = await currentPage().evaluate(() => ({
@@ -87,11 +98,28 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
       const payload = await readJson(request);
       if (url.pathname === "/page/aria") {
         const selector = payload.selector === ":focus" ? ":focus" : "body";
-        const locator = currentPage().locator(selector);
-        const count = await locator.count();
-        const snapshot = count === 1 ? await locator.ariaSnapshot({ timeout: 5_000 }) : null;
-        sendJson(response, 200, { count, snapshot });
-        return;
+        let lastError;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            const locator = currentPage().locator(selector);
+            const count = await locator.count();
+            const snapshot = count === 1
+              ? await locator.ariaSnapshot({ timeout: selector === ":focus" ? 1_000 : 5_000 })
+              : null;
+            sendJson(response, 200, { count, snapshot });
+            return;
+          } catch (error) {
+            lastError = error;
+            if (attempt < 2) await currentPage().waitForTimeout(150);
+          }
+        }
+        // Focus may disappear while a click navigates or rerenders the task.
+        // It is optional observer context; the full body snapshot remains strict.
+        if (selector === ":focus") {
+          sendJson(response, 200, { count: 0, snapshot: null });
+          return;
+        }
+        throw lastError;
       }
       if (url.pathname === "/page/locator") {
         const locator = locate(payload);
@@ -114,7 +142,17 @@ export const startBrowserBridge = async ({ page, getPage, token, port = 8765 }) 
           if (await locator.count() !== 1) throw new Error("STRICT_LOCATOR_REQUIRED");
           if (op === "focus") await locator.focus({ timeout: 3_000 });
           if (op === "fill") await locator.fill(String(payload.value ?? ""), { timeout: 3_000 });
-          if (op === "press") await locator.press(String(payload.key ?? ""), { timeout: 3_000 });
+          if (op === "press") {
+            const key = String(payload.key ?? "");
+            const activePage = currentPage();
+            const navigation = payload.role === "button" && key === "Enter" && typeof activePage.waitForNavigation === "function"
+              ? activePage.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 2_000 }).catch(() => null)
+              : null;
+            await locator.press(key, { timeout: 3_000 });
+            if (navigation) {
+              await Promise.race([navigation, currentBrowserPage().waitForTimeout(750)]);
+            }
+          }
           if (op === "select") result.selected = await locator.selectOption({ label: String(payload.value ?? "") }, { timeout: 3_000 });
           if (op === "set_checked") await locator.setChecked(Boolean(payload.checked), { timeout: 3_000 });
           if (op === "scroll") await locator.scrollIntoViewIfNeeded({ timeout: 3_000 });
