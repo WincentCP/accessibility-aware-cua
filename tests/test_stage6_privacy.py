@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from packages.agent.privacy import REDACTED, contains_forbidden_material, redact_payload
-from packages.agent.retention import RetentionPolicy
+from backend.agent.privacy import REDACTED, contains_forbidden_material, redact_payload
+from backend.agent.retention import RetentionPolicy
 
 
 def test_secret_values_are_masked_and_raw_audio_is_dropped() -> None:

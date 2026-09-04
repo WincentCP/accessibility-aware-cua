@@ -15,17 +15,17 @@ sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from packages.agent.contracts import AgentAction  # noqa: E402
-from packages.agent.observer import AccessibilityObserver  # noqa: E402
-from packages.agent.resolver import SemanticTargetResolver  # noqa: E402
-from packages.agent.safety import (  # noqa: E402
+from backend.agent.contracts import AgentAction  # noqa: E402
+from backend.agent.observer import AccessibilityObserver  # noqa: E402
+from backend.agent.resolver import SemanticTargetResolver  # noqa: E402
+from backend.agent.safety import (  # noqa: E402
     ApprovalChoice,
     ApprovalRegistry,
     RiskClass,
     SafetyPolicy,
     execute_with_consumed_approval,
 )
-from packages.agent.shared_control import (  # noqa: E402
+from backend.agent.shared_control import (  # noqa: E402
     AtomicControlGate,
     SharedControlService,
 )

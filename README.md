@@ -49,16 +49,22 @@ tidak menerima target, expected state, predicate, atau near miss.
 ## Struktur
 
 ```text
-apps/api/          FastAPI + empat mini-site
-apps/extension/    extension MV3 TypeScript/Vite (side panel aksesibel)
-packages/agent/    state, observer AX, privasi, audit PostgreSQL, checkpoint LangGraph
-benchmark/public/  kontrak yang boleh dilihat runner/agent
-benchmark/private/ oracle dan manifest evaluator
-evaluation/        runner manifest, hidden scoring, persistence, dan report
-tests/             unit, integration, browser, axe, keyboard
-docs/              arsitektur dan runbook
-evidence/          ringkasan gate yang dapat diaudit
+frontend/research-console/  UI sesi peserta, mini-site, CSS, dan JavaScript
+frontend/extension/         extension MV3 dan koordinator percakapan hands-free
+backend/api/                FastAPI, state studi, rekaman, dan laporan PDF
+backend/agent/              observer AX, planner, executor, verifikasi, dan recovery
+a11y_benchmark/             implementasi katalog, reset, dan oracle
+benchmark/public/           kontrak yang boleh dilihat runner/agent
+benchmark/private/          hidden oracle dan manifest evaluator
+evaluation/                 baseline B0/B1/P, scoring, persistence, dan report
+tests/                      unit, integration, browser, axe, dan keyboard
+scripts/                    launcher, browser bridge, validator, dan smoke test
+docs/                       arsitektur, workflow studi, dan runbook
+evidence/                   bukti quality gate yang dapat diaudit
 ```
+
+Alur sistem dan aturan dependensi tiap folder dijelaskan di
+[`docs/system_architecture.md`](docs/system_architecture.md).
 
 ## Quick start
 
@@ -134,7 +140,7 @@ Set `CUA_REQUIRE_POSTGRES=true` di `.env`, kemudian:
 
 ```bash
 python scripts/check_dependencies.py
-python -m uvicorn apps.api.a11y_api.app:app --host 127.0.0.1 --port 8000
+python -m uvicorn backend.api.app:app --host 127.0.0.1 --port 8000
 ```
 
 Buka `http://127.0.0.1:8000`. Dokumentasi API lokal ada di
@@ -162,7 +168,7 @@ listening aktif otomatis setelah ucapan AI selesai.
 ## Semua quality gate
 
 ```bash
-python -m ruff check a11y_benchmark apps packages scripts tests
+python -m ruff check a11y_benchmark backend evaluation scripts tests
 python -m pytest -q
 python scripts/validate_stage6.py
 python scripts/validate_stage7.py

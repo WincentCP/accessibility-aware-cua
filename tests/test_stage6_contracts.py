@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from packages.agent.contracts import (
+from backend.agent.contracts import (
     AgentAction,
     AgentState,
     GoalSpec,
@@ -14,7 +14,7 @@ from packages.agent.contracts import (
     VerificationResult,
     VerificationStatus,
 )
-from packages.agent.state import to_graph_state
+from backend.agent.state import to_graph_state
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -96,7 +96,7 @@ def test_contracts_reject_unknown_fields() -> None:
 
 def test_empty_database_rollback_is_idempotent() -> None:
     down_sql = (
-        ROOT / "packages" / "agent" / "migrations" / "001_stage6_down.sql"
+        ROOT / "backend" / "agent" / "migrations" / "001_stage6_down.sql"
     ).read_text(encoding="utf-8")
     assert "DROP TABLE IF EXISTS schema_migrations" in down_sql
     assert "DELETE FROM schema_migrations" not in down_sql

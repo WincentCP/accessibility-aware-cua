@@ -18,7 +18,7 @@ export default defineConfig({
       timeout: 30_000
     },
     {
-      command: "python -m http.server 4173 --bind 127.0.0.1 --directory apps/extension/dist",
+      command: "python -m http.server 4173 --bind 127.0.0.1 --directory frontend/extension/dist",
       url: "http://127.0.0.1:4173/sidepanel.html",
       reuseExistingServer: false,
       timeout: 30_000

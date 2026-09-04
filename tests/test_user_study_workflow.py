@@ -11,8 +11,8 @@ os.environ.setdefault("CUA_PLANNER_PROVIDER", "deterministic")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from apps.api.a11y_api.app import STUDY_RESULTS_DIR, create_app  # noqa: E402
-from apps.api.a11y_api.config import Settings  # noqa: E402
+from backend.api.app import STUDY_RESULTS_DIR, create_app  # noqa: E402
+from backend.api.config import Settings  # noqa: E402
 
 
 class HandsFreeStudyWorkflowTests(unittest.TestCase):

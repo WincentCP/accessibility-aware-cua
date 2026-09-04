@@ -16,8 +16,8 @@ from fastapi.testclient import TestClient  # noqa: E402
 load_dotenv(ROOT / ".env")
 os.environ.setdefault("CUA_REQUIRE_POSTGRES", "true")
 
-from apps.api.a11y_api.app import create_app  # noqa: E402
-from apps.api.a11y_api.config import Settings  # noqa: E402
+from backend.api.app import create_app  # noqa: E402
+from backend.api.config import Settings  # noqa: E402
 
 
 def main() -> int:

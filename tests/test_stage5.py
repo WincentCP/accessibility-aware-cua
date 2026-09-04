@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from a11y_benchmark.catalog import CONDITIONS, FINAL_TASKS  # noqa: E402
 from a11y_benchmark.manifests import final_seed  # noqa: E402
 from a11y_benchmark.oracles.engine import evaluate  # noqa: E402
-from apps.api.a11y_api.app import app  # noqa: E402
+from backend.api.app import app  # noqa: E402
 
 FORBIDDEN_PUBLIC_KEYS = {
     "initial_state",

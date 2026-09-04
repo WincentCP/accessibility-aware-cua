@@ -27,7 +27,7 @@ pengembangan mini-site; jangan menandai gate PostgreSQL lulus.
 Terminal 1:
 
 ```bash
-python -m uvicorn apps.api.a11y_api.app:app --host 127.0.0.1 --port 8000
+python -m uvicorn backend.api.app:app --host 127.0.0.1 --port 8000
 ```
 
 Terminal 2:

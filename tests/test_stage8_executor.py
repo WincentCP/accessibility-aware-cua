@@ -14,15 +14,15 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 from pydantic import ValidationError
 
-from packages.agent.contracts import AgentAction, ErrorCode
-from packages.agent.executor import (
+from backend.agent.contracts import AgentAction, ErrorCode
+from backend.agent.executor import (
     DeterministicExecutor,
     PrimitiveAction,
     PrimitiveActionRequest,
     map_playwright_exception,
 )
-from packages.agent.observer import AccessibilityObserver
-from packages.agent.resolver import SemanticTargetResolver
+from backend.agent.observer import AccessibilityObserver
+from backend.agent.resolver import SemanticTargetResolver
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "http://127.0.0.1:8015"

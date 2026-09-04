@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Separated participant UI and Chromium integration into `frontend/`, and moved
+  FastAPI plus the agent core into `backend/` without changing runtime behavior.
+- Updated Python imports, npm workspace links, launchers, validators, CI, tests,
+  and asset resolution for the new repository boundaries.
+- Added a current system-architecture guide covering the participant, agent,
+  benchmark, evaluation, recording, and report flows.
+
 ## Stage 12
 
 - Added a versioned verified-only accessible task-map compiler with evidence provenance and stale-reference invalidation.

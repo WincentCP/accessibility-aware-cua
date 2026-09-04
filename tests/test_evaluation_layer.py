@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 
 from a11y_benchmark.oracles.engine import success_state
 from a11y_benchmark.reset.engine import reset_case
-from apps.api.a11y_api.app import create_app
-from apps.api.a11y_api.config import ROOT, Settings
+from backend.api.app import create_app
+from backend.api.config import ROOT, Settings
 from evaluation.config import (
     CONFIGURATIONS,
     EvaluationConfiguration,
@@ -321,7 +321,7 @@ def test_report_contains_paired_comparison_and_domain_breakdown() -> None:
 
 
 def test_evaluation_migration_has_typed_result_table_and_rollback() -> None:
-    migration_dir = ROOT / "packages/agent/migrations"
+    migration_dir = ROOT / "backend/agent/migrations"
     up = (migration_dir / "004_evaluation_runs_up.sql").read_text(encoding="utf-8")
     down = (migration_dir / "004_evaluation_runs_down.sql").read_text(encoding="utf-8")
     assert "CREATE TABLE IF NOT EXISTS evaluation_runs" in up

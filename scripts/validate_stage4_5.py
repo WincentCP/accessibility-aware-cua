@@ -115,7 +115,7 @@ def main() -> int:
     env["PATH"] = f"{Path(sys.executable).parent}{os.pathsep}{env.get('PATH', '')}"
 
     commands = [
-        run("Ruff", [sys.executable, "-m", "ruff", "check", "a11y_benchmark", "apps", "packages", "scripts", "tests"], env),
+        run("Ruff", [sys.executable, "-m", "ruff", "check", "a11y_benchmark", "backend", "evaluation", "scripts", "tests"], env),
         run("Pytest", [sys.executable, "-m", "pytest", "-q"], env),
         run("Extension build", ["npm", "run", "test:frontend"], env),
     ]
@@ -137,7 +137,7 @@ def main() -> int:
 
     stage4_checks = {
         "git_repository_initialized": item("PASS" if (ROOT / ".git").exists() else "FAIL", ".git pada branch main"),
-        "monorepo_boundaries": item("PASS", "apps, packages, benchmark, evaluation, tests, docs, evidence"),
+        "monorepo_boundaries": item("PASS", "frontend, backend, benchmark, evaluation, tests, docs, evidence"),
         "exact_dependency_locks": item("PASS", "requirements-frozen.lock + package-lock.json"),
         "environment_and_secret_validation": item("PASS" if pytest_ok else "FAIL", "test missing/example secret dan profil browser pribadi"),
         "api_health_and_readiness": item("PASS" if pytest_ok else "FAIL", "/health dan /health/ready diuji"),

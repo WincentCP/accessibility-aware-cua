@@ -3,7 +3,7 @@
   "version": "0.6.0",
   "private": true,
   "workspaces": [
-    "apps/extension"
+    "frontend/extension"
   ],
   "scripts": {
     "extension:build": "npm run build --workspace @a11y-cua/extension",

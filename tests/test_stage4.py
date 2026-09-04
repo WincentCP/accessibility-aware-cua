@@ -13,8 +13,8 @@ os.environ.setdefault("CUA_REQUIRE_POSTGRES", "false")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from apps.api.a11y_api.app import create_app  # noqa: E402
-from apps.api.a11y_api.config import ConfigurationError, Settings  # noqa: E402
+from backend.api.app import create_app  # noqa: E402
+from backend.api.config import ConfigurationError, Settings  # noqa: E402
 
 
 class Stage4ConfigurationTests(unittest.TestCase):
@@ -64,9 +64,9 @@ class Stage4ConfigurationTests(unittest.TestCase):
 class Stage4RepositoryContractTests(unittest.TestCase):
     def test_monorepo_boundaries_exist(self):
         required = [
-            "apps/extension",
-            "apps/api",
-            "packages/agent",
+            "frontend/extension",
+            "backend/api",
+            "backend/agent",
             "benchmark",
             "evaluation",
             "tests",
@@ -84,7 +84,7 @@ class Stage4RepositoryContractTests(unittest.TestCase):
         self.assertIn("fastapi==", python_lock)
         root_package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
         extension_package = json.loads(
-            (ROOT / "apps" / "extension" / "package.json").read_text(encoding="utf-8")
+            (ROOT / "frontend" / "extension" / "package.json").read_text(encoding="utf-8")
         )
         for dependencies in (
             root_package["devDependencies"],
@@ -95,7 +95,7 @@ class Stage4RepositoryContractTests(unittest.TestCase):
                     self.assertRegex(version, r"^\d+\.\d+\.\d+$")
 
     def test_extension_is_mv3_least_privilege_accessible_shell(self):
-        extension = ROOT / "apps" / "extension"
+        extension = ROOT / "frontend" / "extension"
         manifest = json.loads((extension / "public" / "manifest.json").read_text(encoding="utf-8"))
         html = (extension / "sidepanel.html").read_text(encoding="utf-8")
         self.assertEqual(manifest["manifest_version"], 3)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from packages.agent.observer import parse_cdp_ax_tree
-from packages.agent.semantic_snapshot import prune_nodes
+from backend.agent.observer import parse_cdp_ax_tree
+from backend.agent.semantic_snapshot import prune_nodes
 
 
 def test_documented_cdp_fallback_normalizes_full_ax_tree() -> None:

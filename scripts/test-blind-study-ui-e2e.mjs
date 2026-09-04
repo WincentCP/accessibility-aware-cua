@@ -9,7 +9,7 @@ const root = resolve(import.meta.dirname, "..");
 const baseUrl = process.env.CUA_TEST_API_BASE_URL || "http://127.0.0.1:8000";
 const bridgePort = Number(process.env.CUA_BROWSER_BRIDGE_PORT || 8765);
 const bridgeSecret = "local-test-agent-secret-2026-safe";
-const extension = resolve(root, "apps", "extension", "dist");
+const extension = resolve(root, "frontend", "extension", "dist");
 const fail = (message) => { throw new Error(message); };
 const sleep = (milliseconds) => new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from playwright.sync_api import sync_playwright
 
-from packages.agent.observer import AccessibilityObserver, SemanticResolutionError
-from packages.agent.semantic_snapshot import (
+from backend.agent.observer import AccessibilityObserver, SemanticResolutionError
+from backend.agent.semantic_snapshot import (
     ObserverErrorCode,
     ResolutionStatus,
     TargetQuery,

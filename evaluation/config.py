@@ -13,7 +13,7 @@ from enum import StrEnum
 
 from pydantic import Field, model_validator
 
-from packages.agent.contracts import ClosedModel
+from backend.agent.contracts import ClosedModel
 
 
 class EvaluationConfiguration(StrEnum):

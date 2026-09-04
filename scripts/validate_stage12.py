@@ -14,8 +14,8 @@ sys.path.insert(0, str(ROOT))
 
 from pydantic import ValidationError  # noqa: E402
 
-from packages.agent.contracts import AgentAction, Observation, RelevantItem, VerificationResult  # noqa: E402
-from packages.agent.task_map import (  # noqa: E402
+from backend.agent.contracts import AgentAction, Observation, RelevantItem, VerificationResult  # noqa: E402
+from backend.agent.task_map import (  # noqa: E402
     TaskMapCompileInput,
     TaskMapCompiler,
     TaskMapItem,
@@ -89,11 +89,11 @@ def run_gate(*, update_assets: bool) -> dict[str, object]:
             failures.append(label)
 
     required = [
-        ROOT / "apps/extension/src/content-script.ts",
-        ROOT / "apps/extension/src/focus-bridge.ts",
-        ROOT / "apps/extension/src/voice.ts",
-        ROOT / "apps/extension/src/task-map.ts",
-        ROOT / "apps/extension/focus-fixture.html",
+        ROOT / "frontend/extension/src/content-script.ts",
+        ROOT / "frontend/extension/src/focus-bridge.ts",
+        ROOT / "frontend/extension/src/voice.ts",
+        ROOT / "frontend/extension/src/task-map.ts",
+        ROOT / "frontend/extension/focus-fixture.html",
         ROOT / "tests/e2e/stage12.spec.ts",
     ]
     if not all(path.is_file() for path in required):

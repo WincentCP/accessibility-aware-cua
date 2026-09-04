@@ -11,21 +11,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from packages.agent.contracts import AgentAction  # noqa: E402
-from packages.agent.persistence import AuditRepository  # noqa: E402
+from backend.agent.contracts import AgentAction  # noqa: E402
+from backend.agent.persistence import AuditRepository  # noqa: E402
 
 
 def main() -> int:
     required_files = [
-        "packages/agent/contracts.py",
-        "packages/agent/state.py",
-        "packages/agent/privacy.py",
-        "packages/agent/checkpoints.py",
-        "packages/agent/persistence.py",
-        "packages/agent/retention.py",
-        "packages/agent/migrations/001_stage6_up.sql",
-        "packages/agent/migrations/001_stage6_down.sql",
-        "apps/extension/src/contracts.ts",
+        "backend/agent/contracts.py",
+        "backend/agent/state.py",
+        "backend/agent/privacy.py",
+        "backend/agent/checkpoints.py",
+        "backend/agent/persistence.py",
+        "backend/agent/retention.py",
+        "backend/agent/migrations/001_stage6_up.sql",
+        "backend/agent/migrations/001_stage6_down.sql",
+        "frontend/extension/src/contracts.ts",
         "docs/stage6_erd.md",
         "docs/stage6_data_dictionary.md",
         "docs/privacy_and_retention.md",

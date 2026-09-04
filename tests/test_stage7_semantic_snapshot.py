@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from packages.agent.semantic_snapshot import (
+from backend.agent.semantic_snapshot import (
     ObserverErrorCode,
     ResolutionStatus,
     SnapshotRegistry,

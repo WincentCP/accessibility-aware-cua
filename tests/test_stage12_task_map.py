@@ -4,13 +4,13 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from packages.agent.contracts import (
+from backend.agent.contracts import (
     AgentAction,
     Observation,
     RelevantItem,
     VerificationResult,
 )
-from packages.agent.task_map import (
+from backend.agent.task_map import (
     DisplayStatus,
     TaskMapCompileInput,
     TaskMapCompiler,

@@ -36,7 +36,7 @@ def ensure_api() -> subprocess.Popen[bytes] | None:
             sys.executable,
             "-m",
             "uvicorn",
-            "apps.api.a11y_api.app:app",
+            "backend.api.app:app",
             "--host",
             "127.0.0.1",
             "--port",

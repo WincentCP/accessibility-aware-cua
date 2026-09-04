@@ -6,7 +6,7 @@ __pycache__/
 *.py[cod]
 node_modules/
 .npm-cache/
-apps/extension/dist/
+frontend/extension/dist/
 .runtime/
 playwright-report/
 .playwright-browsers/

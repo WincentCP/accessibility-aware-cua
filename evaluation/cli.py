@@ -8,13 +8,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from apps.api.a11y_api.config import ROOT, Settings
+from backend.agent.persistence import AuditRepository
+from backend.api.config import ROOT, Settings
 from evaluation.api_executor import ApiRunExecutor
 from evaluation.config import EvaluationConfiguration
 from evaluation.report import write_reports
 from evaluation.runner import EvaluationRunner, load_manifest, validate_pilot_gate
 from evaluation.storage import JsonResultStore, PostgresResultStore
-from packages.agent.persistence import AuditRepository
 
 MANIFESTS = {
     "pilot": ROOT / "benchmark/private/manifests/pilot_runs.json",

@@ -8,8 +8,8 @@ from typing import Any
 
 from pydantic import Field
 
+from backend.agent.contracts import ClosedModel
 from evaluation.config import EvaluationConfiguration
-from packages.agent.contracts import ClosedModel
 
 
 class FailureClass(StrEnum):

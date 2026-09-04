@@ -15,7 +15,7 @@
 
 Artefak bukti yang wajib ada:
 
-- `packages/agent/observer.py` dan `semantic_snapshot.py`;
+- `backend/agent/observer.py` dan `semantic_snapshot.py`;
 - `benchmark/public/observer_targets.json` untuk 36 kasus;
 - 36 file `benchmark/golden/stage7/*.aria.yml`;
 - `evidence/stage7/observer_coverage_report.csv`;

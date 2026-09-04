@@ -17,15 +17,15 @@ sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from packages.agent.contracts import VerificationStatus  # noqa: E402
-from packages.agent.observer import AccessibilityObserver  # noqa: E402
-from packages.agent.predicates import ExpectedPostcondition  # noqa: E402
-from packages.agent.recovery import (  # noqa: E402
+from backend.agent.contracts import VerificationStatus  # noqa: E402
+from backend.agent.observer import AccessibilityObserver  # noqa: E402
+from backend.agent.predicates import ExpectedPostcondition  # noqa: E402
+from backend.agent.recovery import (  # noqa: E402
     RecoveryContext,
     RecoveryController,
     RecoveryDecision,
 )
-from packages.agent.verifier import PredicateVerifier  # noqa: E402
+from backend.agent.verifier import PredicateVerifier  # noqa: E402
 
 EVIDENCE_DIR = ROOT / "evidence" / "stage9"
 MATRIX_CSV = EVIDENCE_DIR / "verifier_confusion_matrix.csv"

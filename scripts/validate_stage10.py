@@ -18,18 +18,18 @@ sys.path.insert(0, str(ROOT))
 from langgraph.checkpoint.memory import InMemorySaver  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from packages.agent.executor import DeterministicExecutor  # noqa: E402
-from packages.agent.graph import OrchestrationServices, build_agent_graph  # noqa: E402
-from packages.agent.observer import AccessibilityObserver  # noqa: E402
-from packages.agent.planner import (  # noqa: E402
+from backend.agent.executor import DeterministicExecutor  # noqa: E402
+from backend.agent.graph import OrchestrationServices, build_agent_graph  # noqa: E402
+from backend.agent.observer import AccessibilityObserver  # noqa: E402
+from backend.agent.planner import (  # noqa: E402
     ModelResponse,
     PlannerRequest,
     StructuredPlanner,
     normalize_input,
 )
-from packages.agent.recovery import RecoveryController  # noqa: E402
-from packages.agent.resolver import SemanticTargetResolver  # noqa: E402
-from packages.agent.verifier import PredicateVerifier  # noqa: E402
+from backend.agent.recovery import RecoveryController  # noqa: E402
+from backend.agent.resolver import SemanticTargetResolver  # noqa: E402
+from backend.agent.verifier import PredicateVerifier  # noqa: E402
 
 EVIDENCE_DIR = ROOT / "evidence" / "stage10"
 TRAJECTORIES = EVIDENCE_DIR / "pilot_trajectories.jsonl"
@@ -176,7 +176,7 @@ def run_gate(*, update_assets: bool) -> dict[str, object]:
         row["terminal_reason"] == "COMPLETED" and row["verification_status"] == "VERIFIED"
         for row in trajectories
     )
-    graph_source = (ROOT / "packages" / "agent" / "graph.py").read_text(encoding="utf-8")
+    graph_source = (ROOT / "backend" / "agent" / "graph.py").read_text(encoding="utf-8")
     if valid_pct < 98:
         failures.append(f"planner schema validity {valid_pct:.2f}% below 98%")
     if completed != 5:

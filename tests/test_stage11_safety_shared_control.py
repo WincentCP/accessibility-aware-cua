@@ -8,19 +8,19 @@ import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 from playwright.sync_api import sync_playwright
 
-from packages.agent.contracts import AgentAction
-from packages.agent.executor import DeterministicExecutor
-from packages.agent.graph import (
+from backend.agent.contracts import AgentAction
+from backend.agent.executor import DeterministicExecutor
+from backend.agent.graph import (
     OrchestrationServices,
     apply_correction_to_state,
     apply_resume_to_state,
     build_agent_graph,
 )
-from packages.agent.observer import AccessibilityObserver
-from packages.agent.planner import ModelResponse, StructuredPlanner, normalize_input
-from packages.agent.recovery import RecoveryController
-from packages.agent.resolver import SemanticTargetResolver
-from packages.agent.safety import (
+from backend.agent.observer import AccessibilityObserver
+from backend.agent.planner import ModelResponse, StructuredPlanner, normalize_input
+from backend.agent.recovery import RecoveryController
+from backend.agent.resolver import SemanticTargetResolver
+from backend.agent.safety import (
     ApprovalChoice,
     ApprovalRegistry,
     InputChannel,
@@ -28,8 +28,8 @@ from packages.agent.safety import (
     SafetyPolicy,
     execute_with_consumed_approval,
 )
-from packages.agent.shared_control import AtomicControlGate, SharedControlService
-from packages.agent.verifier import PredicateVerifier
+from backend.agent.shared_control import AtomicControlGate, SharedControlService
+from backend.agent.verifier import PredicateVerifier
 
 
 def action_for(name: str, *, risk: str = "LOW", requires_approval: bool = False) -> AgentAction:

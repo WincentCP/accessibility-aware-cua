@@ -8,6 +8,8 @@ from typing import Any
 
 import httpx
 
+from backend.agent.planner import PROMPT_PATH, PROMPT_VERSION
+from backend.agent.remote_page import RemotePage
 from evaluation.config import TreatmentConfig
 from evaluation.contracts import ExecutionOutcome, ManifestRun
 from evaluation.visual_baseline import (
@@ -16,8 +18,6 @@ from evaluation.visual_baseline import (
     VisualBaselineRunner,
     VisualBridge,
 )
-from packages.agent.planner import PROMPT_PATH, PROMPT_VERSION
-from packages.agent.remote_page import RemotePage
 
 TERMINAL_STATUSES = {"COMPLETED", "FAILED", "CANCELLED"}
 

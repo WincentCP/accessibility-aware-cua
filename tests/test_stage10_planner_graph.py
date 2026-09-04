@@ -8,15 +8,15 @@ import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 from playwright.sync_api import sync_playwright
 
-from packages.agent.executor import DeterministicExecutor
-from packages.agent.graph import (
+from backend.agent.executor import DeterministicExecutor
+from backend.agent.graph import (
     GraphRoute,
     OrchestrationServices,
     apply_correction_to_state,
     build_agent_graph,
 )
-from packages.agent.observer import AccessibilityObserver
-from packages.agent.planner import (
+from backend.agent.observer import AccessibilityObserver
+from backend.agent.planner import (
     ModelResponse,
     PlannerConfig,
     PlannerRequest,
@@ -24,9 +24,9 @@ from packages.agent.planner import (
     clarify_if_needed,
     normalize_input,
 )
-from packages.agent.recovery import RecoveryController
-from packages.agent.resolver import SemanticTargetResolver
-from packages.agent.verifier import PredicateVerifier
+from backend.agent.recovery import RecoveryController
+from backend.agent.resolver import SemanticTargetResolver
+from backend.agent.verifier import PredicateVerifier
 
 
 class GenericPilotModel:

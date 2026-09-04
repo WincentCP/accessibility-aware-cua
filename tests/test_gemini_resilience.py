@@ -4,8 +4,8 @@ import json
 
 import httpx
 
-from packages.agent.gemini_client import GeminiStructuredClient
-from packages.agent.gemini_tts import GeminiTTSClient
+from backend.agent.gemini_client import GeminiStructuredClient
+from backend.agent.gemini_tts import GeminiTTSClient
 
 
 def test_gemini_planner_retries_503_then_succeeds() -> None:

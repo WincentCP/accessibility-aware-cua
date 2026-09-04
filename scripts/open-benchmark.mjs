@@ -63,7 +63,7 @@ if (!(profile === root || profile.startsWith(`${root}${sep}`))) {
 }
 
 const withExtension = flags.has("--with-extension");
-const extension = resolve(root, "apps", "extension", "dist");
+const extension = resolve(root, "frontend", "extension", "dist");
 const browserArgs = [];
 if (withExtension) {
   if (!existsSync(resolve(extension, "manifest.json"))) {

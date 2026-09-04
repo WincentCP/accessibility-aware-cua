@@ -1,6 +1,6 @@
 # Progress Implementasi
 
-Terakhir diperbarui: 29 Agustus 2026.
+Terakhir diperbarui: 4 September 2026.
 
 ## Sudah tersedia
 
@@ -18,7 +18,10 @@ Terakhir diperbarui: 29 Agustus 2026.
 - Perekaman otomatis layar dengan frame wajah dan audio, plus rekaman kamera cadangan.
 - Gemini live STT Bahasa Indonesia, Gemini TTS Bahasa Indonesia, turn-taking otomatis,
   respons percakapan natural, dan reconnect sesi transkripsi.
-- Feedback suara setelah Task 4 serta hasil sesi anonim dalam JSON.
+- Feedback suara setelah Task 4, hasil sesi lokal dalam JSON, dan laporan PDF
+  yang dapat diunduh peneliti.
+- Boundary repository yang eksplisit: UI dan extension di `frontend/`, API dan
+  core agent di `backend/`, serta hidden oracle tetap terpisah dari runtime.
 
 ## Milestone workflow dan prototype selesai
 

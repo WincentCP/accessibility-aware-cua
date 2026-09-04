@@ -16,8 +16,8 @@ from typing import Any
 import httpx
 from pydantic import Field, ValidationError, model_validator
 
+from backend.agent.contracts import ClosedModel
 from evaluation.contracts import ExecutionOutcome
-from packages.agent.contracts import ClosedModel
 
 VISUAL_PROMPT_VERSION = "visual-baseline-v1"
 VISUAL_PROMPT = """You are the visual-only B0 browser baseline in a controlled synthetic website.

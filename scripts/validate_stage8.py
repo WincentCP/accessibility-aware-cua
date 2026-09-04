@@ -15,13 +15,13 @@ sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from packages.agent.executor import (  # noqa: E402
+from backend.agent.executor import (  # noqa: E402
     DeterministicExecutor,
     PrimitiveAction,
     PrimitiveActionRequest,
 )
-from packages.agent.observer import AccessibilityObserver  # noqa: E402
-from packages.agent.resolver import SemanticTargetResolver  # noqa: E402
+from backend.agent.observer import AccessibilityObserver  # noqa: E402
+from backend.agent.resolver import SemanticTargetResolver  # noqa: E402
 from scripts.validate_stage7 import BASE_URL, TARGETS_PATH, test_server  # noqa: E402
 
 REPORT = ROOT / "evidence" / "stage8" / "primitive_action_reliability.csv"

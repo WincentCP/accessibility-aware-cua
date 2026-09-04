@@ -7,8 +7,8 @@ from uuid import uuid4
 
 import pytest
 
-from packages.agent.checkpoints import build_checkpoint_graph, postgres_checkpointer
-from packages.agent.contracts import (
+from backend.agent.checkpoints import build_checkpoint_graph, postgres_checkpointer
+from backend.agent.contracts import (
     AgentAction,
     AgentState,
     ErrorCode,
@@ -24,9 +24,9 @@ from packages.agent.contracts import (
     VerificationResult,
     VerificationStatus,
 )
-from packages.agent.persistence import AuditRepository
-from packages.agent.retention import RetentionPolicy, purge_expired_sessions
-from packages.agent.state import to_graph_state
+from backend.agent.persistence import AuditRepository
+from backend.agent.retention import RetentionPolicy, purge_expired_sessions
+from backend.agent.state import to_graph_state
 
 POSTGRES_REQUIRED = os.getenv("CUA_REQUIRE_POSTGRES", "false").lower() == "true"
 DATABASE_URL = os.getenv(

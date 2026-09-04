@@ -59,7 +59,7 @@ hanya `activeTab`, `scripting`, `offscreen`, serta host lokal. Koordinator berja
 memiliki goal teks, input suara bila browser mendukung, status, placeholder peta
 tugas, dan shared-control controls. Planner/LangGraph, accessibility-tree
 observer, verify-after-action, dan focus handoff baru dihubungkan pada tahap
-agent; boundary `packages/agent` sudah disediakan.
+agent; boundary `backend/agent` sudah disediakan.
 
 ## Bukti otomatis
 

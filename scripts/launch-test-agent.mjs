@@ -163,7 +163,7 @@ try {
   } else {
     const serverArgs = checkMode
       ? ["scripts/run_live_test_server.py"]
-      : ["-m", "uvicorn", "apps.api.a11y_api.app:app", "--host", "127.0.0.1", "--port", String(apiPort)];
+      : ["-m", "uvicorn", "backend.api.app:app", "--host", "127.0.0.1", "--port", String(apiPort)];
     const server = spawn(python, serverArgs, { cwd: root, env, stdio: "inherit" });
     children.push(server);
     ownsServer = true;
@@ -176,7 +176,7 @@ try {
     await run("node", ["scripts/test-blind-study-ui-e2e.mjs"]);
     console.log("Pemeriksaan otomatis selesai dan semua pemeriksaan utama lulus.");
   } else {
-    const extension = resolve(root, "apps", "extension", "dist");
+    const extension = resolve(root, "frontend", "extension", "dist");
     const profile = resolve(root, env.CUA_BROWSER_PROFILE_DIR || ".runtime/playwright-profile");
     browserContext = await chromium.launchPersistentContext(profile, {
       headless: false,

@@ -11,15 +11,15 @@ from fastapi.testclient import TestClient
 os.environ.setdefault("CUA_ENV", "test")
 os.environ.setdefault("CUA_APP_SECRET", "test-secret")
 
-from apps.api.a11y_api.app import create_app
-from apps.api.a11y_api.config import Settings
-from packages.agent.gemini_client import GeminiStructuredClient
-from packages.agent.gemini_tts import (
+from backend.agent.gemini_client import GeminiStructuredClient
+from backend.agent.gemini_tts import (
     INDONESIAN_TTS_DIRECTION,
     GeminiTTSClient,
     GeminiTTSQuotaError,
 )
-from packages.agent.remote_page import RemoteBridgeError, RemotePage
+from backend.agent.remote_page import RemoteBridgeError, RemotePage
+from backend.api.app import create_app
+from backend.api.config import Settings
 
 
 def test_gemini_adapter_uses_structured_json_output() -> None:
@@ -226,7 +226,7 @@ def test_voice_api_uses_configured_retry_limit(monkeypatch) -> None:
         def close(self) -> None:
             captured["closed"] = True
 
-    monkeypatch.setattr("apps.api.a11y_api.app.GeminiTTSClient", FakeTTSClient)
+    monkeypatch.setattr("backend.api.app.GeminiTTSClient", FakeTTSClient)
     app = create_app(_settings(api_key="test-key"))
     with TestClient(app) as client:
         response = client.post("/api/voice/speech", json={"text": "Halo!"})
@@ -259,7 +259,7 @@ def test_voice_api_switches_to_fallback_model_when_primary_quota_is_full(monkeyp
         def close(self) -> None:
             pass
 
-    monkeypatch.setattr("apps.api.a11y_api.app.GeminiTTSClient", FakeTTSClient)
+    monkeypatch.setattr("backend.api.app.GeminiTTSClient", FakeTTSClient)
     app = create_app(_settings(api_key="test-key"))
     with TestClient(app) as client:
         response = client.post("/api/voice/speech", json={"text": "Halo dari fallback"})

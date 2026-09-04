@@ -24,8 +24,8 @@ sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from packages.agent.observer import AccessibilityObserver  # noqa: E402
-from packages.agent.semantic_snapshot import (  # noqa: E402
+from backend.agent.observer import AccessibilityObserver  # noqa: E402
+from backend.agent.semantic_snapshot import (  # noqa: E402
     ACTIONABLE_ROLES,
     CONTEXT_CHAR_BUDGET,
     ObserverErrorCode,

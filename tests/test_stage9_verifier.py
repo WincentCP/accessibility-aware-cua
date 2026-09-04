@@ -7,20 +7,20 @@ import pytest
 from playwright.sync_api import sync_playwright
 from pydantic import ValidationError
 
-from packages.agent.contracts import (
+from backend.agent.contracts import (
     ErrorCode,
     RiskLevel,
     TerminalReason,
     VerificationStatus,
 )
-from packages.agent.executor import DeterministicExecutor, PrimitiveAction, PrimitiveActionRequest
-from packages.agent.observer import AccessibilityObserver
-from packages.agent.predicates import (
+from backend.agent.executor import DeterministicExecutor, PrimitiveAction, PrimitiveActionRequest
+from backend.agent.observer import AccessibilityObserver
+from backend.agent.predicates import (
     ExpectedPostcondition,
     PredicateKind,
     VerificationPlan,
 )
-from packages.agent.recovery import (
+from backend.agent.recovery import (
     CompletedClaim,
     HiddenOracleVerdict,
     RecoveryContext,
@@ -29,8 +29,8 @@ from packages.agent.recovery import (
     RecoveryPolicy,
     final_success_from_hidden_oracle,
 )
-from packages.agent.resolver import SemanticTargetResolver
-from packages.agent.verifier import PredicateVerifier
+from backend.agent.resolver import SemanticTargetResolver
+from backend.agent.verifier import PredicateVerifier
 
 
 @pytest.fixture(scope="module")

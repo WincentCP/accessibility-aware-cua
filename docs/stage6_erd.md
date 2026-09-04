@@ -65,6 +65,6 @@ tetap mengikuti kontrak adaptor resmi. Korelasi dilakukan dengan
 
 Migration riset bersifat versioned:
 
-- Up: `packages/agent/migrations/001_stage6_up.sql`
-- Down: `packages/agent/migrations/001_stage6_down.sql`
-- Adaptor: `packages/agent/persistence.py`
+- Up: `backend/agent/migrations/001_stage6_up.sql`
+- Down: `backend/agent/migrations/001_stage6_down.sql`
+- Adaptor: `backend/agent/persistence.py`

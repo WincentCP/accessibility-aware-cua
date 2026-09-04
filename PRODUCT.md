@@ -22,14 +22,14 @@ The product exposes an accessible, verified task map rather than presenting comp
 ## Operating Context
 
 - A local FastAPI service hosts four synthetic benchmark domains and deterministic task sessions.
-- A Manifest V3 Chromium side panel presents the participant controls, Indonesian guidance, agent activity, task-map evidence, and shared-control actions.
+- The research console presents the one-click participant flow, while a Manifest V3 Chromium extension coordinates Indonesian voice guidance, turn-taking, and agent actions in the background.
 - Twelve synthetic tasks cover travel, marketplace, appointment, and account-settings scenarios across C0, C1, and C2 conditions.
 - All task data is dummy data. The environment stops before real booking, payment, checkout, account deletion, or other external transactions.
 
 ## Capabilities and Constraints
 
 - Preserve the existing benchmark contracts, element IDs, event wiring, keyboard commands, API boundaries, and hidden-oracle separation.
-- Input is available through text and push-to-talk; speech transcripts must be reviewed before use.
+- After the single start action and browser permissions, participant input uses automatic Indonesian speech transcription without push-to-talk.
 - Indonesian voice guidance supplements, but never replaces, semantic text and ARIA live regions.
 - The current system is a research prototype. Automated gates do not substitute for the pending Windows NVDA evaluation.
 - The attached scheduler image is a visual reference only; its content, feature set, and information architecture must not be copied.
@@ -42,7 +42,7 @@ The product exposes an accessible, verified task map rather than presenting comp
 
 ## Evidence on Hand
 
-- The repository contains the benchmark catalog, deterministic reset and oracle logic, accessibility-tree observer, semantic executor, verification and recovery flow, side-panel UI, automated gates, and research documentation.
+- The repository contains the benchmark catalog, deterministic reset and oracle logic, accessibility-tree observer, semantic executor, verification and recovery flow, hands-free research UI, automated gates, and research documentation.
 - Existing claims and limitations are documented in `README.md`; future UI work must not invent participants, success rates, testimonials, or external deployment claims.
 
 ## Product Principles
