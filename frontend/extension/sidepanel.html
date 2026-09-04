@@ -1,138 +1,180 @@
 <!doctype html>
-<html lang="id" data-agent-state="idle">
+<html lang="id" data-agent-state="idle" data-session-state="welcome">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#f5f6fb">
+    <meta name="theme-color" content="#7C3AED">
     <title>Accessibility-Aware CUA</title>
     <script type="module" src="/src/sidepanel.ts"></script>
   </head>
   <body>
     <!--
-      THESIS: Agent assistance should feel legible and controllable, never like an opaque automation dashboard.
-      OWN-WORLD: Soft lavender-slate canvas, white surfaces, muted teal controls, restrained amber signals, Plus Jakarta Sans, and one consistent soft geometry.
-      STORY: Review the task, start the agent, understand every phase, inspect verified evidence, and intervene at any time.
-      FIRST VIEWPORT: Live status leads directly into one clear task card, followed by activity, verified evidence, and shared controls.
-      FORM: Brief-pinned Operate shell; seed key brief-pinned-cua-20260826.
-      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+      REDESIGN: Fun, modern, friendly, playful, approachable, slightly gamified
+      Inspired by modern learning apps but not copying Duolingo
+      Priority: accessibility, clarity, warmth, personality
     -->
-    <a class="skip-link" href="#main-content">Lewati ke kontrol utama</a>
-    <main id="main-content" class="panel-shell" tabindex="-1">
-      <h1 class="sr-only">Accessibility-Aware CUA</h1>
-      <p id="shell-description" class="sr-only">Tinjau tujuan, aktivitas agen, bukti, dan kendali tugas.</p>
-      <div class="panel-status status-strip">
-        <span class="status-indicator" aria-hidden="true"></span>
-        <p id="status" role="status" aria-live="polite" aria-atomic="true">Panel siap.</p>
-      </div>
-
-      <p id="approval-alert" class="approval" role="alert" aria-live="assertive" hidden></p>
-
-      <section class="surface task-surface" aria-labelledby="goal-heading">
-        <div class="section-heading">
-          <h2 id="goal-heading">Asisten</h2>
+    <a class="skip-link" href="#main-content">Lewati ke konten utama</a>
+    
+    <main id="main-content" class="app-container" tabindex="-1">
+      
+      <!-- WELCOME SCREEN -->
+      <section id="welcome-screen" class="screen welcome-screen" aria-labelledby="welcome-heading">
+        <div class="welcome-content">
+          <div class="welcome-illustration" aria-hidden="true">
+            <div class="orb-hero orb-welcome"></div>
+          </div>
+          <h1 id="welcome-heading" class="welcome-title">Siap mulai?</h1>
+          <p class="welcome-description">
+            Setelah dimulai, cukup dengarkan dan bicara. AI akan memandu kamu sampai selesai.
+          </p>
+          <button id="start-session" class="button-primary button-xl" type="button">
+            <span class="button-text">Mulai Penelitian</span>
+            <span class="button-icon" aria-hidden="true">→</span>
+          </button>
         </div>
-        <p id="assistant-prompt" class="assistant-prompt">Saya sedang menyiapkan kegiatan.</p>
-        <p id="heard-text" class="heard-text" hidden><strong>Saya mendengar:</strong> <span></span></p>
+      </section>
 
-        <div id="transcript-review" class="inline-review" hidden>
-          <label for="transcript">Periksa hasil suara</label>
-          <textarea id="transcript" rows="3"></textarea>
-          <div class="button-row">
-            <button id="confirm-transcript" class="button-secondary" type="button">Gunakan transkrip</button>
-            <button id="edit-transcript" class="button-quiet" type="button">Ubah transkrip</button>
+      <!-- PREPARING SCREEN -->
+      <section id="preparing-screen" class="screen preparing-screen" aria-labelledby="preparing-heading" hidden>
+        <div class="preparing-content">
+          <div class="orb-container" aria-hidden="true">
+            <div class="orb orb-preparing"></div>
+          </div>
+          <h2 id="preparing-heading" class="preparing-title">Sebentar ya</h2>
+          <p class="preparing-description">Kami sedang menyiapkan sesi kamu.</p>
+          <div class="progress-container">
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progres persiapan">
+              <div class="progress-fill"></div>
+            </div>
+            <p id="preparing-status" class="preparing-status" role="status" aria-live="polite">Memeriksa mikrofon...</p>
           </div>
         </div>
+      </section>
 
-        <p id="voice-state" class="voice-state" role="status" aria-live="polite">Panduan suara siap.</p>
+      <!-- ACTIVE SESSION SCREEN -->
+      <section id="active-session-screen" class="screen active-session-screen" aria-labelledby="session-heading" hidden>
+        
+        <!-- AI Orb Header -->
+        <header class="orb-header" aria-live="polite" aria-atomic="true">
+          <div class="orb-container orb-container-large" aria-hidden="true">
+            <div class="orb orb-active" id="agent-orb"></div>
+          </div>
+          <div class="orb-status">
+            <p id="orb-status-text" class="orb-status-text">Menyiapkan kegiatan...</p>
+            <p id="voice-indicator" class="voice-indicator" hidden>
+              <span class="voice-dot" aria-hidden="true"></span>
+              <span id="voice-status-text">AI sedang berbicara</span>
+            </p>
+          </div>
+        </header>
 
-        <details id="fallback-tools" class="fallback-tools">
+        <!-- Task Card -->
+        <section class="task-card" aria-labelledby="task-heading">
+          <div class="task-header">
+            <h2 id="task-heading" class="task-title">Kegiatan</h2>
+            <span id="task-progress-chip" class="progress-chip">1 dari 5</span>
+          </div>
+          <p id="current-task" class="task-description">Memuat tugas...</p>
+        </section>
+
+        <!-- Activity Feedback -->
+        <section id="activity-feedback" class="feedback-card" aria-live="polite" hidden>
+          <div class="feedback-icon" aria-hidden="true">✨</div>
+          <p id="feedback-text" class="feedback-text">Bagus!</p>
+        </section>
+
+        <!-- Session Progress -->
+        <section class="progress-section" aria-labelledby="progress-heading">
+          <h3 id="progress-heading" class="sr-only">Progres sesi</h3>
+          <div class="progress-steps">
+            <div class="step completed" aria-label="Langkah 1 selesai">
+              <div class="step-dot" aria-hidden="true">✓</div>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step active" aria-label="Langkah 2 sedang berjalan" aria-current="step">
+              <div class="step-dot" aria-hidden="true">2</div>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step" aria-label="Langkah 3 belum dimulai">
+              <div class="step-dot" aria-hidden="true">3</div>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step" aria-label="Langkah 4 belum dimulai">
+              <div class="step-dot" aria-hidden="true">4</div>
+            </div>
+            <div class="step-line" aria-hidden="true"></div>
+            <div class="step" aria-label="Langkah 5 belum dimulai">
+              <div class="step-dot" aria-hidden="true">5</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Hidden fallback tools for accessibility -->
+        <details id="fallback-tools" class="fallback-details" aria-label="Kontrol cadangan">
           <summary>Kontrol cadangan</summary>
           <div class="fallback-content">
             <label for="goal">Apa yang ingin saya bantu?</label>
-            <textarea id="goal" rows="3" aria-describedby="shell-description voice-help"></textarea>
-            <button id="submit-goal" class="button-primary button-wide" type="button" disabled>Minta bantuan</button>
-            <div class="button-row secondary-actions" aria-label="Input tujuan cadangan">
+            <textarea id="goal" rows="3" aria-describedby="voice-help"></textarea>
+            <button id="submit-goal" class="button-secondary button-wide" type="button" disabled>Minta bantuan</button>
+            <div class="button-row" aria-label="Input tujuan cadangan">
               <button id="voice" class="button-secondary" type="button" aria-pressed="false">Dengarkan saya</button>
               <button id="cancel-voice" class="button-quiet" type="button" disabled>Batalkan</button>
-            </div>
-            <div class="button-row compact-actions" aria-label="Kontrol panduan suara">
-              <button id="repeat-guide" class="button-quiet" type="button" disabled>Ulangi panduan</button>
-              <button id="toggle-guide" class="button-quiet" type="button" aria-pressed="true">Suara: aktif</button>
             </div>
             <p id="voice-help" class="supporting-copy">Kontrol ini hanya digunakan jika percakapan suara otomatis tidak tersedia.</p>
           </div>
         </details>
-        <p id="voice-disclosure" class="sr-only">Panduan suara dibuat oleh AI.</p>
+
+        <!-- Shared Controls -->
+        <section class="controls-section" aria-labelledby="controls-heading">
+          <h3 id="controls-heading" class="controls-title">Kontrol</h3>
+          <p id="control-hint" class="control-hint">Jeda, koreksi, atau ambil alih kapan saja.</p>
+          <div class="control-grid" role="group" aria-label="Kontrol sesi">
+            <button class="button-control" type="button" data-command="APPROVE" disabled aria-keyshortcuts="Alt+A">
+              <span class="control-icon" aria-hidden="true">✓</span>
+              <span>Setujui</span>
+            </button>
+            <button class="button-control" type="button" data-command="PAUSE" disabled aria-keyshortcuts="Alt+P">
+              <span class="control-icon" aria-hidden="true">⏸</span>
+              <span>Jeda</span>
+            </button>
+            <button class="button-control" type="button" data-command="TAKE_OVER" disabled aria-keyshortcuts="Alt+T">
+              <span class="control-icon" aria-hidden="true">✋</span>
+              <span>Ambil Alih</span>
+            </button>
+            <button class="button-control button-control-danger" type="button" data-command="CANCEL" disabled aria-keyshortcuts="Alt+C">
+              <span class="control-icon" aria-hidden="true">✕</span>
+              <span>Batalkan</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Live region for screen reader announcements -->
+        <div id="status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+        <div id="assistant-prompt" class="sr-only" role="status" aria-live="polite"></div>
+        <div id="voice-state" class="sr-only" role="status" aria-live="polite"></div>
       </section>
 
-      <section class="surface activity-surface" aria-labelledby="activity-heading">
-        <div class="section-heading activity-heading-row">
-          <h2 id="activity-heading">Sedang saya lakukan</h2>
-          <span id="activity-phase" class="phase-chip">Menunggu</span>
-        </div>
-        <div class="activity-signal" aria-hidden="true"><span></span></div>
-        <p id="activity-detail" class="activity-detail" aria-live="polite">Belum ada aktivitas.</p>
-        <dl class="summary-list compact-summary sr-only">
-          <div>
-            <dt>Progres terverifikasi</dt>
-            <dd id="activity-progress">0 langkah terverifikasi selesai.</dd>
+      <!-- COMPLETION SCREEN -->
+      <section id="completion-screen" class="screen completion-screen" aria-labelledby="completion-heading" hidden>
+        <div class="completion-content">
+          <div class="completion-celebration" aria-hidden="true">
+            <div class="orb orb-complete"></div>
+            <div class="confetti" aria-hidden="true">
+              <span class="confetti-piece">🎉</span>
+              <span class="confetti-piece">✨</span>
+              <span class="confetti-piece">🌟</span>
+            </div>
           </div>
-        </dl>
-      </section>
-
-      <section id="task-map" class="surface evidence-surface" aria-labelledby="map-heading">
-        <div class="section-heading">
-          <h2 id="map-heading">Hasil yang sudah diperiksa</h2>
-        </div>
-        <dl class="summary-list evidence-summary">
-          <div class="sr-only">
-            <dt>Tujuan aktif</dt>
-            <dd id="active-goal">Belum ada tujuan aktif.</dd>
+          <h1 id="completion-heading" class="completion-title">Semua selesai! 🎉</h1>
+          <p class="completion-description">
+            Terima kasih sudah menyelesaikan sesi penelitian ini.
+          </p>
+          <div id="completion-summary" class="completion-summary">
+            <p><strong>Ringkasan:</strong> <span id="final-summary-text">Sesi berhasil diselesaikan.</span></p>
           </div>
-          <div>
-            <dt>Perkembangan</dt>
-            <dd id="progress">0 langkah terverifikasi selesai.</dd>
-          </div>
-        </dl>
-
-        <div class="evidence-block verified-block">
-          <h3>Sudah selesai</h3>
-          <ol id="verified-list"><li>Belum ada.</li></ol>
-        </div>
-        <div class="evidence-block">
-          <h3>Pilihan yang ditemukan</h3>
-          <ul id="relevant-list"><li>Belum ada.</li></ul>
-        </div>
-        <div class="evidence-block next-block">
-          <h3>Berikutnya</h3>
-          <p id="next-action">Belum ada.</p>
-        </div>
-        <div class="evidence-block">
-          <h3>Perlu diperiksa lagi</h3>
-          <ul id="uncertain-list"><li>Belum ada.</li></ul>
-        </div>
-        <div class="evidence-block final-block">
-          <h3>Ringkasan</h3>
-          <p id="final-summary">Tugas belum selesai.</p>
         </div>
       </section>
 
-      <details class="surface control-surface fallback-tools">
-        <summary id="control-heading">Kontrol darurat</summary>
-        <div class="section-heading">
-          <h2 class="sr-only">Kendali Anda <span lang="en">Shared control</span></h2>
-        </div>
-        <p id="control-help" class="section-intro">Kontrol aktif setelah tujuan dikonfirmasi atau tugas dimulai.</p>
-        <div class="control-grid">
-          <button class="button-primary" type="button" data-command="APPROVE" disabled><span>Setujui</span><kbd>Alt+A</kbd></button>
-          <button class="button-secondary" type="button" data-command="EDIT" disabled><span>Ubah tujuan</span><kbd>Alt+E</kbd></button>
-          <button class="button-secondary" type="button" data-command="PAUSE" disabled><span>Jeda agen</span><kbd>Alt+P</kbd></button>
-          <button class="button-secondary" type="button" data-command="TAKE_OVER" disabled><span>Ambil alih</span><kbd>Alt+T</kbd></button>
-          <button class="button-secondary" type="button" data-command="RESUME" disabled><span>Lanjutkan</span><kbd>Alt+R</kbd></button>
-          <button class="button-danger" type="button" data-command="REJECT" disabled><span>Tolak aksi</span><kbd>Esc</kbd></button>
-          <button class="button-danger button-wide" type="button" data-command="CANCEL" disabled><span>Batalkan tugas</span><kbd>Alt+C</kbd></button>
-        </div>
-      </details>
     </main>
   </body>
 </html>
